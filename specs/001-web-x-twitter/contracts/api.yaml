@@ -1,0 +1,571 @@
+openapi: 3.0.3
+info:
+  title: Hobby Content Review Logging API
+  description: API for logging and sharing content reviews with Twitter integration
+  version: 1.0.0
+servers:
+  - url: https://shumilog.example.com/api
+    description: Production server
+  - url: http://localhost:8787/api
+    description: Development server
+
+paths:
+  /auth/twitter:
+    get:
+      summary: Initiate Twitter OAuth flow
+      description: Redirects user to Twitter for authentication
+      responses:
+        '302':
+          description: Redirect to Twitter OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+                example: https://twitter.com/i/oauth2/authorize?...
+        '400':
+          description: Invalid request parameters
+
+  /auth/callback:
+    get:
+      summary: Handle Twitter OAuth callback
+      description: Process OAuth callback and create user session
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to application with session
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: session=token; HttpOnly; Secure
+        '401':
+          description: Authentication failed
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      description: Invalidate user session
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Not authenticated
+
+  /users/me:
+    get:
+      summary: Get current user profile
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+
+  /content:
+    get:
+      summary: Search and list content
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [anime, manga, game, movie, book, music, theater, figure, model, merchandise]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of content items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Content'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+    post:
+      summary: Create new content item
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentCreate'
+      responses:
+        '201':
+          description: Content created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Content'
+        '400':
+          description: Invalid content data
+        '401':
+          description: Not authenticated
+
+  /content/{contentId}:
+    get:
+      summary: Get content details
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Content details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentDetail'
+        '404':
+          description: Content not found
+
+  /content/{contentId}/subcontent:
+    get:
+      summary: List episodes/chapters for content
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of sub-content items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubContent'
+
+    post:
+      summary: Add episode/chapter to content
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubContentCreate'
+      responses:
+        '201':
+          description: Sub-content created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubContent'
+        '401':
+          description: Not authenticated
+        '404':
+          description: Content not found
+
+  /reviews:
+    get:
+      summary: List public reviews
+      parameters:
+        - name: content_id
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of public reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+                  total:
+                    type: integer
+
+    post:
+      summary: Create new review
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreate'
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Invalid review data
+        '401':
+          description: Not authenticated
+
+  /reviews/{reviewId}:
+    get:
+      summary: Get review details
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDetail'
+        '404':
+          description: Review not found
+
+    put:
+      summary: Update review
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewUpdate'
+      responses:
+        '200':
+          description: Review updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not review owner
+        '404':
+          description: Review not found
+
+    delete:
+      summary: Delete review
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Review deleted
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not review owner
+        '404':
+          description: Review not found
+
+  /reviews/{reviewId}/share:
+    post:
+      summary: Share review to Twitter
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully shared to Twitter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  twitter_post_id:
+                    type: string
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not review owner
+        '404':
+          description: Review not found
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        twitter_username:
+          type: string
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Content:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content_type:
+          type: string
+          enum: [anime, manga, game, movie, book, music, theater, figure, model, merchandise]
+        description:
+          type: string
+        wikipedia_url:
+          type: string
+        official_url:
+          type: string
+        has_episodes:
+          type: boolean
+        episode_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ContentCreate:
+      type: object
+      required:
+        - title
+        - content_type
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        content_type:
+          type: string
+          enum: [anime, manga, game, movie, book, music, theater, figure, model, merchandise]
+        description:
+          type: string
+        wikipedia_url:
+          type: string
+        official_url:
+          type: string
+        has_episodes:
+          type: boolean
+        episode_count:
+          type: integer
+
+    ContentDetail:
+      allOf:
+        - $ref: '#/components/schemas/Content'
+        - type: object
+          properties:
+            review_count:
+              type: integer
+            average_rating:
+              type: number
+            recent_reviews:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+
+    SubContent:
+      type: object
+      properties:
+        id:
+          type: string
+        content_id:
+          type: string
+        number:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        release_date:
+          type: string
+          format: date
+
+    SubContentCreate:
+      type: object
+      required:
+        - number
+      properties:
+        number:
+          type: integer
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        release_date:
+          type: string
+          format: date
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        content:
+          $ref: '#/components/schemas/Content'
+        subcontent:
+          $ref: '#/components/schemas/SubContent'
+        title:
+          type: string
+        content_html:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            type: string
+        posted_to_twitter:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReviewCreate:
+      type: object
+      required:
+        - content_id
+        - content_md
+      properties:
+        content_id:
+          type: string
+        subcontent_id:
+          type: string
+        title:
+          type: string
+          maxLength: 200
+        content_md:
+          type: string
+          maxLength: 10000
+        is_public:
+          type: boolean
+          default: false
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            type: string
+
+    ReviewUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        content_md:
+          type: string
+          maxLength: 10000
+        is_public:
+          type: boolean
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            type: string
+
+    ReviewDetail:
+      allOf:
+        - $ref: '#/components/schemas/Review'
+        - type: object
+          properties:
+            content_md:
+              type: string

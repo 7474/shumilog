@@ -1,5 +1,5 @@
 
-# Implementation Plan: Hobby Content Review Logging Service
+# Implementation Plan: Hobby Content Log Service
 
 **Branch**: `001-web-x-twitter` | **Date**: 2025-09-26 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-web-x-twitter/spec.md`
@@ -31,7 +31,7 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Build a mobile-first web service for otaku community to log and share content reviews (anime, manga, games, etc.) with Twitter OAuth authentication, Markdown formatting, and content-centric browsing. Technical approach: TypeScript + Cloudflare serverless architecture with devcontainer development environment and plain HTML styling initially.
+Build a mobile-first web service for otaku community to log and share personal content logs (anime, manga, games, etc.) with Twitter OAuth authentication, Markdown formatting, and content-centric browsing. Technical approach: TypeScript + Cloudflare serverless architecture with devcontainer development environment and plain HTML styling initially.
 
 ## Technical Context
 **Language/Version**: TypeScript (latest stable)  

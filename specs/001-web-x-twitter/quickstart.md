@@ -1,9 +1,9 @@
-# Quickstart: Hobby Content Review Logging Service
+# Quickstart: Hobby Content Log Service
 
 ## User Journey Testing Scenarios
 
-### Scenario 1: New User Registration and First Review
-**Goal**: Complete user onboarding and create first content review using tag system
+### Scenario 1: New User Registration and First Log
+**Goal**: Complete user onboarding and create first content log using tag system
 
 **Steps**:
 1. **Navigate to landing page**
@@ -18,35 +18,34 @@
    - Redirect back to application with successful authentication
    - Verify user profile shows Twitter username and avatar
 
-3. **Create tags and first review**
-   - Navigate to "Add Review" page
+3. **Create tags and first log**
+   - Navigate to "Add Log" page
    - Search for existing tags or create new ones as needed:
      * Search: "Attack on Titan" - no results found
      * Create new tag: "Attack on Titan"
      * Add metadata: `{"year": 2013, "studio": "Studio WIT", "official_url": "https://attackontitan.com"}`
      * Create association between "Attack on Titan" and "Anime" tags
-   - Fill review form:
+   - Fill log form:
      * Title: "Amazing first season!"
      * Content (Markdown): "This anime really hooked me from episode 1. The animation quality is top-notch and the story keeps you guessing."
      * Associated tags: Select "Anime" and "Attack on Titan" tags
-     * Rating: 5 stars
      * Privacy: Keep private initially
-   - Submit review
-   - Verify tags are created, associated with each other, and review is linked to multiple tags
+   - Submit log
+   - Verify tags are created, associated with each other, and log is linked to multiple tags
 
-4. **Make review public and share**
-   - Edit the review to make it public
+4. **Make log public and share**
+   - Edit the log to make it public
    - Use "Share to Twitter" feature
-   - Verify Twitter post is created with review content
-   - Verify review appears in public tag-based browsing
+   - Verify Twitter post is created with log content
+   - Verify log appears in public tag-based browsing
 
 **Expected Results**:
 - User successfully authenticates via Twitter OAuth
-- New content tag is created under anime category
-- Review is created with Markdown formatting properly rendered
+- New content tag is created and associated with anime tag
+- Log is created with Markdown formatting properly rendered
 - Privacy controls work correctly
-- Twitter integration posts review content
-- Review appears in tag-based content browsing
+- Twitter integration posts log content
+- Log appears in tag-based content browsing
 
 ### Scenario 2: Episode-Level Review Tracking with Tag Associations
 **Goal**: Log reviews for individual episodes using tag parent-child relationships
@@ -65,20 +64,19 @@
      * Title: "Romance Dawn"
      * Metadata: `{"episode_number": 1, "air_date": "1999-10-20"}`
      * Create association with "One Piece" tag
-   - Create episode review:
+   - Create episode log:
      * Title: "Great series opener"
      * Content: "Perfect introduction to Luffy's character. Sets up the adventure perfectly."
      * Associated tags: Select "Anime", "One Piece", and "Romance Dawn" tags
-     * Rating: 4 stars
      * Make public immediately
-   - Submit and verify review is associated with all three tags
+   - Submit and verify log is associated with all three tags
 
 3. **Track progress through series**
    - Update progress status for "One Piece" tag to "watching"
    - Set current episode number to 1
    - Verify progress tracking shows correct status
 
-4. **Browse tag associations and reviews**
+4. **Browse tag associations and logs**
    - Navigate to "One Piece" tag page
    - See associated episode tags organized by episode number
    - Verify tag-based browsing shows associated episode organization
@@ -86,7 +84,7 @@
 
 **Expected Results**:
 - Episode tags are created and associated with related content tags
-- Reviews can be associated with multiple related tags simultaneously
+- Logs can be associated with multiple related tags simultaneously
 - Progress tracking works at tag level
 - Tag associations enable flexible browsing patterns
 - Episode metadata is stored flexibly in tag system
@@ -95,25 +93,25 @@
 **Goal**: Discover content through tag-based browsing and utilize flexible metadata storage
 
 **Steps**:
-1. **Browse public reviews by tags**
-   - Navigate to public reviews section
+1. **Browse public logs by tags**
+   - Navigate to public logs section
    - Filter by tag: "Anime"
    - Browse tags associated with anime
-   - Find highly-rated tags through review aggregation
+   - Find interesting tags through log aggregation
 
 2. **Access flexible tag metadata**
-   - Click on tag with good reviews (e.g., "Demon Slayer")
+   - Click on tag with good logs (e.g., "Demon Slayer")
    - View tag metadata displaying:
      * Wikipedia URL from metadata JSON
      * Official website from metadata JSON
      * Studio, year, episode count from metadata
-   - See aggregate rating and review count for this tag
+   - See log count for this tag
 
 3. **Add to personal tracking**
    - Add discovered tag to "plan to watch" list
    - Verify it appears in personal tag progress tracking
    - Set initial status as "plan_to_watch"
-   - Create review associated with multiple related tags
+   - Create log associated with multiple related tags
 
 **Expected Results**:
 - Tag-based browsing effectively surfaces popular tags
@@ -131,9 +129,9 @@
    - Verify responsive design adapts to mobile screen
    - Test portrait and landscape orientations
 
-2. **Complete full review workflow on mobile**
+2. **Complete full log workflow on mobile**
    - Authenticate via Twitter (mobile OAuth flow)
-   - Create new review using mobile interface
+   - Create new log using mobile interface
    - Use GitHub Flavored Markdown formatting
    - Submit and share to Twitter
 
@@ -170,7 +168,7 @@
    - Add metadata: `{"volumes": 16, "author": "Kugane Maruyama"}`
    - Create association between "Overlord" and "Light Novel" tags
    - Create episode tags for specific volumes and associate them
-   - Create review associated with multiple related tags
+   - Create log associated with multiple related tags
    - Verify tag associations work for browsing and filtering
 
 4. **Modify category tag**
@@ -199,20 +197,20 @@
    - Verify proper 401 responses and redirect to login
 
 2. **Test invalid tag scenarios**
-   - Try to create review with non-existent tag IDs
-   - Submit review with invalid data (empty content, invalid rating, no associated tags)
+   - Try to create log with non-existent tag IDs
+   - Submit log with invalid data (empty content, no associated tags)
    - Try to create tag association with non-existent tag
-   - Try to associate review with tags that don't exist
+   - Try to associate log with tags that don't exist
    - Verify proper error messages and validation
 
 3. **Test Twitter integration failures**
-   - Attempt to share review when Twitter API is unavailable
-   - Verify graceful degradation (review still saved, sharing fails gracefully)
+   - Attempt to share log when Twitter API is unavailable
+   - Verify graceful degradation (log still saved, sharing fails gracefully)
 
 4. **Test tag creation edge cases**
    - Try to create duplicate tag associations
    - Create tags with missing optional fields
-   - Try to delete tag that has associated reviews
+   - Try to delete tag that has associated logs
    - Try to delete tag that has associated tags
    - Verify database constraints and foreign key relationships are enforced
 
@@ -252,7 +250,7 @@
 - [ ] Markdown rendering works correctly in all contexts
 - [ ] Dynamic tag creation and associations work seamlessly
 - [ ] Tag metadata storage handles diverse content information flexibly
-- [ ] Multiple tag associations enable flexible review categorization
-- [ ] Review filtering by associated tags works correctly
+- [ ] Multiple tag associations enable flexible log categorization
+- [ ] Log filtering by associated tags works correctly
 - [ ] Tag association validation prevents invalid configurations
 - [ ] Custom tags integrate properly with all existing features

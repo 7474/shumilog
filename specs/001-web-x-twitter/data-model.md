@@ -1,4 +1,4 @@
-# Data Model: Hobby Content Review Logging Service
+# Data Model: Hobby Content Log Service
 
 ## Core Entities
 
@@ -40,7 +40,7 @@ CREATE TABLE review_tag_associations (
 - `is_active`: Account status flag
 
 **Relationships**:
-- One-to-many with Review (user creates reviews)
+- One-to-many with Log (user creates logs)
 - One-to-many with UserTagProgress (tracking tag consumption)
 - One-to-many with Tag (user creates tags)
 
@@ -63,7 +63,7 @@ CREATE TABLE review_tag_associations (
 
 **Relationships**:
 - Many-to-many with Tag through TagAssociation (tag-to-tag relationships)
-- Many-to-many with Review through ReviewTagAssociation
+- Many-to-many with Log through LogTagAssociation
 - One-to-many with UserTagProgress (user progress tracking)
 - Many-to-one with User (created by user)
 
@@ -71,32 +71,26 @@ CREATE TABLE review_tag_associations (
 - title required, max 200 characters
 - created_by must reference existing User
 
-### Review
-**Purpose**: User-generated reviews and impressions associated with multiple tags
+### Log
+**Purpose**: User-generated personal logs and impressions associated with multiple tags
 **Attributes**:
 - `id`: Primary key (UUID)
 - `user_id`: Foreign key to User (required)
-- `title`: Review title
-- `content_md`: Review content in Markdown (required)
-- `content_html`: Rendered HTML from markdown
-- `rating`: Optional 1-5 star rating
-- `user_tags`: JSON array of user-defined tags for categorization
+- `title`: Log title
+- `content_md`: Log content in Markdown (required)
 - `is_public`: Privacy flag (default false)
-- `posted_to_twitter`: Whether review was shared to Twitter
-- `twitter_post_id`: Twitter post ID if shared
-- `created_at`: Review creation timestamp
+- `created_at`: Log creation timestamp
 - `updated_at`: Last edit timestamp
 
 **Relationships**:
-- Many-to-one with User (user creates review)
-- Many-to-many with Tag through ReviewTagAssociation (review associated with multiple tags)
+- Many-to-one with User (user creates log)
+- Many-to-many with Tag through LogTagAssociation (log associated with multiple tags)
 
 **Validation Rules**:
 - user_id must reference existing User
 - content_md required, max 10000 characters
-- rating must be 1-5 if provided
 - title max 200 characters
-- Must have at least one associated tag through ReviewTagAssociation
+- Must have at least one associated tag through LogTagAssociation
 
 ### TagAssociation
 **Purpose**: Links tags with other tags in bidirectional relationships
@@ -118,22 +112,22 @@ CREATE TABLE review_tag_associations (
 - Unique constraint on (tag_id_1, tag_id_2) and (tag_id_2, tag_id_1) to prevent duplicates
 - created_by must reference existing User
 
-### ReviewTagAssociation
-**Purpose**: Links reviews with multiple associated tags
+### LogTagAssociation
+**Purpose**: Links logs with multiple associated tags
 **Attributes**:
 - `id`: Primary key (UUID)
-- `review_id`: Foreign key to Review (required)
+- `log_id`: Foreign key to Log (required)
 - `tag_id`: Foreign key to Tag (required)
 - `created_at`: Association creation timestamp
 
 **Relationships**:
-- Many-to-one with Review (association belongs to review)
+- Many-to-one with Log (association belongs to log)
 - Many-to-one with Tag (association references tag)
 
 **Validation Rules**:
-- review_id must reference existing Review
+- log_id must reference existing Log
 - tag_id must reference existing Tag
-- Unique constraint on (review_id, tag_id)
+- Unique constraint on (log_id, tag_id)
 
 ### UserTagProgress
 **Purpose**: Tracks user's consumption progress through serialized content tags
@@ -233,32 +227,27 @@ CREATE TABLE tag_associations (
     UNIQUE(tag_id_1, tag_id_2)
 );
 
--- Reviews table
-CREATE TABLE reviews (
+-- Logs table
+CREATE TABLE logs (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    content_tag_id TEXT NOT NULL,
-    episode_tag_id TEXT,
     title TEXT CHECK (LENGTH(title) <= 200),
     content_md TEXT NOT NULL CHECK (LENGTH(content_md) <= 10000),
-    content_html TEXT NOT NULL,
     is_public BOOLEAN DEFAULT 0,
-    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-    tags TEXT, -- JSON array
-    posted_to_twitter BOOLEAN DEFAULT 0,
-    twitter_post_id TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE,
-    FOREIGN KEY (subcontent_id) REFERENCES subcontent(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Log Tag Association table (many-to-many)
+CREATE TABLE log_tag_associations (
+    id TEXT PRIMARY KEY,
+    log_id TEXT NOT NULL,
+    tag_id TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (content_tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-    FOREIGN KEY (episode_tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    FOREIGN KEY (log_id) REFERENCES logs(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    UNIQUE(log_id, tag_id)
 );
 
 -- User Tag Progress table
@@ -290,48 +279,28 @@ INSERT INTO tags (id, title, description, metadata, created_by) VALUES
 ('tag_merchandise', 'Merchandise', 'General merchandise and collectibles', '{"supports_episodes": false}', 'system');
 
 -- Indexes for performance
-CREATE INDEX idx_reviews_user_id ON reviews(user_id);
-CREATE INDEX idx_reviews_public ON reviews(is_public);
-CREATE INDEX idx_reviews_created_at ON reviews(created_at);
-CREATE INDEX idx_review_tag_associations_review_id ON review_tag_associations(review_id);
-CREATE INDEX idx_review_tag_associations_tag_id ON review_tag_associations(tag_id);
+CREATE INDEX idx_logs_user_id ON logs(user_id);
+CREATE INDEX idx_logs_public ON logs(is_public);
+CREATE INDEX idx_logs_created_at ON logs(created_at);
+CREATE INDEX idx_log_tag_associations_log_id ON log_tag_associations(log_id);
+CREATE INDEX idx_log_tag_associations_tag_id ON log_tag_associations(tag_id);
 
-CREATE INDEX idx_tags_parent_id ON tags(parent_id);
 CREATE INDEX idx_tags_created_by ON tags(created_by);
 CREATE INDEX idx_user_tag_progress_user_id ON user_tag_progress(user_id);
 CREATE INDEX idx_user_tag_progress_tag_id ON user_tag_progress(content_tag_id);
+CREATE INDEX idx_tag_associations_tag1 ON tag_associations(tag_id_1);
+CREATE INDEX idx_tag_associations_tag2 ON tag_associations(tag_id_2);
 
--- Insert default content types
-INSERT INTO content_types (id, name, display_name, category, supports_episodes, description) VALUES
-('ct_anime', 'anime', 'Anime', 'media', 1, 'Japanese animated series and movies'),
-('ct_manga', 'manga', 'Manga', 'media', 1, 'Japanese comics and graphic novels'),
-('ct_game', 'game', 'Game', 'media', 0, 'Video games and interactive entertainment'),
-('ct_movie', 'movie', 'Movie', 'media', 0, 'Films and motion pictures'),
-('ct_book', 'book', 'Book', 'media', 1, 'Books, novels, and literature'),
-('ct_music', 'music', 'Music', 'media', 1, 'Music albums, songs, and audio content'),
-('ct_theater', 'theater', 'Theater', 'media', 0, 'Stage performances and live entertainment'),
-('ct_figure', 'figure', 'Figure', 'product', 0, 'Collectible figures and statues'),
-('ct_model', 'model', 'Model Kit', 'product', 0, 'Model kits and building sets'),
-('ct_merchandise', 'merchandise', 'Merchandise', 'product', 0, 'General merchandise and collectibles');
 
--- Indexes for performance
-CREATE INDEX idx_reviews_user_id ON reviews(user_id);
-CREATE INDEX idx_reviews_content_id ON reviews(content_id);
-CREATE INDEX idx_reviews_public ON reviews(is_public);
-CREATE INDEX idx_reviews_created_at ON reviews(created_at);
-CREATE INDEX idx_content_type_id ON content(content_type_id);
-CREATE INDEX idx_content_types_name ON content_types(name);
-CREATE INDEX idx_content_types_category ON content_types(category);
-CREATE INDEX idx_content_types_active ON content_types(is_active);
-CREATE INDEX idx_subcontent_content_id ON subcontent(content_id);
-CREATE INDEX idx_progress_user_id ON user_content_progress(user_id);
+
+
 ```
 
 ## State Transitions
 
-### Review Privacy States
-- `private` → `public`: User chooses to share review
-- `public` → `private`: User makes review private again
+### Log Privacy States
+- `private` → `public`: User chooses to share log
+- `public` → `private`: User makes log private again
 - No restrictions on transitions
 
 ### Tag Progress States

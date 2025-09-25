@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Hobby Content Review Logging API
-  description: API for logging and sharing content reviews with Twitter integration
+  title: Hobby Content Log API
+  description: API for logging and sharing personal content logs
   version: 1.0.0
 servers:
   - url: https://shumilog.example.com/api
@@ -283,9 +283,9 @@ paths:
         '404':
           description: Tag or association not found
 
-  /reviews:
+  /logs:
     get:
-      summary: List public reviews
+      summary: List public logs
       parameters:
         - name: tag_ids
           in: query
@@ -310,7 +310,7 @@ paths:
             default: 0
       responses:
         '200':
-          description: List of public reviews
+          description: List of public logs
           content:
             application/json:
               schema:
@@ -319,12 +319,12 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Review'
+                      $ref: '#/components/schemas/Log'
                   total:
                     type: integer
 
     post:
-      summary: Create new review
+      summary: Create new log
       security:
         - sessionAuth: []
       requestBody:
@@ -332,44 +332,44 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewCreate'
+              $ref: '#/components/schemas/LogCreate'
       responses:
         '201':
-          description: Review created
+          description: Log created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/Log'
         '400':
-          description: Invalid review data
+          description: Invalid log data
         '401':
           description: Not authenticated
 
-  /reviews/{reviewId}:
+  /logs/{logId}:
     get:
-      summary: Get review details
+      summary: Get log details
       parameters:
-        - name: reviewId
+        - name: logId
           in: path
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Review details
+          description: Log details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReviewDetail'
+                $ref: '#/components/schemas/LogDetail'
         '404':
-          description: Review not found
+          description: Log not found
 
     put:
-      summary: Update review
+      summary: Update log
       security:
         - sessionAuth: []
       parameters:
-        - name: reviewId
+        - name: logId
           in: path
           required: true
           schema:
@@ -379,48 +379,48 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewUpdate'
+              $ref: '#/components/schemas/LogUpdate'
       responses:
         '200':
-          description: Review updated
+          description: Log updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/Log'
         '401':
           description: Not authenticated
         '403':
-          description: Not review owner
+          description: Not log owner
         '404':
-          description: Review not found
+          description: Log not found
 
     delete:
-      summary: Delete review
+      summary: Delete log
       security:
         - sessionAuth: []
       parameters:
-        - name: reviewId
+        - name: logId
           in: path
           required: true
           schema:
             type: string
       responses:
         '204':
-          description: Review deleted
+          description: Log deleted
         '401':
           description: Not authenticated
         '403':
-          description: Not review owner
+          description: Not log owner
         '404':
-          description: Review not found
+          description: Log not found
 
-  /reviews/{reviewId}/share:
+  /logs/{logId}/share:
     post:
-      summary: Share review to Twitter
+      summary: Share log to Twitter
       security:
         - sessionAuth: []
       parameters:
-        - name: reviewId
+        - name: logId
           in: path
           required: true
           schema:
@@ -438,9 +438,9 @@ paths:
         '401':
           description: Not authenticated
         '403':
-          description: Not review owner
+          description: Not log owner
         '404':
-          description: Review not found
+          description: Log not found
 
 components:
   securitySchemes:
@@ -516,19 +516,19 @@ components:
         - $ref: '#/components/schemas/Tag'
         - type: object
           properties:
-            review_count:
+            log_count:
               type: integer
-            recent_reviews:
+            recent_logs:
               type: array
               items:
-                $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/Log'
             associated_tags:
               type: array
               items:
                 $ref: '#/components/schemas/Tag'
               description: Tags associated with this tag
 
-    Review:
+    Log:
       type: object
       properties:
         id:
@@ -539,22 +539,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tag'
-          description: Tags associated with this review
+          description: Tags associated with this log
         title:
           type: string
-        content_html:
+        content_md:
           type: string
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        user_tags:
-          type: array
-          items:
-            type: string
-          description: User-defined tags for categorization
-        posted_to_twitter:
-          type: boolean
+          description: Content in Markdown format
         created_at:
           type: string
           format: date-time
@@ -562,7 +552,7 @@ components:
           type: string
           format: date-time
 
-    ReviewCreate:
+    LogCreate:
       type: object
       required:
         - tag_ids
@@ -572,7 +562,7 @@ components:
           type: array
           items:
             type: string
-          description: IDs of tags to associate with this review
+          description: IDs of tags to associate with this log
           minItems: 1
         title:
           type: string
@@ -583,24 +573,15 @@ components:
         is_public:
           type: boolean
           default: false
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        user_tags:
-          type: array
-          items:
-            type: string
-          description: User-defined tags for categorization
 
-    ReviewUpdate:
+    LogUpdate:
       type: object
       properties:
         tag_ids:
           type: array
           items:
             type: string
-          description: Update the tags associated with this review
+          description: Update the tags associated with this log
         title:
           type: string
           maxLength: 200
@@ -609,20 +590,12 @@ components:
           maxLength: 10000
         is_public:
           type: boolean
-        rating:
-          type: integer
-          minimum: 1
-          maximum: 5
-        user_tags:
-          type: array
-          items:
-            type: string
-          description: User-defined tags for categorization
 
-    ReviewDetail:
+    LogDetail:
       allOf:
-        - $ref: '#/components/schemas/Review'
+        - $ref: '#/components/schemas/Log'
         - type: object
           properties:
-            content_md:
-              type: string
+            is_public:
+              type: boolean
+              description: Whether this log is publicly visible

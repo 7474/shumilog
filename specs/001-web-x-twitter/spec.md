@@ -1,4 +1,4 @@
-# Feature Specification: Hobby Content Review Logging Service
+# Feature Specification: Hobby Content Log Service
 
 **Feature Branch**: `001-web-x-twitter`  
 **Created**: 2025-09-26  
@@ -8,37 +8,37 @@
 ## User Scenarios & Testing
 
 ### Primary User Story
-An otaku (anime/manga/game enthusiast) wants to easily record their thoughts and impressions about various content and products they consume. They want to share these reviews publicly to help others discover great content, while also being able to organize and revisit their own thoughts chronologically or by content type. They prefer quick, low-effort logging that can be shared directly to Twitter when desired.
+An otaku (anime/manga/game enthusiast) wants to easily record their thoughts and impressions about various content and products they consume. They want to share these logs publicly to help others discover great content, while also being able to organize and revisit their own thoughts chronologically or by content type. They prefer quick, low-effort logging that can be shared directly to Twitter when desired.
 
 ### Acceptance Scenarios
-1. **Given** a user has consumed some anime content, **When** they access the logging service on their smartphone, **Then** they can quickly create a review entry with minimal effort using Markdown formatting
-2. **Given** a user has written a review, **When** they choose to make it public, **Then** other users can discover it by browsing content-focused views rather than user-focused feeds
-3. **Given** a user wants to track their progress through a series, **When** they log reviews for individual episodes or chapters, **Then** the system organizes these by the parent content series
-4. **Given** a user has written a review they're proud of, **When** they choose to share it, **Then** the system can post it directly to their Twitter account
-5. **Given** a user is browsing reviews, **When** they look for information about specific content, **Then** they can access Wikipedia and official site links for context
+1. **Given** a user has consumed some anime content, **When** they access the logging service on their smartphone, **Then** they can quickly create a log entry with minimal effort using Markdown formatting
+2. **Given** a user has written a log, **When** they choose to make it public, **Then** other users can discover it by browsing content-focused views rather than user-focused feeds
+3. **Given** a user wants to track their progress through a series, **When** they create logs for individual episodes or chapters, **Then** the system organizes these through tag associations
+4. **Given** a user has written a log they're proud of, **When** they choose to share it, **Then** the system can post it directly to their Twitter account
+5. **Given** a user is browsing logs, **When** they look for information about specific content, **Then** they can access Wikipedia and official site links for context
 
 ### Edge Cases
 - What happens when Twitter authentication fails or is revoked?
-- How does the system handle reviews for content that doesn't exist in the database yet?
+- How does the system handle logs for content that doesn't exist in the database yet?
 - What happens when a user tries to log the same episode/chapter multiple times?
-- How are reviews handled when content metadata changes (e.g., title updates)?
+- How are logs handled when content metadata changes (e.g., title updates)?
 
 ## Requirements
 
 ### Functional Requirements
 - **FR-001**: System MUST authenticate users via Twitter (X) OAuth integration
-- **FR-002**: System MUST allow users to create content reviews using GitHub Flavored Markdown formatting
-- **FR-003**: System MUST support content categories including anime, manga, games, movies, books, music, theater, figures, models, and merchandise
-- **FR-004**: System MUST allow users to log reviews for specific episodes, chapters, or other sub-units of serialized content
-- **FR-005**: System MUST provide privacy controls allowing users to keep reviews private or make them public
-- **FR-006**: System MUST organize reviews chronologically and by content/product categories
-- **FR-007**: System MUST focus on content-centric browsing rather than user-centric feeds for public reviews
-- **FR-008**: System MUST integrate with Twitter to allow direct posting of reviews
+- **FR-002**: System MUST allow users to create content logs using GitHub Flavored Markdown formatting
+- **FR-003**: System MUST support flexible tagging including anime, manga, games, movies, books, music, theater, figures, models, and merchandise
+- **FR-004**: System MUST allow users to create logs for specific episodes, chapters, or other sub-units of serialized content through tag associations
+- **FR-005**: System MUST provide privacy controls allowing users to keep logs private or make them public
+- **FR-006**: System MUST organize logs chronologically and by tag associations
+- **FR-007**: System MUST focus on content-centric browsing rather than user-centric feeds for public logs
+- **FR-008**: System MUST integrate with Twitter to allow direct posting of logs
 - **FR-009**: System MUST provide links to Wikipedia and official websites for content items
 - **FR-010**: System MUST offer AI-powered assistance for information gathering and summarization
 - **FR-011**: System MUST provide responsive design optimized for smartphone use
 - **FR-012**: System MUST maintain simple and lightweight interface design
-- **FR-013**: System MUST persist user review data securely
+- **FR-013**: System MUST persist user log data securely
 
 ### Non-Functional Requirements
 - **NFR-001**: Interface MUST be responsive and mobile-first for smartphone primary usage

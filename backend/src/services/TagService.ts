@@ -1,17 +1,8 @@
-import { Tag, TagModel, CreateTagData, UpdateTagData } from '../models/Tag.js';
+import { Tag, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
 import { Database } from '../db/database.js';
 
-export interface TagSearchOptions {
-  query?: string;
-  category?: string;
-  parentId?: number;
-  includeChildren?: boolean;
-  limit?: number;
-  offset?: number;
-}
-
 export interface TagUsageStats {
-  tagId: number;
+  tagId: string;
   usageCount: number;
   lastUsed: string;
 }
@@ -22,20 +13,17 @@ export class TagService {
   /**
    * Create a new tag
    */
-  async createTag(data: CreateTagData): Promise<Tag> {
+  async createTag(data: CreateTagData, createdBy: string): Promise<Tag> {
     const now = new Date().toISOString();
     
     const tagData: Tag = {
-      id: Date.now(), // Auto-increment simulation
-      name: data.name,
+      id: `tag_${Date.now()}`, // Generate string ID
+      title: data.title,
       description: data.description,
-      category: data.category,
-      parent_id: data.parent_id,
-      usage_count: 0,
-      created_at: now,
-      updated_at: now,
       metadata: data.metadata || {},
-      is_active: true
+      created_by: createdBy,
+      created_at: now,
+      updated_at: now
     };
 
     // This will be implemented when the Database API is finalized
@@ -46,7 +34,7 @@ export class TagService {
   /**
    * Update a tag
    */
-  async updateTag(tagId: number, data: UpdateTagData): Promise<Tag> {
+  async updateTag(tagId: string, data: UpdateTagData): Promise<Tag> {
     // Placeholder implementation
     throw new Error('Not implemented');
   }
@@ -54,7 +42,7 @@ export class TagService {
   /**
    * Get tag by ID
    */
-  async getTagById(id: number): Promise<Tag | null> {
+  async getTagById(id: string): Promise<Tag | null> {
     // Placeholder implementation
     return null;
   }
@@ -62,31 +50,7 @@ export class TagService {
   /**
    * Search tags
    */
-  async searchTags(options: TagSearchOptions = {}): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
-  }
-
-  /**
-   * Get all tags by category
-   */
-  async getTagsByCategory(category: string): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
-  }
-
-  /**
-   * Get child tags of a parent tag
-   */
-  async getChildTags(parentId: number): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
-  }
-
-  /**
-   * Get parent tag hierarchy for a tag
-   */
-  async getTagHierarchy(tagId: number): Promise<Tag[]> {
+  async searchTags(options: TagSearchParams = {}): Promise<Tag[]> {
     // Placeholder implementation
     return [];
   }
@@ -94,7 +58,7 @@ export class TagService {
   /**
    * Get tag usage statistics
    */
-  async getTagUsageStats(tagId: number): Promise<TagUsageStats> {
+  async getTagUsageStats(tagId: string): Promise<TagUsageStats> {
     return {
       tagId,
       usageCount: 0,
@@ -113,16 +77,9 @@ export class TagService {
   /**
    * Get recently used tags for a user
    */
-  async getRecentTagsForUser(userId: number, limit = 10): Promise<Tag[]> {
+  async getRecentTagsForUser(userId: string, limit = 10): Promise<Tag[]> {
     // Placeholder implementation
     return [];
-  }
-
-  /**
-   * Associate tag with usage count increment
-   */
-  async incrementTagUsage(tagId: number): Promise<void> {
-    // Placeholder implementation
   }
 
   /**
@@ -134,25 +91,9 @@ export class TagService {
   }
 
   /**
-   * Delete a tag (soft delete by setting is_active = false)
+   * Delete a tag
    */
-  async deleteTag(tagId: number): Promise<void> {
+  async deleteTag(tagId: string): Promise<void> {
     // Placeholder implementation
-  }
-
-  /**
-   * Get all active system tags
-   */
-  async getSystemTags(): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
-  }
-
-  /**
-   * Validate tag hierarchy (prevent circular references)
-   */
-  async validateHierarchy(tagId: number, parentId: number): Promise<boolean> {
-    // Placeholder implementation
-    return true;
   }
 }

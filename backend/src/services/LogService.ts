@@ -1,16 +1,5 @@
-import { Log, LogModel, CreateLogData, UpdateLogData } from '../models/Log.js';
+import { Log, LogDetail, CreateLogData, UpdateLogData, LogSearchParams } from '../models/Log.js';
 import { Database } from '../db/database.js';
-
-export interface LogSearchOptions {
-  query?: string;
-  userId?: number;
-  tags?: number[];
-  dateFrom?: string;
-  dateTo?: string;
-  isPublic?: boolean;
-  limit?: number;
-  offset?: number;
-}
 
 export interface LogSearchResult {
   logs: Log[];
@@ -24,26 +13,24 @@ export class LogService {
   /**
    * Create a new log entry
    */
-  async createLog(data: CreateLogData, userId: number): Promise<Log> {
+  async createLog(data: CreateLogData, userId: string): Promise<Log> {
     const now = new Date().toISOString();
     
+    // For now, create a placeholder log structure
+    // This would need user and tag lookup in real implementation
     const logData: Log = {
-      id: Date.now(), // Auto-increment simulation
-      user_id: userId,
+      id: `log_${Date.now()}`,
+      user: {
+        id: userId,
+        twitter_username: 'placeholder',
+        display_name: 'Placeholder User',
+        created_at: now
+      },
+      associated_tags: [], // Would be populated based on data.tag_ids
       title: data.title,
-      content: data.content,
-      content_html: '', // Will be generated from Markdown
-      privacy: data.privacy || 'private',
-      episode_number: data.episode_number,
-      season_number: data.season_number,
-      rating: data.rating,
-      status: 'draft',
+      content_md: data.content_md,
       created_at: now,
-      updated_at: now,
-      published_at: undefined,
-      view_count: 0,
-      share_count: 0,
-      metadata: data.metadata || {}
+      updated_at: now
     };
 
     // This will be implemented when the Database API is finalized
@@ -54,7 +41,7 @@ export class LogService {
   /**
    * Update a log entry
    */
-  async updateLog(logId: number, data: UpdateLogData): Promise<Log> {
+  async updateLog(logId: string, data: UpdateLogData, userId: string): Promise<Log> {
     // Placeholder implementation
     throw new Error('Not implemented');
   }
@@ -62,15 +49,7 @@ export class LogService {
   /**
    * Get log by ID
    */
-  async getLogById(id: number, userId?: number): Promise<Log | null> {
-    // Placeholder implementation
-    return null;
-  }
-
-  /**
-   * Get log by share URL
-   */
-  async getLogByShareUrl(shareUrl: string): Promise<Log | null> {
+  async getLogById(id: string, userId?: string): Promise<Log | null> {
     // Placeholder implementation
     return null;
   }
@@ -78,7 +57,7 @@ export class LogService {
   /**
    * Search logs with full-text search
    */
-  async searchLogs(options: LogSearchOptions): Promise<LogSearchResult> {
+  async searchLogs(options: LogSearchParams): Promise<LogSearchResult> {
     // Placeholder implementation
     return {
       logs: [],
@@ -90,7 +69,7 @@ export class LogService {
   /**
    * Get logs for a user
    */
-  async getUserLogs(userId: number, limit = 20, offset = 0): Promise<LogSearchResult> {
+  async getUserLogs(userId: string, limit = 20, offset = 0): Promise<LogSearchResult> {
     // Placeholder implementation
     return {
       logs: [],
@@ -126,21 +105,21 @@ export class LogService {
   /**
    * Associate tags with a log
    */
-  async associateTagsWithLog(logId: number, tagIds: number[]): Promise<void> {
+  async associateTagsWithLog(logId: string, tagIds: string[]): Promise<void> {
     // Placeholder implementation
   }
 
   /**
    * Remove tag associations from a log
    */
-  async removeTagsFromLog(logId: number, tagIds: number[]): Promise<void> {
+  async removeTagsFromLog(logId: string, tagIds: string[]): Promise<void> {
     // Placeholder implementation
   }
 
   /**
    * Delete a log entry
    */
-  async deleteLog(logId: number, userId: number): Promise<void> {
+  async deleteLog(logId: string, userId: string): Promise<void> {
     // Placeholder implementation
   }
 
@@ -173,24 +152,22 @@ export class LogService {
   /**
    * Get user's log statistics
    */
-  async getUserLogStats(userId: number): Promise<{
+  async getUserLogStats(userId: string): Promise<{
     totalLogs: number;
     publicLogs: number;
     recentLogsCount: number;
-    averageEpisodeProgress: number;
   }> {
     return {
       totalLogs: 0,
       publicLogs: 0,
-      recentLogsCount: 0,
-      averageEpisodeProgress: 0
+      recentLogsCount: 0
     };
   }
 
   /**
    * Validate user owns the log
    */
-  async validateLogOwnership(logId: number, userId: number): Promise<boolean> {
+  async validateLogOwnership(logId: string, userId: string): Promise<boolean> {
     // Placeholder implementation
     return false;
   }

@@ -1,4 +1,4 @@
-import { User, UserModel, CreateUserData, UpdateUserData, DEFAULT_USER_PREFERENCES } from '../models/User.js';
+import { User, UserModel, CreateUserData, UpdateUserData } from '../models/User.js';
 import { Database } from '../db/database.js';
 
 export class UserService {
@@ -11,17 +11,11 @@ export class UserService {
     const now = new Date().toISOString();
     
     const userData: User = {
-      id: Date.now(), // Auto-increment simulation
-      twitter_id: data.twitter_id,
+      id: crypto.randomUUID(),
       twitter_username: data.twitter_username,
-      twitter_display_name: data.twitter_display_name,
-      twitter_avatar_url: data.twitter_avatar_url,
-      email: data.email,
-      created_at: now,
-      updated_at: now,
-      last_login: now,
-      is_active: true,
-      preferences: { ...DEFAULT_USER_PREFERENCES, ...data.preferences }
+      display_name: data.display_name,
+      avatar_url: data.avatar_url,
+      created_at: now
     };
 
     // This will be implemented when the Database API is finalized
@@ -32,7 +26,7 @@ export class UserService {
   /**
    * Find user by ID
    */
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     // Placeholder implementation
     return null;
   }
@@ -48,7 +42,7 @@ export class UserService {
   /**
    * Update user information
    */
-  async updateUser(userId: number, data: UpdateUserData): Promise<User> {
+  async updateUser(userId: string, data: UpdateUserData): Promise<User> {
     // Placeholder implementation
     throw new Error('Not implemented');
   }
@@ -56,7 +50,7 @@ export class UserService {
   /**
    * Get user statistics
    */
-  async getUserStats(userId: number): Promise<{
+  async getUserStats(userId: string): Promise<{
     totalLogs: number;
     totalTags: number;
     recentLogsCount: number;

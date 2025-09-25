@@ -470,7 +470,7 @@ components:
       properties:
         id:
           type: string
-        title:
+        name:
           type: string
         description:
           type: string
@@ -490,9 +490,9 @@ components:
     TagCreate:
       type: object
       required:
-        - title
+        - name
       properties:
-        title:
+        name:
           type: string
           maxLength: 200
         description:
@@ -503,7 +503,7 @@ components:
     TagUpdate:
       type: object
       properties:
-        title:
+        name:
           type: string
           maxLength: 200
         description:

@@ -18,7 +18,7 @@ export class TagService {
     
     const tagData: Tag = {
       id: `tag_${Date.now()}`, // Generate string ID
-      title: data.title,
+      name: data.name,
       description: data.description,
       metadata: data.metadata || {},
       created_by: createdBy,

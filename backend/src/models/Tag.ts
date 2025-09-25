@@ -4,7 +4,7 @@
 
 export interface Tag {
   id: string;
-  title: string;
+  name: string;
   description?: string;
   metadata: object;
   created_by: string;
@@ -13,13 +13,13 @@ export interface Tag {
 }
 
 export interface CreateTagData {
-  title: string;
+  name: string;
   description?: string;
   metadata?: object;
 }
 
 export interface UpdateTagData {
-  title?: string;
+  name?: string;
   description?: string;
   metadata?: object;
 }
@@ -39,7 +39,7 @@ export interface TagDetail extends Tag {
 export const TAG_TABLE_SCHEMA = `
   CREATE TABLE IF NOT EXISTS tags (
     id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
+    name TEXT NOT NULL,
     description TEXT,
     metadata TEXT NOT NULL DEFAULT '{}',
     created_by TEXT NOT NULL,
@@ -67,14 +67,14 @@ export class TagModel {
     return JSON.stringify(metadata || {});
   }
 
-  static isValidTitle(title: string): boolean {
-    return title.length > 0 && title.length <= 200;
+  static isValidName(name: string): boolean {
+    return name.length > 0 && name.length <= 200;
   }
 
   static fromRow(row: any): Tag {
     return {
       id: row.id,
-      title: row.title,
+      name: row.name,
       description: row.description,
       metadata: TagModel.parseMetadata(row.metadata),
       created_by: row.created_by,

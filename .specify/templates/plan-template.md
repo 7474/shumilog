@@ -47,7 +47,13 @@
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+**Quick Experimentation**: Does this feature enable rapid prototyping and iteration? Avoid over-engineering.
+**Low-Cost Hosting**: Are all technology choices free-tier or <$5/month? Document cost implications.
+**Iterative Exploration**: Can this be built as minimal viable implementation first? No premature optimization.
+**Simplicity First**: Are technologies mainstream and well-documented? Justify any complexity.
+**Cost-Conscious Development**: Is cost analysis included for all paid services and infrastructure?
+
+*Violations must be justified in Complexity Tracking or feature scope reduced.*
 
 ## Project Structure
 

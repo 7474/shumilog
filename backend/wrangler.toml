@@ -1,0 +1,43 @@
+name = "shumilog-backend"
+main = "src/index.ts"
+compatibility_date = "2023-09-25"
+
+[env.development]
+name = "shumilog-backend-dev"
+
+[env.production]
+name = "shumilog-backend-prod"
+
+# Database bindings
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "shumilog-db-dev"
+database_id = "placeholder-dev-id"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "shumilog-db-prod"
+database_id = "placeholder-prod-id"
+
+# KV bindings for sessions
+[[env.development.kv_namespaces]]
+binding = "SESSIONS"
+id = "placeholder-dev-sessions-id"
+
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "placeholder-prod-sessions-id"
+
+# Environment variables
+[env.development.vars]
+ENVIRONMENT = "development"
+TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+TWITTER_REDIRECT_URI = "https://shumilog.example.com/api/auth/callback"
+
+# Secrets (configured via wrangler secret put)
+# TWITTER_CLIENT_ID
+# TWITTER_CLIENT_SECRET
+# SESSION_SECRET

@@ -24,11 +24,11 @@
 - **Path Convention**: Web app structure (`backend/`, `frontend/`)
 
 ## Phase 3.1: Setup
-- [ ] T001 Create backend/ and frontend/ directories with TypeScript project structure per implementation plan
-- [ ] T002 Initialize backend TypeScript project with Hono, Cloudflare Workers, D1, KV dependencies in backend/package.json
-- [ ] T003 [P] Configure ESLint, Prettier, and TypeScript config in backend/
-- [ ] T004 [P] Initialize frontend with basic HTML, CSS, TypeScript structure in frontend/
-- [ ] T005 [P] Set up Vitest and Miniflare testing environment in backend/vitest.config.ts
+- [x] T001 Create backend/ and frontend/ directories with TypeScript project structure per implementation plan
+- [x] T002 Initialize backend TypeScript project with Hono, Cloudflare Workers, D1, KV dependencies in backend/package.json
+- [x] T003 [P] Configure ESLint, Prettier, and TypeScript config in backend/
+- [x] T004 [P] Initialize frontend with basic HTML, CSS, TypeScript structure in frontend/
+- [x] T005 [P] Set up Vitest and Miniflare testing environment in backend/vitest.config.ts
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**

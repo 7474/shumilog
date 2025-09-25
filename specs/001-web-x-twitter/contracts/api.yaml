@@ -82,11 +82,6 @@ paths:
     get:
       summary: Search and list tags
       parameters:
-        - name: parent_id
-          in: query
-          schema:
-            type: string
-            description: Filter by parent tag ID
         - name: search
           in: query
           schema:
@@ -212,6 +207,81 @@ paths:
         '404':
           description: Tag not found
 
+  /tags/{tagId}/associations:
+    get:
+      summary: Get tags associated with this tag
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of associated tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '404':
+          description: Tag not found
+
+    post:
+      summary: Create association between tags
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - associated_tag_id
+              properties:
+                associated_tag_id:
+                  type: string
+                  description: ID of tag to associate with
+      responses:
+        '201':
+          description: Tag association created
+        '400':
+          description: Invalid association data
+        '401':
+          description: Not authenticated
+        '404':
+          description: Tag not found
+
+    delete:
+      summary: Remove association between tags
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: associated_tag_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Tag association removed
+        '401':
+          description: Not authenticated
+        '404':
+          description: Tag or association not found
 
   /reviews:
     get:
@@ -404,9 +474,6 @@ components:
           type: string
         description:
           type: string
-        parent_id:
-          type: string
-          description: Parent tag ID for hierarchical relationships
         metadata:
           type: object
           description: Flexible metadata storage
@@ -430,8 +497,6 @@ components:
           maxLength: 200
         description:
           type: string
-        parent_id:
-          type: string
         metadata:
           type: object
 
@@ -453,16 +518,15 @@ components:
           properties:
             review_count:
               type: integer
-            average_rating:
-              type: number
             recent_reviews:
               type: array
               items:
                 $ref: '#/components/schemas/Review'
-            children:
+            associated_tags:
               type: array
               items:
                 $ref: '#/components/schemas/Tag'
+              description: Tags associated with this tag
 
     Review:
       type: object

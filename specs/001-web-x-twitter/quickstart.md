@@ -23,8 +23,8 @@
    - Search for existing tags or create new ones as needed:
      * Search: "Attack on Titan" - no results found
      * Create new tag: "Attack on Titan"
-     * Select parent tag: "Anime"
      * Add metadata: `{"year": 2013, "studio": "Studio WIT", "official_url": "https://attackontitan.com"}`
+     * Create association between "Attack on Titan" and "Anime" tags
    - Fill review form:
      * Title: "Amazing first season!"
      * Content (Markdown): "This anime really hooked me from episode 1. The animation quality is top-notch and the story keeps you guessing."
@@ -32,7 +32,7 @@
      * Rating: 5 stars
      * Privacy: Keep private initially
    - Submit review
-   - Verify tags are created and review is associated with multiple tags
+   - Verify tags are created, associated with each other, and review is linked to multiple tags
 
 4. **Make review public and share**
    - Edit the review to make it public
@@ -48,24 +48,23 @@
 - Twitter integration posts review content
 - Review appears in tag-based content browsing
 
-### Scenario 2: Episode-Level Review Tracking with Tag Hierarchy
+### Scenario 2: Episode-Level Review Tracking with Tag Associations
 **Goal**: Log reviews for individual episodes using tag parent-child relationships
 
 **Steps**:
-1. **Find or create serialized content tag**
-   - Search for "One Piece" content tag
-   - If not found, create new content tag:
+1. **Find or create content tag**
+   - Search for "One Piece" tag
+   - If not found, create new tag:
      * Title: "One Piece"
-     * Type: content
-     * Parent: "Anime" category tag
      * Metadata: `{"year": 1999, "studio": "Toei Animation", "episode_count": 1000}`
+     * Create association with "Anime" tag
 
 2. **Create episode tag and review**
    - Navigate to tag management
    - Create new episode tag:
      * Title: "Romance Dawn"
-     * Parent: "One Piece" tag
      * Metadata: `{"episode_number": 1, "air_date": "1999-10-20"}`
+     * Create association with "One Piece" tag
    - Create episode review:
      * Title: "Great series opener"
      * Content: "Perfect introduction to Luffy's character. Sets up the adventure perfectly."
@@ -75,21 +74,21 @@
    - Submit and verify review is associated with all three tags
 
 3. **Track progress through series**
-   - Update progress status for "One Piece" content tag to "watching"
+   - Update progress status for "One Piece" tag to "watching"
    - Set current episode number to 1
    - Verify progress tracking shows correct status
 
-4. **Browse tag hierarchy and reviews**
-   - Navigate to "One Piece" content tag page
-   - See child episode tags organized by episode number
-   - Verify tag-based browsing shows hierarchical episode organization
-   - Browse from Anime category → One Piece content → Episode tags
+4. **Browse tag associations and reviews**
+   - Navigate to "One Piece" tag page
+   - See associated episode tags organized by episode number
+   - Verify tag-based browsing shows associated episode organization
+   - Browse through tag associations: Anime ↔ One Piece ↔ Episode tags
 
 **Expected Results**:
-- Episode tags are properly created as children of content tags
+- Episode tags are created and associated with related content tags
 - Reviews can be associated with multiple related tags simultaneously
-- Progress tracking works at content tag level
-- Tag hierarchy enables flexible browsing patterns
+- Progress tracking works at tag level
+- Tag associations enable flexible browsing patterns
 - Episode metadata is stored flexibly in tag system
 
 ### Scenario 3: Tag-Based Content Discovery and Flexible Metadata
@@ -98,26 +97,26 @@
 **Steps**:
 1. **Browse public reviews by tags**
    - Navigate to public reviews section
-   - Filter by category tag: "Anime"
-   - Browse content tags under anime category
-   - Find highly-rated content tags through review aggregation
+   - Filter by tag: "Anime"
+   - Browse tags associated with anime
+   - Find highly-rated tags through review aggregation
 
 2. **Access flexible tag metadata**
-   - Click on content tag with good reviews (e.g., "Demon Slayer")
+   - Click on tag with good reviews (e.g., "Demon Slayer")
    - View tag metadata displaying:
      * Wikipedia URL from metadata JSON
      * Official website from metadata JSON
      * Studio, year, episode count from metadata
-   - See aggregate rating and review count for this content tag
+   - See aggregate rating and review count for this tag
 
 3. **Add to personal tracking**
-   - Add discovered content tag to "plan to watch" list
+   - Add discovered tag to "plan to watch" list
    - Verify it appears in personal tag progress tracking
    - Set initial status as "plan_to_watch"
    - Create review associated with multiple related tags
 
 **Expected Results**:
-- Tag-based browsing effectively surfaces popular content tags
+- Tag-based browsing effectively surfaces popular tags
 - Flexible metadata system displays diverse content information
 - External links to Wikipedia and official sites work correctly
 - Personal tracking integrates with content discovery
@@ -153,44 +152,43 @@
 **Goal**: Test creation and management of custom tags
 
 **Steps**:
-1. **View available root tags**
+1. **View available tags**
    - Navigate to tag browsing section
-   - View list of default root tags (anime, manga, game, etc.)
-   - See tag hierarchy and usage statistics
+   - View list of default tags (anime, manga, game, etc.)
+   - See tag associations and usage statistics
 
-2. **Create new root tag**
+2. **Create new tag**
    - Add new tag: "Light Novel"
    - Fill form:
      * Title: "Light Novel"
      * Description: "Japanese light novels and web novels"
-     * Parent: None (root-level)
      * Metadata: `{"supports_episodes": true, "icon": "📖"}`
    - Submit and verify new tag is created
 
-3. **Create child tags under new root**
+3. **Create associated tags**
    - Create new tag: "Overlord"
-   - Set parent to "Light Novel" tag
    - Add metadata: `{"volumes": 16, "author": "Kugane Maruyama"}`
-   - Create episode tags for specific volumes
+   - Create association between "Overlord" and "Light Novel" tags
+   - Create episode tags for specific volumes and associate them
    - Create review associated with multiple related tags
-   - Verify tag filtering works with new tag hierarchy
+   - Verify tag associations work for browsing and filtering
 
 4. **Modify category tag**
    - Edit the "Light Novel" category tag
    - Update description or metadata
    - Verify changes don't break existing content tag relationships
 
-5. **Test tag validation and relationships**
-   - Try to create circular parent-child relationships
-   - Try to delete tag that has child tags
-   - Try to create tag with non-existent parent
-   - Verify proper validation errors for hierarchy rules
+5. **Test tag validation and associations**
+   - Try to create association between non-existent tags
+   - Try to create duplicate associations
+   - Try to associate tag with itself
+   - Verify proper validation errors for association rules
 
 **Expected Results**:
-- New tags can be created and form proper hierarchy
-- Child tags correctly reference parents
+- New tags can be created and associated freely
+- Tag associations are bidirectional and flexible
 - Tag modifications maintain referential integrity
-- Validation enforces proper tag hierarchy rules
+- Validation enforces proper association rules
 
 ### Scenario 6: Error Handling and Edge Cases
 **Goal**: Verify graceful handling of error conditions
@@ -203,8 +201,7 @@
 2. **Test invalid tag scenarios**
    - Try to create review with non-existent tag IDs
    - Submit review with invalid data (empty content, invalid rating, no associated tags)
-   - Try to create content tag without valid category parent
-   - Try to create episode tag with content tag as parent that doesn't exist
+   - Try to create tag association with non-existent tag
    - Try to associate review with tags that don't exist
    - Verify proper error messages and validation
 
@@ -213,18 +210,18 @@
    - Verify graceful degradation (review still saved, sharing fails gracefully)
 
 4. **Test tag creation edge cases**
-   - Try to create duplicate episode tags under same content tag
+   - Try to create duplicate tag associations
    - Create tags with missing optional fields
-   - Try to delete category tag that has child content tags
-   - Try to delete content tag that has child episode tags or reviews
+   - Try to delete tag that has associated reviews
+   - Try to delete tag that has associated tags
    - Verify database constraints and foreign key relationships are enforced
 
 **Expected Results**:
 - Authentication failures handled gracefully with clear messaging
-- Tag validation prevents invalid hierarchy relationships
+- Tag validation prevents invalid associations
 - External service failures don't break core functionality
 - Database integrity maintained with proper cascading rules
-- Tag dependencies properly enforced throughout hierarchy
+- Tag associations properly enforced
 
 ## Performance and Cost Validation
 
@@ -253,9 +250,9 @@
 - [ ] Twitter integration works reliably
 - [ ] Tag-based browsing provides good content discovery experience
 - [ ] Markdown rendering works correctly in all contexts
-- [ ] Dynamic category tag creation and hierarchical relationships work seamlessly
+- [ ] Dynamic tag creation and associations work seamlessly
 - [ ] Tag metadata storage handles diverse content information flexibly
 - [ ] Multiple tag associations enable flexible review categorization
 - [ ] Review filtering by associated tags works correctly
-- [ ] Content type validation prevents invalid configurations
-- [ ] Custom content types integrate properly with all existing features
+- [ ] Tag association validation prevents invalid configurations
+- [ ] Custom tags integrate properly with all existing features

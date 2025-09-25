@@ -51,27 +51,24 @@ CREATE TABLE review_tag_associations (
 - is_active defaults to true
 
 ### Tag
-**Purpose**: Unified entity for flexible hierarchical tagging system
+**Purpose**: Unified entity for flexible tagging system
 **Attributes**:
 - `id`: Primary key (UUID)
 - `title`: Tag title (required)
 - `description`: Brief description
-- `parent_id`: Foreign key to parent Tag (nullable for root tags)
 - `metadata`: JSON field for flexible data storage
 - `created_by`: Foreign key to User who created this tag
 - `created_at`: Record creation timestamp
 - `updated_at`: Last update timestamp
 
 **Relationships**:
-- Self-referential: Many-to-one with Tag (parent-child hierarchy)
-- One-to-many with Tag (parent can have multiple children)
+- Many-to-many with Tag through TagAssociation (tag-to-tag relationships)
 - Many-to-many with Review through ReviewTagAssociation
 - One-to-many with UserTagProgress (user progress tracking)
 - Many-to-one with User (created by user)
 
 **Validation Rules**:
 - title required, max 200 characters
-- parent_id must reference existing Tag if provided
 - created_by must reference existing User
 
 ### Review
@@ -100,6 +97,26 @@ CREATE TABLE review_tag_associations (
 - rating must be 1-5 if provided
 - title max 200 characters
 - Must have at least one associated tag through ReviewTagAssociation
+
+### TagAssociation
+**Purpose**: Links tags with other tags in bidirectional relationships
+**Attributes**:
+- `id`: Primary key (UUID)
+- `tag_id_1`: Foreign key to first Tag (required)
+- `tag_id_2`: Foreign key to second Tag (required)
+- `created_by`: Foreign key to User who created this association
+- `created_at`: Association creation timestamp
+
+**Relationships**:
+- Many-to-one with Tag (first tag)
+- Many-to-one with Tag (second tag)
+- Many-to-one with User (created by user)
+
+**Validation Rules**:
+- tag_id_1 and tag_id_2 must reference existing Tags
+- tag_id_1 and tag_id_2 must be different
+- Unique constraint on (tag_id_1, tag_id_2) and (tag_id_2, tag_id_1) to prevent duplicates
+- created_by must reference existing User
 
 ### ReviewTagAssociation
 **Purpose**: Links reviews with multiple associated tags
@@ -190,18 +207,30 @@ CREATE TABLE users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tags table (unified hierarchical tagging system)
+-- Tags table (unified tagging system)
 CREATE TABLE tags (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL CHECK (LENGTH(title) <= 200),
     description TEXT,
-    parent_id TEXT,
     metadata TEXT, -- JSON for flexible data storage
     created_by TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (parent_id) REFERENCES tags(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
+);
+
+-- Tag Association table (tag-to-tag relationships)
+CREATE TABLE tag_associations (
+    id TEXT PRIMARY KEY,
+    tag_id_1 TEXT NOT NULL,
+    tag_id_2 TEXT NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tag_id_1) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id_2) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    CHECK (tag_id_1 != tag_id_2),
+    UNIQUE(tag_id_1, tag_id_2)
 );
 
 -- Reviews table
@@ -247,18 +276,18 @@ CREATE TABLE user_tag_progress (
     UNIQUE(user_id, content_tag_id)
 );
 
--- Initial Root Tags (seeded data)
-INSERT INTO tags (id, title, description, parent_id, metadata, created_by) VALUES
-('tag_anime', 'Anime', 'Japanese animated series and films', NULL, '{"supports_episodes": true}', 'system'),
-('tag_manga', 'Manga', 'Japanese comics and graphic novels', NULL, '{"supports_episodes": true}', 'system'),
-('tag_game', 'Game', 'Video games and interactive entertainment', NULL, '{"supports_episodes": false}', 'system'),
-('tag_movie', 'Movie', 'Films and motion pictures', NULL, '{"supports_episodes": false}', 'system'),
-('tag_book', 'Book', 'Books, novels, and literature', NULL, '{"supports_episodes": true}', 'system'),
-('tag_music', 'Music', 'Music albums, songs, and audio content', NULL, '{"supports_episodes": true}', 'system'),
-('tag_theater', 'Theater', 'Stage performances and live entertainment', NULL, '{"supports_episodes": false}', 'system'),
-('tag_figure', 'Figure', 'Collectible figures and statues', NULL, '{"supports_episodes": false}', 'system'),
-('tag_model', 'Model Kit', 'Model kits and building sets', NULL, '{"supports_episodes": false}', 'system'),
-('tag_merchandise', 'Merchandise', 'General merchandise and collectibles', NULL, '{"supports_episodes": false}', 'system');
+-- Initial Tags (seeded data)
+INSERT INTO tags (id, title, description, metadata, created_by) VALUES
+('tag_anime', 'Anime', 'Japanese animated series and films', '{"supports_episodes": true}', 'system'),
+('tag_manga', 'Manga', 'Japanese comics and graphic novels', '{"supports_episodes": true}', 'system'),
+('tag_game', 'Game', 'Video games and interactive entertainment', '{"supports_episodes": false}', 'system'),
+('tag_movie', 'Movie', 'Films and motion pictures', '{"supports_episodes": false}', 'system'),
+('tag_book', 'Book', 'Books, novels, and literature', '{"supports_episodes": true}', 'system'),
+('tag_music', 'Music', 'Music albums, songs, and audio content', '{"supports_episodes": true}', 'system'),
+('tag_theater', 'Theater', 'Stage performances and live entertainment', '{"supports_episodes": false}', 'system'),
+('tag_figure', 'Figure', 'Collectible figures and statues', '{"supports_episodes": false}', 'system'),
+('tag_model', 'Model Kit', 'Model kits and building sets', '{"supports_episodes": false}', 'system'),
+('tag_merchandise', 'Merchandise', 'General merchandise and collectibles', '{"supports_episodes": false}', 'system');
 
 -- Indexes for performance
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
@@ -270,7 +299,7 @@ CREATE INDEX idx_review_tag_associations_tag_id ON review_tag_associations(tag_i
 CREATE INDEX idx_tags_parent_id ON tags(parent_id);
 CREATE INDEX idx_tags_created_by ON tags(created_by);
 CREATE INDEX idx_user_tag_progress_user_id ON user_tag_progress(user_id);
-CREATE INDEX idx_user_tag_progress_content_tag_id ON user_tag_progress(content_tag_id);
+CREATE INDEX idx_user_tag_progress_tag_id ON user_tag_progress(content_tag_id);
 
 -- Insert default content types
 INSERT INTO content_types (id, name, display_name, category, supports_episodes, description) VALUES

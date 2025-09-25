@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
-
-const mockApp = new Hono();
+import { app } from '../helpers/app';
 
 describe('Contract: GET /logs', () => {
   it('should return paginated list of public logs', async () => {
-    const response = await mockApp.request('/logs', {
+    const response = await app.request('/logs', {
       method: 'GET',
     });
 
@@ -35,7 +33,7 @@ describe('Contract: GET /logs', () => {
   });
 
   it('should filter by tag_ids', async () => {
-    const response = await mockApp.request('/logs?tag_ids=tag1,tag2', {
+    const response = await app.request('/logs?tag_ids=tag1,tag2', {
       method: 'GET',
     });
 
@@ -45,7 +43,7 @@ describe('Contract: GET /logs', () => {
   });
 
   it('should filter by user_id', async () => {
-    const response = await mockApp.request('/logs?user_id=user123', {
+    const response = await app.request('/logs?user_id=user123', {
       method: 'GET',
     });
 
@@ -55,7 +53,7 @@ describe('Contract: GET /logs', () => {
   });
 
   it('should handle pagination parameters', async () => {
-    const response = await mockApp.request('/logs?limit=10&offset=20', {
+    const response = await app.request('/logs?limit=10&offset=20', {
       method: 'GET',
     });
 

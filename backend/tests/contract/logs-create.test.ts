@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
+import { app } from "../helpers/app";
 
 // Contract tests for POST /logs endpoint (create new log)
 describe('Contract: POST /logs', () => {
-  const app = new Hono();
 
   it('should create new log for authenticated user', async () => {
     const logData = {

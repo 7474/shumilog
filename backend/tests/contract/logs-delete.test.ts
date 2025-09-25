@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
+import { app } from "../helpers/app";
 
 // Contract tests for DELETE /logs/{logId} endpoint
 describe('Contract: DELETE /logs/{logId}', () => {
-  const app = new Hono();
 
   it('should delete log for authenticated owner', async () => {
     const response = await app.request('/logs/123', {

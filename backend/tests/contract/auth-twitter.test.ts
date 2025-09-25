@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { Hono } from 'hono';
-
-// Mock the app since it doesn't exist yet
-const mockApp = new Hono();
+import { app } from '../helpers/app';
 
 // This test should FAIL initially - that's the point of TDD
 describe('Contract: GET /auth/twitter', () => {
@@ -13,8 +10,7 @@ describe('Contract: GET /auth/twitter', () => {
   });
 
   it('should redirect to Twitter OAuth with proper parameters', async () => {
-    // This will fail because the route doesn't exist yet
-    const response = await mockApp.request('/auth/twitter', {
+    const response = await app.request('/auth/twitter', {
       method: 'GET',
     });
 
@@ -32,8 +28,7 @@ describe('Contract: GET /auth/twitter', () => {
   });
 
   it('should return 400 for invalid request parameters', async () => {
-    // This will also fail initially
-    const response = await mockApp.request('/auth/twitter?invalid=param', {
+    const response = await app.request('/auth/twitter?invalid=param', {
       method: 'GET',
     });
 

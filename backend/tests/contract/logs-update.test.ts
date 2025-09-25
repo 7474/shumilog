@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
+import { app } from "../helpers/app";
 
 // Contract tests for PUT /logs/{logId} endpoint (update log)
 describe('Contract: PUT /logs/{logId}', () => {
-  const app = new Hono();
 
   it('should update log for authenticated owner', async () => {
     const updateData = {

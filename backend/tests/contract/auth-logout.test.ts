@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
+import { app } from '../helpers/app';
 
 // Contract tests for POST /auth/logout endpoint
 describe('Contract: POST /auth/logout', () => {
-  const app = new Hono();
 
   it('should successfully logout authenticated user', async () => {
     const response = await app.request('/auth/logout', {

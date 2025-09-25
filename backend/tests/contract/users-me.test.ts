@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Hono } from 'hono';
-
-const mockApp = new Hono();
+import { app } from '../helpers/app';
 
 describe('Contract: GET /users/me', () => {
   beforeEach(() => {
@@ -9,7 +7,7 @@ describe('Contract: GET /users/me', () => {
   });
 
   it('should return user profile for authenticated user', async () => {
-    const response = await mockApp.request('/users/me', {
+    const response = await app.request('/users/me', {
       method: 'GET',
       headers: {
         'Cookie': 'session=valid_session_token'
@@ -35,7 +33,7 @@ describe('Contract: GET /users/me', () => {
   });
 
   it('should return 401 for unauthenticated request', async () => {
-    const response = await mockApp.request('/users/me', {
+    const response = await app.request('/users/me', {
       method: 'GET',
     });
 
@@ -43,7 +41,7 @@ describe('Contract: GET /users/me', () => {
   });
 
   it('should return 401 for invalid session', async () => {
-    const response = await mockApp.request('/users/me', {
+    const response = await app.request('/users/me', {
       method: 'GET',
       headers: {
         'Cookie': 'session=invalid_session_token'

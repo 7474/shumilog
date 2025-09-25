@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
 
 // Integration test: Dynamic tag creation and management
 describe('Integration: Tag Management', () => {
-  const app = new Hono();
+  import { app } from "../helpers/app";
 
   it('should create and associate new tags during log creation', async () => {
     const sessionCookie = 'session=test_session_token';

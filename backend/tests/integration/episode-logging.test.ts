@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
 
 // Integration test: Episode-level log tracking with tag associations
 describe('Integration: Episode-level Log Tracking', () => {
-  const app = new Hono();
+  import { app } from "../helpers/app";
 
   it('should track episode progress across anime series', async () => {
     // Login with Twitter OAuth

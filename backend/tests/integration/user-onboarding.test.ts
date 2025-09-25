@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Hono } from 'hono';
 
-const mockApp = new Hono();
+import { app } from "../helpers/app";
 
 describe('Integration: New User Registration and First Log', () => {
   beforeEach(() => {
@@ -17,14 +16,14 @@ describe('Integration: New User Registration and First Log', () => {
     // For now we'll test API endpoints
     
     // Step 2: Twitter OAuth initiation
-    const authResponse = await mockApp.request('/auth/twitter', {
+    const authResponse = await app.request('/auth/twitter', {
       method: 'GET',
     });
     expect(authResponse.status).toBe(302);
     expect(authResponse.headers.get('Location')).toContain('twitter.com');
     
     // Step 3: OAuth callback simulation
-    const callbackResponse = await mockApp.request('/auth/callback?code=test_code&state=test_state', {
+    const callbackResponse = await app.request('/auth/callback?code=test_code&state=test_state', {
       method: 'GET',
     });
     expect(callbackResponse.status).toBe(302);
@@ -40,7 +39,7 @@ describe('Integration: New User Registration and First Log', () => {
       is_public: false
     };
     
-    const createLogResponse = await mockApp.request('/logs', {
+    const createLogResponse = await app.request('/logs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,7 +56,7 @@ describe('Integration: New User Registration and First Log', () => {
     expect(createdLog.associated_tags).toHaveLength(1);
     
     // Step 5: Make log public and verify
-    const updateResponse = await mockApp.request(`/logs/${createdLog.id}`, {
+    const updateResponse = await app.request(`/logs/${createdLog.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +68,7 @@ describe('Integration: New User Registration and First Log', () => {
     expect(updateResponse.status).toBe(200);
     
     // Step 6: Verify log appears in public browsing
-    const publicLogsResponse = await mockApp.request('/logs', {
+    const publicLogsResponse = await app.request('/logs', {
       method: 'GET',
     });
     
@@ -86,7 +85,7 @@ describe('Integration: New User Registration and First Log', () => {
       is_public: false
     };
     
-    const response = await mockApp.request('/logs', {
+    const response = await app.request('/logs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

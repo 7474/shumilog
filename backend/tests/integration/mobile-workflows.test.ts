@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
 
 // Integration test: Mobile-first experience workflows
 describe('Integration: Mobile Workflows', () => {
-  const app = new Hono();
+  import { app } from "../helpers/app";
 
   it('should handle mobile user journey from login to log creation', async () => {
     // Mobile user starts OAuth flow

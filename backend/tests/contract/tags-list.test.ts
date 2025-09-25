@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
-
-const mockApp = new Hono();
+import { app } from '../helpers/app';
 
 describe('Contract: GET /tags', () => {
   it('should return paginated list of tags', async () => {
-    const response = await mockApp.request('/tags', {
+    const response = await app.request('/tags', {
       method: 'GET',
     });
 
@@ -29,7 +27,7 @@ describe('Contract: GET /tags', () => {
   });
 
   it('should handle search parameter', async () => {
-    const response = await mockApp.request('/tags?search=anime', {
+    const response = await app.request('/tags?search=anime', {
       method: 'GET',
     });
 
@@ -39,7 +37,7 @@ describe('Contract: GET /tags', () => {
   });
 
   it('should handle custom pagination', async () => {
-    const response = await mockApp.request('/tags?limit=10&offset=5', {
+    const response = await app.request('/tags?limit=10&offset=5', {
       method: 'GET',
     });
 
@@ -50,7 +48,7 @@ describe('Contract: GET /tags', () => {
   });
 
   it('should enforce maximum limit', async () => {
-    const response = await mockApp.request('/tags?limit=200', {
+    const response = await app.request('/tags?limit=200', {
       method: 'GET',
     });
 

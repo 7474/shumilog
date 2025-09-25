@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
+import { app } from "../helpers/app";
 
 // Contract tests for POST /logs/{logId}/share endpoint
 describe('Contract: POST /logs/{logId}/share', () => {
-  const app = new Hono();
 
   it('should share public log to Twitter for authenticated owner', async () => {
     const shareData = {

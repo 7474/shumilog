@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { Hono } from 'hono';
-
-const mockApp = new Hono();
+import { app } from '../helpers/app';
 
 describe('Contract: GET /auth/callback', () => {
   beforeAll(() => {
@@ -10,7 +8,7 @@ describe('Contract: GET /auth/callback', () => {
   });
 
   it('should handle successful OAuth callback with code and state', async () => {
-    const response = await mockApp.request('/auth/callback?code=test_code&state=test_state', {
+    const response = await app.request('/auth/callback?code=test_code&state=test_state', {
       method: 'GET',
     });
 
@@ -29,7 +27,7 @@ describe('Contract: GET /auth/callback', () => {
   });
 
   it('should return 401 for missing code parameter', async () => {
-    const response = await mockApp.request('/auth/callback?state=test_state', {
+    const response = await app.request('/auth/callback?state=test_state', {
       method: 'GET',
     });
 
@@ -37,7 +35,7 @@ describe('Contract: GET /auth/callback', () => {
   });
 
   it('should return 401 for missing state parameter', async () => {
-    const response = await mockApp.request('/auth/callback?code=test_code', {
+    const response = await app.request('/auth/callback?code=test_code', {
       method: 'GET',
     });
 
@@ -45,7 +43,7 @@ describe('Contract: GET /auth/callback', () => {
   });
 
   it('should return 401 for invalid code', async () => {
-    const response = await mockApp.request('/auth/callback?code=invalid_code&state=test_state', {
+    const response = await app.request('/auth/callback?code=invalid_code&state=test_state', {
       method: 'GET',
     });
 

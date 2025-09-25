@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Hono } from 'hono';
 
 // Integration test: Tag-based content discovery
 describe('Integration: Content Discovery', () => {
-  const app = new Hono();
+  import { app } from "../helpers/app";
 
   it('should discover content through tag browsing and associations', async () => {
     // Browse all available tags

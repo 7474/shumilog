@@ -82,12 +82,6 @@ paths:
     get:
       summary: Search and list tags
       parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [category, content, episode]
-            description: Filter by tag type (category, content, or episode)
         - name: parent_id
           in: query
           schema:
@@ -217,54 +211,6 @@ paths:
           description: Not tag owner
         '404':
           description: Tag not found
-
-  /tags/{tagId}/children:
-    get:
-      summary: List child tags (episodes, seasons, volumes, etc.)
-      parameters:
-        - name: tagId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of child tags
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Tag'
-
-    post:
-      summary: Add child tag to parent
-      security:
-        - sessionAuth: []
-      parameters:
-        - name: tagId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TagCreate'
-      responses:
-        '201':
-          description: Child tag created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tag'
-        '401':
-          description: Not authenticated
-        '404':
-          description: Parent tag not found
-
 
 
   /reviews:
@@ -456,10 +402,6 @@ components:
           type: string
         title:
           type: string
-        type:
-          type: string
-          enum: [category, content, episode]
-          description: Tag type - category (genre/medium), content (series/work), or episode (specific installment)
         description:
           type: string
         parent_id:
@@ -467,7 +409,7 @@ components:
           description: Parent tag ID for hierarchical relationships
         metadata:
           type: object
-          description: Flexible metadata storage (URLs, episode numbers, etc.)
+          description: Flexible metadata storage
         created_by:
           type: string
           description: User ID who created this tag
@@ -482,14 +424,10 @@ components:
       type: object
       required:
         - title
-        - type
       properties:
         title:
           type: string
           maxLength: 200
-        type:
-          type: string
-          enum: [category, content, episode]
         description:
           type: string
         parent_id:
@@ -526,22 +464,6 @@ components:
               items:
                 $ref: '#/components/schemas/Tag'
 
-    SubContentCreate:
-      type: object
-      required:
-        - number
-      properties:
-        number:
-          type: integer
-        title:
-          type: string
-          maxLength: 200
-        description:
-          type: string
-        release_date:
-          type: string
-          format: date
-
     Review:
       type: object
       properties:
@@ -553,7 +475,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tag'
-          description: Tags associated with this review (can include any combination of category, content, episode tags)
+          description: Tags associated with this review
         title:
           type: string
         content_html:

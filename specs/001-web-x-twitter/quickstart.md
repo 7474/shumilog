@@ -22,8 +22,8 @@
    - Navigate to "Add Review" page
    - Search for existing tags or create new ones as needed:
      * Search: "Attack on Titan" - no results found
-     * Create new content tag: "Attack on Titan"
-     * Select parent category tag: "Anime"
+     * Create new tag: "Attack on Titan"
+     * Select parent tag: "Anime"
      * Add metadata: `{"year": 2013, "studio": "Studio WIT", "official_url": "https://attackontitan.com"}`
    - Fill review form:
      * Title: "Amazing first season!"
@@ -64,8 +64,7 @@
    - Navigate to tag management
    - Create new episode tag:
      * Title: "Romance Dawn"
-     * Type: episode
-     * Parent: "One Piece" content tag
+     * Parent: "One Piece" tag
      * Metadata: `{"episode_number": 1, "air_date": "1999-10-20"}`
    - Create episode review:
      * Title: "Great series opener"
@@ -150,33 +149,31 @@
 - Text input and formatting work well on mobile keyboards
 - All core functionality accessible without desktop
 
-### Scenario 5: Dynamic Category Tag Creation and Management
-**Goal**: Test creation and management of custom category tags
+### Scenario 5: Dynamic Tag Creation and Management
+**Goal**: Test creation and management of custom tags
 
 **Steps**:
-1. **View available category tags**
+1. **View available root tags**
    - Navigate to tag browsing section
-   - Filter by type: "category"
-   - View list of default category tags (anime, manga, game, etc.)
+   - View list of default root tags (anime, manga, game, etc.)
    - See tag hierarchy and usage statistics
 
-2. **Create new category tag**
-   - Add new category tag: "Light Novel"
+2. **Create new root tag**
+   - Add new tag: "Light Novel"
    - Fill form:
      * Title: "Light Novel"
-     * Type: "category"
      * Description: "Japanese light novels and web novels"
-     * Parent: None (root-level category)
+     * Parent: None (root-level)
      * Metadata: `{"supports_episodes": true, "icon": "📖"}`
-   - Submit and verify new category tag is created
+   - Submit and verify new tag is created
 
-3. **Create content under new category**
-   - Create new content tag: "Overlord"
-   - Set parent to "Light Novel" category tag
-   - Add content metadata: `{"volumes": 16, "author": "Kugane Maruyama"}`
+3. **Create child tags under new root**
+   - Create new tag: "Overlord"
+   - Set parent to "Light Novel" tag
+   - Add metadata: `{"volumes": 16, "author": "Kugane Maruyama"}`
    - Create episode tags for specific volumes
-   - Create review for specific volume episode tag
-   - Verify category filtering works with new tag hierarchy
+   - Create review associated with multiple related tags
+   - Verify tag filtering works with new tag hierarchy
 
 4. **Modify category tag**
    - Edit the "Light Novel" category tag
@@ -184,14 +181,14 @@
    - Verify changes don't break existing content tag relationships
 
 5. **Test tag validation and relationships**
-   - Try to create category tag with invalid parent (content or episode tag)
-   - Try to create content tag without category parent
-   - Try to create episode tag without content tag parent
+   - Try to create circular parent-child relationships
+   - Try to delete tag that has child tags
+   - Try to create tag with non-existent parent
    - Verify proper validation errors for hierarchy rules
 
 **Expected Results**:
-- New category tags can be created and form proper hierarchy
-- Content and episode tags correctly reference category parents
+- New tags can be created and form proper hierarchy
+- Child tags correctly reference parents
 - Tag modifications maintain referential integrity
 - Validation enforces proper tag hierarchy rules
 

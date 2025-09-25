@@ -51,14 +51,13 @@ CREATE TABLE review_tag_associations (
 - is_active defaults to true
 
 ### Tag
-**Purpose**: Unified entity representing categories, content, and episodes in a flexible hierarchical system
+**Purpose**: Unified entity for flexible hierarchical tagging system
 **Attributes**:
 - `id`: Primary key (UUID)
 - `title`: Tag title (required)
-- `type`: Tag type enum (category, content, episode) - required
 - `description`: Brief description
 - `parent_id`: Foreign key to parent Tag (nullable for root tags)
-- `metadata`: JSON field for flexible data storage (URLs, episode numbers, year, studio, etc.)
+- `metadata`: JSON field for flexible data storage
 - `created_by`: Foreign key to User who created this tag
 - `created_at`: Record creation timestamp
 - `updated_at`: Last update timestamp
@@ -66,23 +65,14 @@ CREATE TABLE review_tag_associations (
 **Relationships**:
 - Self-referential: Many-to-one with Tag (parent-child hierarchy)
 - One-to-many with Tag (parent can have multiple children)
-- One-to-many with Review (tags receive reviews)
+- Many-to-many with Review through ReviewTagAssociation
 - One-to-many with UserTagProgress (user progress tracking)
 - Many-to-one with User (created by user)
 
 **Validation Rules**:
 - title required, max 200 characters
-- type must be 'category', 'content', or 'episode'
 - parent_id must reference existing Tag if provided
 - created_by must reference existing User
-- Category tags should not have parent_id (root level)
-- Content tags should have category tag as parent
-- Episode tags should have content tag as parent
-
-**Type-Specific Usage**:
-- **Category**: Root-level tags like "anime", "manga", "game", "movie", "book", "music", "figure"
-- **Content**: Specific works like "Attack on Titan", "Demon Slayer", "Elden Ring"  
-- **Episode**: Individual episodes/chapters like "Episode 1", "Chapter 145", "DLC Pack 1"
 
 ### Review
 **Purpose**: User-generated reviews and impressions associated with multiple tags
@@ -200,11 +190,10 @@ CREATE TABLE users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tags table (unified content, categories, and episodes)
+-- Tags table (unified hierarchical tagging system)
 CREATE TABLE tags (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL CHECK (LENGTH(title) <= 200),
-    type TEXT NOT NULL CHECK (type IN ('category', 'content', 'episode')),
     description TEXT,
     parent_id TEXT,
     metadata TEXT, -- JSON for flexible data storage
@@ -258,18 +247,18 @@ CREATE TABLE user_tag_progress (
     UNIQUE(user_id, content_tag_id)
 );
 
--- Initial Category Tags (seeded data)
-INSERT INTO tags (id, title, type, description, parent_id, metadata, created_by) VALUES
-('tag_anime', 'Anime', 'category', 'Japanese animated series and films', NULL, '{"supports_episodes": true}', 'system'),
-('tag_manga', 'Manga', 'category', 'Japanese comics and graphic novels', NULL, '{"supports_episodes": true}', 'system'),
-('tag_game', 'Game', 'category', 'Video games and interactive entertainment', NULL, '{"supports_episodes": false}', 'system'),
-('tag_movie', 'Movie', 'category', 'Films and motion pictures', NULL, '{"supports_episodes": false}', 'system'),
-('tag_book', 'Book', 'category', 'Books, novels, and literature', NULL, '{"supports_episodes": true}', 'system'),
-('tag_music', 'Music', 'category', 'Music albums, songs, and audio content', NULL, '{"supports_episodes": true}', 'system'),
-('tag_theater', 'Theater', 'category', 'Stage performances and live entertainment', NULL, '{"supports_episodes": false}', 'system'),
-('tag_figure', 'Figure', 'category', 'Collectible figures and statues', NULL, '{"supports_episodes": false}', 'system'),
-('tag_model', 'Model Kit', 'category', 'Model kits and building sets', NULL, '{"supports_episodes": false}', 'system'),
-('tag_merchandise', 'Merchandise', 'category', 'General merchandise and collectibles', NULL, '{"supports_episodes": false}', 'system');
+-- Initial Root Tags (seeded data)
+INSERT INTO tags (id, title, description, parent_id, metadata, created_by) VALUES
+('tag_anime', 'Anime', 'Japanese animated series and films', NULL, '{"supports_episodes": true}', 'system'),
+('tag_manga', 'Manga', 'Japanese comics and graphic novels', NULL, '{"supports_episodes": true}', 'system'),
+('tag_game', 'Game', 'Video games and interactive entertainment', NULL, '{"supports_episodes": false}', 'system'),
+('tag_movie', 'Movie', 'Films and motion pictures', NULL, '{"supports_episodes": false}', 'system'),
+('tag_book', 'Book', 'Books, novels, and literature', NULL, '{"supports_episodes": true}', 'system'),
+('tag_music', 'Music', 'Music albums, songs, and audio content', NULL, '{"supports_episodes": true}', 'system'),
+('tag_theater', 'Theater', 'Stage performances and live entertainment', NULL, '{"supports_episodes": false}', 'system'),
+('tag_figure', 'Figure', 'Collectible figures and statues', NULL, '{"supports_episodes": false}', 'system'),
+('tag_model', 'Model Kit', 'Model kits and building sets', NULL, '{"supports_episodes": false}', 'system'),
+('tag_merchandise', 'Merchandise', 'General merchandise and collectibles', NULL, '{"supports_episodes": false}', 'system');
 
 -- Indexes for performance
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
@@ -277,7 +266,7 @@ CREATE INDEX idx_reviews_public ON reviews(is_public);
 CREATE INDEX idx_reviews_created_at ON reviews(created_at);
 CREATE INDEX idx_review_tag_associations_review_id ON review_tag_associations(review_id);
 CREATE INDEX idx_review_tag_associations_tag_id ON review_tag_associations(tag_id);
-CREATE INDEX idx_tags_type ON tags(type);
+
 CREATE INDEX idx_tags_parent_id ON tags(parent_id);
 CREATE INDEX idx_tags_created_by ON tags(created_by);
 CREATE INDEX idx_user_tag_progress_user_id ON user_tag_progress(user_id);

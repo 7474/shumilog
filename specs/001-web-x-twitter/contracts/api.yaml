@@ -265,200 +265,19 @@ paths:
         '404':
           description: Parent tag not found
 
-  /content:
-    get:
-      summary: Search and list content tags
-      parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            description: Filter by category tag (e.g., anime, manga, game, movie, book, music)
-        - name: parent_id
-          in: query
-          schema:
-            type: string
-            description: Filter by parent content ID
-        - name: search
-          in: query
-          schema:
-            type: string
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-            maximum: 100
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        '200':
-          description: List of content tags
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Tag'
-                  total:
-                    type: integer
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
 
-    post:
-      summary: Create content as tag
-      security:
-        - sessionAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TagCreate'
-      responses:
-        '201':
-          description: Content tag created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tag'
-        '400':
-          description: Invalid content data
-        '401':
-          description: Not authenticated
-
-  /content/{contentId}:
-    get:
-      summary: Get content tag details
-      parameters:
-        - name: contentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Content tag details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TagDetail'
-        '404':
-          description: Content not found
-
-    put:
-      summary: Update content tag
-      security:
-        - sessionAuth: []
-      parameters:
-        - name: contentId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TagUpdate'
-      responses:
-        '200':
-          description: Content tag updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tag'
-        '401':
-          description: Not authenticated
-        '403':
-          description: Not content owner
-        '404':
-          description: Content not found
-
-    delete:
-      summary: Delete content tag
-      security:
-        - sessionAuth: []
-      parameters:
-        - name: contentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Content tag deleted
-        '401':
-          description: Not authenticated
-        '403':
-          description: Not content owner
-        '404':
-          description: Content not found
-
-  /content/{contentId}/episodes:
-    get:
-      summary: List episode tags for content
-      parameters:
-        - name: contentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of episode tags
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SubContent'
-
-    post:
-      summary: Add episode/chapter to content
-      security:
-        - sessionAuth: []
-      parameters:
-        - name: contentId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubContentCreate'
-      responses:
-        '201':
-          description: Sub-content created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubContent'
-        '401':
-          description: Not authenticated
-        '404':
-          description: Content not found
 
   /reviews:
     get:
       summary: List public reviews
       parameters:
-        - name: content_id
+        - name: tag_ids
           in: query
           schema:
-            type: string
+            type: array
+            items:
+              type: string
+            description: Filter by associated tag IDs
         - name: user_id
           in: query
           schema:
@@ -730,10 +549,11 @@ components:
           type: string
         user:
           $ref: '#/components/schemas/User'
-        content_tag:
-          $ref: '#/components/schemas/Tag'
-        episode_tag:
-          $ref: '#/components/schemas/Tag'
+        associated_tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Tags associated with this review (can include any combination of category, content, episode tags)
         title:
           type: string
         content_html:
@@ -742,10 +562,11 @@ components:
           type: integer
           minimum: 1
           maximum: 5
-        tags:
+        user_tags:
           type: array
           items:
             type: string
+          description: User-defined tags for categorization
         posted_to_twitter:
           type: boolean
         created_at:
@@ -758,15 +579,15 @@ components:
     ReviewCreate:
       type: object
       required:
-        - content_tag_id
+        - tag_ids
         - content_md
       properties:
-        content_tag_id:
-          type: string
-          description: ID of the content tag being reviewed
-        episode_tag_id:
-          type: string
-          description: Optional ID of specific episode tag
+        tag_ids:
+          type: array
+          items:
+            type: string
+          description: IDs of tags to associate with this review
+          minItems: 1
         title:
           type: string
           maxLength: 200
@@ -780,17 +601,20 @@ components:
           type: integer
           minimum: 1
           maximum: 5
-        tags:
+        user_tags:
           type: array
           items:
             type: string
+          description: User-defined tags for categorization
 
     ReviewUpdate:
       type: object
       properties:
-        episode_tag_id:
-          type: string
-          description: Update the episode tag being reviewed
+        tag_ids:
+          type: array
+          items:
+            type: string
+          description: Update the tags associated with this review
         title:
           type: string
           maxLength: 200
@@ -803,10 +627,11 @@ components:
           type: integer
           minimum: 1
           maximum: 5
-        tags:
+        user_tags:
           type: array
           items:
             type: string
+          description: User-defined tags for categorization
 
     ReviewDetail:
       allOf:

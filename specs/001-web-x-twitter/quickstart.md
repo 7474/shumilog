@@ -18,9 +18,9 @@
    - Redirect back to application with successful authentication
    - Verify user profile shows Twitter username and avatar
 
-3. **Create content tag and first review**
+3. **Create tags and first review**
    - Navigate to "Add Review" page
-   - Search for existing content tag or create new one:
+   - Search for existing tags or create new ones as needed:
      * Search: "Attack on Titan" - no results found
      * Create new content tag: "Attack on Titan"
      * Select parent category tag: "Anime"
@@ -28,10 +28,11 @@
    - Fill review form:
      * Title: "Amazing first season!"
      * Content (Markdown): "This anime really hooked me from episode 1. The animation quality is top-notch and the story keeps you guessing."
+     * Associated tags: Select "Anime" and "Attack on Titan" tags
      * Rating: 5 stars
      * Privacy: Keep private initially
    - Submit review
-   - Verify content tag is created and review is saved
+   - Verify tags are created and review is associated with multiple tags
 
 4. **Make review public and share**
    - Edit the review to make it public
@@ -60,8 +61,7 @@
      * Metadata: `{"year": 1999, "studio": "Toei Animation", "episode_count": 1000}`
 
 2. **Create episode tag and review**
-   - Navigate to One Piece content tag page
-   - Click "Add Episode Review"
+   - Navigate to tag management
    - Create new episode tag:
      * Title: "Romance Dawn"
      * Type: episode
@@ -70,9 +70,10 @@
    - Create episode review:
      * Title: "Great series opener"
      * Content: "Perfect introduction to Luffy's character. Sets up the adventure perfectly."
+     * Associated tags: Select "Anime", "One Piece", and "Romance Dawn" tags
      * Rating: 4 stars
      * Make public immediately
-   - Submit and verify episode tag and review are created
+   - Submit and verify review is associated with all three tags
 
 3. **Track progress through series**
    - Update progress status for "One Piece" content tag to "watching"
@@ -87,8 +88,9 @@
 
 **Expected Results**:
 - Episode tags are properly created as children of content tags
+- Reviews can be associated with multiple related tags simultaneously
 - Progress tracking works at content tag level
-- Tag hierarchy enables content-centric browsing
+- Tag hierarchy enables flexible browsing patterns
 - Episode metadata is stored flexibly in tag system
 
 ### Scenario 3: Tag-Based Content Discovery and Flexible Metadata
@@ -113,6 +115,7 @@
    - Add discovered content tag to "plan to watch" list
    - Verify it appears in personal tag progress tracking
    - Set initial status as "plan_to_watch"
+   - Create review associated with multiple related tags
 
 **Expected Results**:
 - Tag-based browsing effectively surfaces popular content tags
@@ -201,10 +204,11 @@
    - Verify proper 401 responses and redirect to login
 
 2. **Test invalid tag scenarios**
-   - Try to create review for non-existent content tag
-   - Submit review with invalid data (empty content, invalid rating)
+   - Try to create review with non-existent tag IDs
+   - Submit review with invalid data (empty content, invalid rating, no associated tags)
    - Try to create content tag without valid category parent
    - Try to create episode tag with content tag as parent that doesn't exist
+   - Try to associate review with tags that don't exist
    - Verify proper error messages and validation
 
 3. **Test Twitter integration failures**
@@ -254,5 +258,7 @@
 - [ ] Markdown rendering works correctly in all contexts
 - [ ] Dynamic category tag creation and hierarchical relationships work seamlessly
 - [ ] Tag metadata storage handles diverse content information flexibly
+- [ ] Multiple tag associations enable flexible review categorization
+- [ ] Review filtering by associated tags works correctly
 - [ ] Content type validation prevents invalid configurations
 - [ ] Custom content types integrate properly with all existing features

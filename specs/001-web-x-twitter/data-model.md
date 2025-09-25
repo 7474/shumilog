@@ -5,8 +5,33 @@
 ### User
 **Purpose**: Represents authenticated users from Twitter OAuth
 **Attributes**:
-- `id`: Primary key (UUID)
-- `twitter_id`: Twitter user ID (unique, required)
+- `id`: Primary key (-- Reviews table
+CREATE TABLE reviews (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    title TEXT CHECK (LENGTH(title) <= 200),
+    content_md TEXT NOT NULL CHECK (LENGTH(content_md) <= 10000),
+    content_html TEXT NOT NULL,
+    is_public BOOLEAN DEFAULT 0,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+    user_tags TEXT, -- JSON array for user-defined tags
+    posted_to_twitter BOOLEAN DEFAULT 0,
+    twitter_post_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Review Tag Association table (many-to-many)
+CREATE TABLE review_tag_associations (
+    id TEXT PRIMARY KEY,
+    review_id TEXT NOT NULL,
+    tag_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    UNIQUE(review_id, tag_id)
+);: Twitter user ID (unique, required)
 - `twitter_username`: Twitter handle (required)
 - `display_name`: User's display name from Twitter
 - `avatar_url`: Twitter profile image URL
@@ -60,17 +85,15 @@
 - **Episode**: Individual episodes/chapters like "Episode 1", "Chapter 145", "DLC Pack 1"
 
 ### Review
-**Purpose**: User-generated reviews and impressions for tags
+**Purpose**: User-generated reviews and impressions associated with multiple tags
 **Attributes**:
 - `id`: Primary key (UUID)
 - `user_id`: Foreign key to User (required)
-- `content_tag_id`: Foreign key to Tag (type='content', required)
-- `episode_tag_id`: Foreign key to Tag (type='episode', optional for episode-specific reviews)
 - `title`: Review title
 - `content_md`: Review content in Markdown (required)
 - `content_html`: Rendered HTML from markdown
 - `rating`: Optional 1-5 star rating
-- `tags`: JSON array of user-defined tags
+- `user_tags`: JSON array of user-defined tags for categorization
 - `is_public`: Privacy flag (default false)
 - `posted_to_twitter`: Whether review was shared to Twitter
 - `twitter_post_id`: Twitter post ID if shared
@@ -79,17 +102,31 @@
 
 **Relationships**:
 - Many-to-one with User (user creates review)
-- Many-to-one with Tag as content_tag (review is about content tag)
-- Many-to-one with Tag as episode_tag (review is about specific episode tag, optional)
+- Many-to-many with Tag through ReviewTagAssociation (review associated with multiple tags)
 
 **Validation Rules**:
 - user_id must reference existing User
-- content_tag_id must reference existing Tag with type='content'
-- episode_tag_id must reference existing Tag with type='episode' if provided
 - content_md required, max 10000 characters
 - rating must be 1-5 if provided
 - title max 200 characters
-- If episode_tag_id provided, it must have content_tag as parent (episode belongs to content)
+- Must have at least one associated tag through ReviewTagAssociation
+
+### ReviewTagAssociation
+**Purpose**: Links reviews with multiple associated tags
+**Attributes**:
+- `id`: Primary key (UUID)
+- `review_id`: Foreign key to Review (required)
+- `tag_id`: Foreign key to Tag (required)
+- `created_at`: Association creation timestamp
+
+**Relationships**:
+- Many-to-one with Review (association belongs to review)
+- Many-to-one with Tag (association references tag)
+
+**Validation Rules**:
+- review_id must reference existing Review
+- tag_id must reference existing Tag
+- Unique constraint on (review_id, tag_id)
 
 ### UserTagProgress
 **Purpose**: Tracks user's consumption progress through serialized content tags
@@ -135,13 +172,14 @@ User (1) ─── (∞) Tag (created_by)
 User (1) ─── (∞) Session
 
 Tag (1) ─── (∞) Tag (parent-child hierarchy)
-Tag (1) ─── (∞) Review (content tags)
-Tag (1) ─── (∞) Review (episode tags, optional)
+Tag (1) ─── (∞) ReviewTagAssociation
 Tag (1) ─── (∞) UserTagProgress
 
 Review (∞) ─── (1) User
-Review (∞) ─── (1) Tag (content_tag)
-Review (∞) ─── (1) Tag (episode_tag, optional)
+Review (1) ─── (∞) ReviewTagAssociation
+
+ReviewTagAssociation (∞) ─── (1) Review
+ReviewTagAssociation (∞) ─── (1) Tag
 
 UserTagProgress (∞) ─── (1) User
 UserTagProgress (∞) ─── (1) Tag (content_tag)
@@ -235,10 +273,10 @@ INSERT INTO tags (id, title, type, description, parent_id, metadata, created_by)
 
 -- Indexes for performance
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
-CREATE INDEX idx_reviews_content_tag_id ON reviews(content_tag_id);
-CREATE INDEX idx_reviews_episode_tag_id ON reviews(episode_tag_id);
 CREATE INDEX idx_reviews_public ON reviews(is_public);
 CREATE INDEX idx_reviews_created_at ON reviews(created_at);
+CREATE INDEX idx_review_tag_associations_review_id ON review_tag_associations(review_id);
+CREATE INDEX idx_review_tag_associations_tag_id ON review_tag_associations(tag_id);
 CREATE INDEX idx_tags_type ON tags(type);
 CREATE INDEX idx_tags_parent_id ON tags(parent_id);
 CREATE INDEX idx_tags_created_by ON tags(created_by);

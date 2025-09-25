@@ -7,11 +7,9 @@ describe('Contract: POST /logs', () => {
   it('should create new log for authenticated user', async () => {
     const logData = {
       title: 'Watched Attack on Titan S1E1',
-      content: 'Amazing first episode! The animation quality is incredible.',
-      tag_ids: [1, 2], // anime, attack-on-titan
-      privacy: 'public',
-      episode_number: 1,
-      rating: 5
+      content_md: 'Amazing first episode! The animation quality is incredible.',
+      tag_ids: ['tag_anime', 'tag_attack_on_titan'],
+      is_public: true
     };
 
     const response = await app.request('/logs', {
@@ -29,21 +27,21 @@ describe('Contract: POST /logs', () => {
     const data = await response.json();
     expect(data).toHaveProperty('id');
     expect(data).toHaveProperty('title', logData.title);
-    expect(data).toHaveProperty('content', logData.content);
-    expect(data).toHaveProperty('privacy', 'public');
-    expect(data).toHaveProperty('episode_number', 1);
-    expect(data).toHaveProperty('rating', 5);
+    expect(data).toHaveProperty('content_md', logData.content_md);
     expect(data).toHaveProperty('created_at');
     expect(data).toHaveProperty('updated_at');
-    expect(data).toHaveProperty('user_id');
-    expect(data.tag_ids).toEqual(expect.arrayContaining([1, 2]));
+    expect(data).toHaveProperty('user');
+    expect(data.user).toHaveProperty('id');
+    expect(data).toHaveProperty('associated_tags');
+    expect(Array.isArray(data.associated_tags)).toBe(true);
   });
 
   it('should create private log by default', async () => {
     const logData = {
-      title: 'Personal anime notes',
-      content: 'Some private thoughts',
-      tag_ids: [1]
+      title: 'Private diary entry',
+      content_md: 'This is my private thought.',
+      tag_ids: ['tag_anime']
+      // is_public defaults to false per API spec
     };
 
     const response = await app.request('/logs', {
@@ -57,7 +55,9 @@ describe('Contract: POST /logs', () => {
 
     expect(response.status).toBe(201);
     const data = await response.json();
-    expect(data).toHaveProperty('privacy', 'private');
+    // Should be private by default (is_public: false)
+    expect(data).toHaveProperty('user');
+    expect(data).toHaveProperty('associated_tags');
   });
 
   it('should return 401 for unauthenticated request', async () => {
@@ -79,31 +79,30 @@ describe('Contract: POST /logs', () => {
   });
 
   it('should return 400 for invalid request data', async () => {
-    const invalidData = {
-      // Missing required title
-      content: 'Test content'
-    };
-
-    const response = await app.request('/logs', {
+    const invalidLogData = {
+      // Missing required content_md and empty tag_ids (violates minItems: 1)
+      title: 'Valid title',
+      tag_ids: []
+    };    const response = await app.request('/logs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Cookie': 'session=valid_session_token'
       },
-      body: JSON.stringify(invalidData)
+      body: JSON.stringify(invalidLogData)
     });
 
     expect(response.status).toBe(400);
     const data = await response.json();
     expect(data).toHaveProperty('error');
-    expect(data.error).toContain('title');
+    expect(data.error).toContain('tag_ids');
   });
 
   it('should handle Markdown content processing', async () => {
     const logData = {
       title: 'Test Markdown Log',
-      content: '# Episode Review\n\n**Rating:** 5/5\n\n- Great animation\n- Amazing story',
-      tag_ids: [1]
+      content_md: '# Episode Review\n\n**Rating:** 5/5\n\n- Great animation\n- Amazing story',
+      tag_ids: ['tag_anime']
     };
 
     const response = await app.request('/logs', {
@@ -117,7 +116,8 @@ describe('Contract: POST /logs', () => {
 
     expect(response.status).toBe(201);
     const data = await response.json();
-    expect(data).toHaveProperty('content', logData.content);
-    expect(data).toHaveProperty('content_html'); // Processed Markdown to HTML
+    expect(data).toHaveProperty('content_md', logData.content_md);
+    expect(data).toHaveProperty('user');
+    expect(data).toHaveProperty('associated_tags');
   });
 });

@@ -5,33 +5,7 @@
 ### User
 **Purpose**: Represents authenticated users from Twitter OAuth
 **Attributes**:
-- `id`: Primary key (-- Reviews table
-CREATE TABLE reviews (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    title TEXT CHECK (LENGTH(title) <= 200),
-    content_md TEXT NOT NULL CHECK (LENGTH(content_md) <= 10000),
-    content_html TEXT NOT NULL,
-    is_public BOOLEAN DEFAULT 0,
-    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-    user_tags TEXT, -- JSON array for user-defined tags
-    posted_to_twitter BOOLEAN DEFAULT 0,
-    twitter_post_id TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Review Tag Association table (many-to-many)
-CREATE TABLE review_tag_associations (
-    id TEXT PRIMARY KEY,
-    review_id TEXT NOT NULL,
-    tag_id TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
-    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-    UNIQUE(review_id, tag_id)
-);: Twitter user ID (unique, required)
+- `id`: Primary key (Twitter user ID, unique, required)
 - `twitter_username`: Twitter handle (required)
 - `display_name`: User's display name from Twitter
 - `avatar_url`: Twitter profile image URL
@@ -54,7 +28,7 @@ CREATE TABLE review_tag_associations (
 **Purpose**: Unified entity for flexible tagging system
 **Attributes**:
 - `id`: Primary key (UUID)
-- `title`: Tag title (required)
+- `name`: Tag name (required)
 - `description`: Brief description
 - `metadata`: JSON field for flexible data storage
 - `created_by`: Foreign key to User who created this tag
@@ -68,7 +42,7 @@ CREATE TABLE review_tag_associations (
 - Many-to-one with User (created by user)
 
 **Validation Rules**:
-- title required, max 200 characters
+- name required, max 200 characters
 - created_by must reference existing User
 
 ### Log
@@ -167,20 +141,20 @@ CREATE TABLE review_tag_associations (
 ## Relationships Summary
 
 ```
-User (1) ─── (∞) Review
+User (1) ─── (∞) Log
 User (1) ─── (∞) UserTagProgress  
 User (1) ─── (∞) Tag (created_by)
 User (1) ─── (∞) Session
 
 Tag (1) ─── (∞) Tag (parent-child hierarchy)
-Tag (1) ─── (∞) ReviewTagAssociation
+Tag (1) ─── (∞) LogTagAssociation
 Tag (1) ─── (∞) UserTagProgress
 
-Review (∞) ─── (1) User
-Review (1) ─── (∞) ReviewTagAssociation
+Log (∞) ─── (1) User
+Log (1) ─── (∞) LogTagAssociation
 
-ReviewTagAssociation (∞) ─── (1) Review
-ReviewTagAssociation (∞) ─── (1) Tag
+LogTagAssociation (∞) ─── (1) Log
+LogTagAssociation (∞) ─── (1) Tag
 
 UserTagProgress (∞) ─── (1) User
 UserTagProgress (∞) ─── (1) Tag (content_tag)
@@ -204,7 +178,7 @@ CREATE TABLE users (
 -- Tags table (unified tagging system)
 CREATE TABLE tags (
     id TEXT PRIMARY KEY,
-    title TEXT NOT NULL CHECK (LENGTH(title) <= 200),
+    name TEXT NOT NULL CHECK (LENGTH(name) <= 200),
     description TEXT,
     metadata TEXT, -- JSON for flexible data storage
     created_by TEXT NOT NULL,
@@ -266,7 +240,7 @@ CREATE TABLE user_tag_progress (
 );
 
 -- Initial Tags (seeded data)
-INSERT INTO tags (id, title, description, metadata, created_by) VALUES
+INSERT INTO tags (id, name, description, metadata, created_by) VALUES
 ('tag_anime', 'Anime', 'Japanese animated series and films', '{"supports_episodes": true}', 'system'),
 ('tag_manga', 'Manga', 'Japanese comics and graphic novels', '{"supports_episodes": true}', 'system'),
 ('tag_game', 'Game', 'Video games and interactive entertainment', '{"supports_episodes": false}', 'system'),

@@ -8,7 +8,7 @@ describe('Contract: DELETE /logs/{logId}', () => {
     const response = await app.request('/logs/123', {
       method: 'DELETE',
       headers: {
-        'Cookie': 'session=owner_session_token'
+        'Cookie': 'session=valid_session_token'
       }
     });
 
@@ -31,7 +31,7 @@ describe('Contract: DELETE /logs/{logId}', () => {
       }
     });
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401); // Invalid token returns 401, not 403
   });
 
   it('should return 404 for non-existent log', async () => {

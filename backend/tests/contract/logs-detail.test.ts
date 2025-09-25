@@ -13,28 +13,27 @@ describe('Contract: GET /logs/{logId}', () => {
     const data = await response.json();
     expect(data).toHaveProperty('id', '123');
     expect(data).toHaveProperty('title');
-    expect(data).toHaveProperty('content');
-    expect(data).toHaveProperty('content_html');
-    expect(data).toHaveProperty('privacy', 'public');
+    expect(data).toHaveProperty('content_md');
+    expect(data).toHaveProperty('is_public', true);
     expect(data).toHaveProperty('created_at');
     expect(data).toHaveProperty('updated_at');
-    expect(data).toHaveProperty('user_id');
-    expect(data).toHaveProperty('tag_ids');
-    expect(data).toHaveProperty('episode_number');
-    expect(data).toHaveProperty('rating');
+    expect(data).toHaveProperty('user');
+    expect(data.user).toHaveProperty('id');
+    expect(data).toHaveProperty('associated_tags');
+    expect(Array.isArray(data.associated_tags)).toBe(true);
   });
 
   it('should return private log only to owner', async () => {
     const response = await app.request('/logs/456', {
       headers: {
-        'Cookie': 'session=owner_session_token'
+        'Cookie': 'session=valid_session_token_456'
       }
     });
 
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data).toHaveProperty('id', '456');
-    expect(data).toHaveProperty('privacy', 'private');
+    expect(data).toHaveProperty('is_public', false);
   });
 
   it('should return 403 for private log accessed by non-owner', async () => {
@@ -80,7 +79,7 @@ describe('Contract: GET /logs/{logId}', () => {
     if (data.tags && data.tags.length > 0) {
       expect(data.tags[0]).toHaveProperty('id');
       expect(data.tags[0]).toHaveProperty('name');
-      expect(data.tags[0]).toHaveProperty('category');
+      expect(data.tags[0]).toHaveProperty('description');
     }
   });
 });

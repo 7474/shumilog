@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import app from '../helpers/app';
 
 // Integration test: Tag-based content discovery
 describe('Integration: Content Discovery', () => {
-  import { app } from "../helpers/app";
 
   it('should discover content through tag browsing and associations', async () => {
     // Browse all available tags

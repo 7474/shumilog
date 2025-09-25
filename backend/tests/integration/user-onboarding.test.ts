@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-import { app } from "../helpers/app";
+import app from '../helpers/app';
 
 describe('Integration: New User Registration and First Log', () => {
   beforeEach(() => {

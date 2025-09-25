@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import app from '../helpers/app';
 
 // Integration test: Episode-level log tracking with tag associations
-describe('Integration: Episode-level Log Tracking', () => {
-  import { app } from "../helpers/app";
+describe('Integration: Episode-Level Review Tracking', () => {
 
   it('should track episode progress across anime series', async () => {
     // Login with Twitter OAuth

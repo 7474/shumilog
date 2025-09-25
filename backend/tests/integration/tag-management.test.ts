@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import app from '../helpers/app';
 
 // Integration test: Dynamic tag creation and management
 describe('Integration: Tag Management', () => {
-  import { app } from "../helpers/app";
 
   it('should create and associate new tags during log creation', async () => {
     const sessionCookie = 'session=test_session_token';

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shumilog - Personal Content Logger</title>
+    <link rel="stylesheet" href="../styles/main.css">
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>Shumilog</h1>
+            <p class="subtitle">Log and share your personal content journey</p>
+            <p class="description">
+                Track your anime, manga, games, and other content with personal logs and tags. 
+                Share your thoughts and discover content through community-driven associations.
+            </p>
+        </header>
+
+        <main class="landing-content">
+            <section class="features">
+                <h2>Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>📝 Personal Logs</h3>
+                        <p>Create detailed logs with Markdown formatting for any content you consume</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🏷️ Flexible Tagging</h3>
+                        <p>Organize content with hierarchical tags and associations</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🐦 Twitter Integration</h3>
+                        <p>Login with Twitter and share your logs with your network</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📱 Mobile-First</h3>
+                        <p>Optimized for mobile usage with responsive design</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="auth-section">
+                <h2>Get Started</h2>
+                <p>Sign in with your Twitter account to start logging your content journey</p>
+                <a href="/auth/twitter" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M23.953 4.57a10 10 0 0 1-2.825.775 4.958 4.958 0 0 0 2.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 0 0-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 0 0-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 0 1-2.228-.616v.06a4.923 4.923 0 0 0 3.946 4.827 4.996 4.996 0 0 1-2.212.085 4.936 4.936 0 0 0 4.604 3.417 9.867 9.867 0 0 1-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 0 0 7.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0 0 24 4.59z"/>
+                    </svg>
+                    Login with Twitter
+                </a>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2024 Shumilog. Built for the otaku community.</p>
+            <p class="mobile-note">📱 Best experienced on mobile devices</p>
+        </footer>
+    </div>
+
+    <script>
+        // Simple analytics and mobile optimization
+        if ('serviceWorker' in navigator) {
+            // Future PWA support
+            console.log('Service Worker supported');
+        }
+        
+        // Mobile-specific optimizations
+        if (window.innerWidth <= 768) {
+            document.body.classList.add('mobile-optimized');
+        }
+    </script>
+</body>
+</html>

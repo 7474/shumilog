@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import app from '../helpers/app';
 
 // Integration test: Mobile-first experience workflows
 describe('Integration: Mobile Workflows', () => {
-  import { app } from "../helpers/app";
 
   it('should handle mobile user journey from login to log creation', async () => {
     // Mobile user starts OAuth flow

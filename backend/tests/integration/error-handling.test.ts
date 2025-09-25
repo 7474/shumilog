@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import app from '../helpers/app';
 
 // Integration test: Error handling and edge cases
 describe('Integration: Error Handling', () => {
-  import { app } from "../helpers/app";
 
   it('should handle malformed request bodies gracefully', async () => {
     const sessionCookie = 'session=test_session_token';

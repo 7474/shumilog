@@ -1,6 +1,6 @@
 export interface Session {
   sessionId: string;
-  userId: number;
+  userId: string;
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: number;
@@ -29,7 +29,7 @@ export class SessionService {
   /**
    * Create a new session
    */
-  async createSession(userId: number, tokens?: SessionTokens, metadata?: {
+  async createSession(userId: string, tokens?: SessionTokens, metadata?: {
     ipAddress?: string;
     userAgent?: string;
   }): Promise<string> {
@@ -101,7 +101,7 @@ export class SessionService {
   /**
    * Get session by user ID
    */
-  async getSessionByUserId(userId: number): Promise<Session | null> {
+  async getSessionByUserId(userId: string): Promise<Session | null> {
     if (!this.kv) {
       return null;
     }
@@ -171,7 +171,7 @@ export class SessionService {
   /**
    * Destroy all sessions for a user
    */
-  async destroyUserSessions(userId: number): Promise<void> {
+  async destroyUserSessions(userId: string): Promise<void> {
     if (!this.kv) {
       return;
     }

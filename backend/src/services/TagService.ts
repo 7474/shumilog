@@ -1,4 +1,4 @@
-import { Tag, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
+import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
 import { Database } from '../db/database.js';
 
 export interface TagUsageStats {
@@ -15,9 +15,25 @@ export class TagService {
    */
   async createTag(data: CreateTagData, createdBy: string): Promise<Tag> {
     const now = new Date().toISOString();
+    const tagId = `tag_${Date.now()}`;
     
-    const tagData: Tag = {
-      id: `tag_${Date.now()}`, // Generate string ID
+    const stmt = this.db.prepare(`
+      INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    await stmt.run([
+      tagId,
+      data.name,
+      data.description || null,
+      TagModel.serializeMetadata(data.metadata || {}),
+      createdBy,
+      now,
+      now
+    ]);
+
+    return {
+      id: tagId,
       name: data.name,
       description: data.description,
       metadata: data.metadata || {},
@@ -25,44 +41,112 @@ export class TagService {
       created_at: now,
       updated_at: now
     };
-
-    // This will be implemented when the Database API is finalized
-    // For now, just return the tag data
-    return tagData;
   }
 
   /**
    * Update a tag
    */
   async updateTag(tagId: string, data: UpdateTagData): Promise<Tag> {
-    // Placeholder implementation
-    throw new Error('Not implemented');
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (data.name !== undefined) {
+      updates.push('name = ?');
+      params.push(data.name);
+    }
+    
+    if (data.description !== undefined) {
+      updates.push('description = ?');
+      params.push(data.description);
+    }
+    
+    if (data.metadata !== undefined) {
+      updates.push('metadata = ?');
+      params.push(TagModel.serializeMetadata(data.metadata));
+    }
+    
+    if (updates.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    updates.push('updated_at = ?');
+    params.push(new Date().toISOString());
+    params.push(tagId);
+    
+    const stmt = this.db.prepare(`
+      UPDATE tags 
+      SET ${updates.join(', ')}
+      WHERE id = ?
+    `);
+    
+    await stmt.run(params);
+    
+    // Return updated tag
+    const updatedTag = await this.getTagById(tagId);
+    if (!updatedTag) {
+      throw new Error('Tag not found after update');
+    }
+    
+    return updatedTag;
   }
 
   /**
    * Get tag by ID
    */
   async getTagById(id: string): Promise<Tag | null> {
-    // Placeholder implementation
-    return null;
+    const row = await this.db.queryFirst(
+      'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags WHERE id = ?',
+      [id]
+    );
+    
+    return row ? TagModel.fromRow(row) : null;
   }
 
   /**
    * Search tags
    */
   async searchTags(options: TagSearchParams = {}): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
+    const { search, limit = 20, offset = 0 } = options;
+    
+    let sql = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags';
+    const params: any[] = [];
+    
+    if (search) {
+      sql += ' WHERE name LIKE ? OR description LIKE ?';
+      const searchPattern = `%${search}%`;
+      params.push(searchPattern, searchPattern);
+    }
+    
+    sql += ' ORDER BY name ASC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+    
+    const rows = await this.db.query(sql, params);
+    return rows.map(row => TagModel.fromRow(row));
   }
 
   /**
    * Get tag usage statistics
    */
   async getTagUsageStats(tagId: string): Promise<TagUsageStats> {
+    const usageResult = await this.db.queryFirst<{ count: number }>(
+      'SELECT COUNT(*) as count FROM log_tag_associations WHERE tag_id = ?',
+      [tagId]
+    );
+    
+    const lastUsedResult = await this.db.queryFirst<{ last_used: string }>(
+      `SELECT l.created_at as last_used 
+       FROM log_tag_associations lta 
+       JOIN logs l ON l.id = lta.log_id 
+       WHERE lta.tag_id = ? 
+       ORDER BY l.created_at DESC 
+       LIMIT 1`,
+      [tagId]
+    );
+    
     return {
       tagId,
-      usageCount: 0,
-      lastUsed: new Date().toISOString()
+      usageCount: usageResult?.count || 0,
+      lastUsed: lastUsedResult?.last_used || new Date().toISOString()
     };
   }
 
@@ -70,30 +154,73 @@ export class TagService {
    * Get most popular tags
    */
   async getPopularTags(limit = 20): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
+    const rows = await this.db.query(
+      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+              COUNT(lta.tag_id) as usage_count
+       FROM tags t
+       LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
+       GROUP BY t.id
+       ORDER BY usage_count DESC, t.name ASC
+       LIMIT ?`,
+      [limit]
+    );
+    
+    return rows.map(row => TagModel.fromRow(row));
   }
 
   /**
    * Get recently used tags for a user
    */
   async getRecentTagsForUser(userId: string, limit = 10): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
+    const rows = await this.db.query(
+      `SELECT DISTINCT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+              MAX(l.created_at) as last_used
+       FROM tags t
+       JOIN log_tag_associations lta ON t.id = lta.tag_id
+       JOIN logs l ON l.id = lta.log_id
+       WHERE l.user_id = ?
+       GROUP BY t.id
+       ORDER BY last_used DESC
+       LIMIT ?`,
+      [userId, limit]
+    );
+    
+    return rows.map(row => TagModel.fromRow(row));
   }
 
   /**
    * Get tag suggestions based on input
    */
   async getTagSuggestions(query: string, limit = 5): Promise<Tag[]> {
-    // Placeholder implementation
-    return [];
+    const searchPattern = `%${query}%`;
+    const rows = await this.db.query(
+      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+              COUNT(lta.tag_id) as usage_count
+       FROM tags t
+       LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
+       WHERE t.name LIKE ? OR t.description LIKE ?
+       GROUP BY t.id
+       ORDER BY usage_count DESC, t.name ASC
+       LIMIT ?`,
+      [searchPattern, searchPattern, limit]
+    );
+    
+    return rows.map(row => TagModel.fromRow(row));
   }
 
   /**
    * Delete a tag
    */
   async deleteTag(tagId: string): Promise<void> {
-    // Placeholder implementation
+    // Start transaction - delete associations first, then tag
+    const deleteAssociationsStmt = this.db.prepare(
+      'DELETE FROM log_tag_associations WHERE tag_id = ?'
+    );
+    await deleteAssociationsStmt.run([tagId]);
+    
+    const deleteTagStmt = this.db.prepare(
+      'DELETE FROM tags WHERE id = ?'
+    );
+    await deleteTagStmt.run([tagId]);
   }
 }

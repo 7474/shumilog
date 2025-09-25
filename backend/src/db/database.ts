@@ -52,7 +52,13 @@ export class Database {
 
   constructor(config: DatabaseConfig) {
     this.config = config;
-    this.db = null;
+    
+    // For D1 databases, we can connect immediately since they're just bindings
+    if (config.d1Database) {
+      this.db = config.d1Database;
+    } else {
+      this.db = null;
+    }
   }
 
   /**
@@ -61,7 +67,7 @@ export class Database {
   async connect(): Promise<void> {
     try {
       if (this.config.d1Database) {
-        // Cloudflare D1 database
+        // Cloudflare D1 database - already connected in constructor
         this.db = this.config.d1Database;
       } else if (this.config.databasePath) {
         // Local SQLite database (for development/testing)

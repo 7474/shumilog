@@ -1,21 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import app from '../helpers/app'
+import app, { createTestSession, createTestUser, clearTestData } from '../helpers/app'
 
 describe('POST /tags - Create Tag Contract', () => {
   beforeEach(async () => {
     // Setup test database state
+    await clearTestData();
   })
 
   afterEach(async () => {
     // Cleanup test data
+    await clearTestData();
   })
 
   it('should create a new tag with valid data', async () => {
-    // Mock authenticated user session
-    const mockSession = {
-      userId: 'mock-user-id',
-      twitterUsername: 'testuser'
-    }
+    // Create test user and authenticated session
+    await createTestUser('mock-user-id', 'testuser');
+    const sessionToken = await createTestSession('mock-user-id');
     
     const tagData = {
       name: 'Attack on Titan',
@@ -31,7 +31,7 @@ describe('POST /tags - Create Tag Contract', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': 'session=mock-session-token'
+        'Cookie': `session=${sessionToken}`
       },
       body: JSON.stringify(tagData)
     })
@@ -55,6 +55,10 @@ describe('POST /tags - Create Tag Contract', () => {
   })
 
   it('should return 400 for invalid tag data', async () => {
+    // Create test user and authenticated session
+    await createTestUser('mock-user-id', 'testuser');
+    const sessionToken = await createTestSession('mock-user-id');
+
     const invalidTagData = {
       // Missing required name field
       description: 'Invalid tag'
@@ -64,7 +68,7 @@ describe('POST /tags - Create Tag Contract', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': 'session=mock-session-token'
+        'Cookie': `session=${sessionToken}`
       },
       body: JSON.stringify(invalidTagData)
     })

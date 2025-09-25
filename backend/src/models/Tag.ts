@@ -49,7 +49,7 @@ export const TAG_TABLE_SCHEMA = `
     FOREIGN KEY (created_by) REFERENCES users(id)
   );
   
-  CREATE INDEX IF NOT EXISTS idx_tags_title ON tags(title);
+  CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
   CREATE INDEX IF NOT EXISTS idx_tags_created_by ON tags(created_by);
   CREATE INDEX IF NOT EXISTS idx_tags_created_at ON tags(created_at);
 `;

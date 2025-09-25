@@ -1,4 +1,6 @@
-import { Log, LogDetail, CreateLogData, UpdateLogData, LogSearchParams } from '../models/Log.js';
+import { Log, LogDetail, LogModel, CreateLogData, UpdateLogData, LogSearchParams } from '../models/Log.js';
+import { Tag, TagModel } from '../models/Tag.js';
+import { User, UserModel } from '../models/User.js';
 import { Database } from '../db/database.js';
 
 export interface LogSearchResult {
@@ -15,54 +17,208 @@ export class LogService {
    */
   async createLog(data: CreateLogData, userId: string): Promise<Log> {
     const now = new Date().toISOString();
+    const logId = `log_${Date.now()}`;
     
-    // For now, create a placeholder log structure
-    // This would need user and tag lookup in real implementation
-    const logData: Log = {
-      id: `log_${Date.now()}`,
-      user: {
-        id: userId,
-        twitter_username: 'placeholder',
-        display_name: 'Placeholder User',
-        created_at: now
-      },
-      associated_tags: [], // Would be populated based on data.tag_ids
-      title: data.title,
-      content_md: data.content_md,
-      created_at: now,
-      updated_at: now
-    };
+    // Create the log
+    const stmt = this.db.prepare(`
+      INSERT INTO logs (id, user_id, title, content_md, is_public, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    await stmt.run([
+      logId,
+      userId,
+      data.title || null,
+      data.content_md,
+      data.is_public ? 1 : 0,
+      now,
+      now
+    ]);
 
-    // This will be implemented when the Database API is finalized
-    // For now, just return the log data
-    return logData;
+    // Associate tags with log
+    if (data.tag_ids && data.tag_ids.length > 0) {
+      await this.associateTagsWithLog(logId, data.tag_ids);
+    }
+
+    // Return the created log with user and tags
+    const createdLog = await this.getLogById(logId, userId);
+    if (!createdLog) {
+      throw new Error('Failed to create log');
+    }
+    
+    return createdLog;
   }
 
   /**
    * Update a log entry
    */
   async updateLog(logId: string, data: UpdateLogData, userId: string): Promise<Log> {
-    // Placeholder implementation
-    throw new Error('Not implemented');
+    // Verify ownership
+    const isOwner = await this.validateLogOwnership(logId, userId);
+    if (!isOwner) {
+      throw new Error('Unauthorized: User does not own this log');
+    }
+    
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (data.title !== undefined) {
+      updates.push('title = ?');
+      params.push(data.title);
+    }
+    
+    if (data.content_md !== undefined) {
+      updates.push('content_md = ?');
+      params.push(data.content_md);
+    }
+    
+    if (data.is_public !== undefined) {
+      updates.push('is_public = ?');
+      params.push(data.is_public ? 1 : 0);
+    }
+    
+    if (updates.length > 0) {
+      updates.push('updated_at = ?');
+      params.push(new Date().toISOString());
+      params.push(logId);
+      
+      const stmt = this.db.prepare(`
+        UPDATE logs 
+        SET ${updates.join(', ')}
+        WHERE id = ?
+      `);
+      
+      await stmt.run(params);
+    }
+    
+    // Update tag associations if provided
+    if (data.tag_ids !== undefined) {
+      // Remove all existing associations
+      const deleteStmt = this.db.prepare('DELETE FROM log_tag_associations WHERE log_id = ?');
+      await deleteStmt.run([logId]);
+      
+      // Add new associations
+      if (data.tag_ids.length > 0) {
+        await this.associateTagsWithLog(logId, data.tag_ids);
+      }
+    }
+    
+    // Return updated log
+    const updatedLog = await this.getLogById(logId, userId);
+    if (!updatedLog) {
+      throw new Error('Log not found after update');
+    }
+    
+    return updatedLog;
   }
 
   /**
    * Get log by ID
    */
   async getLogById(id: string, userId?: string): Promise<Log | null> {
-    // Placeholder implementation
-    return null;
+    // Get log with user info
+    const logRow = await this.db.queryFirst(`
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      FROM logs l
+      JOIN users u ON l.user_id = u.id
+      WHERE l.id = ?
+    `, [id]);
+    
+    if (!logRow) {
+      return null;
+    }
+    
+    // Get associated tags
+    const tagRows = await this.db.query(`
+      SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+      FROM tags t
+      JOIN log_tag_associations lta ON t.id = lta.tag_id
+      WHERE lta.log_id = ?
+      ORDER BY t.name
+    `, [id]);
+    
+    const user: User = {
+      id: logRow.user_id,
+      twitter_username: logRow.twitter_username,
+      display_name: logRow.display_name,
+      avatar_url: logRow.avatar_url,
+      created_at: logRow.user_created_at
+    };
+    
+    const tags: Tag[] = tagRows.map(row => TagModel.fromRow(row));
+    
+    return LogModel.fromRow(logRow, user, tags);
   }
 
   /**
    * Search logs with full-text search
    */
   async searchLogs(options: LogSearchParams): Promise<LogSearchResult> {
-    // Placeholder implementation
+    const { tag_ids, user_id, limit = 20, offset = 0 } = options;
+    
+    let sql = `
+      SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      FROM logs l
+      JOIN users u ON l.user_id = u.id
+    `;
+    
+    const conditions: string[] = [];
+    const params: any[] = [];
+    
+    if (tag_ids && tag_ids.length > 0) {
+      const placeholders = tag_ids.map(() => '?').join(',');
+      sql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
+      conditions.push(`lta.tag_id IN (${placeholders})`);
+      params.push(...tag_ids);
+    }
+    
+    if (user_id) {
+      conditions.push('l.user_id = ?');
+      params.push(user_id);
+    }
+    
+    if (conditions.length > 0) {
+      sql += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    
+    sql += ' ORDER BY l.created_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+    
+    const logRows = await this.db.query(sql, params);
+    const logs = await this.enrichLogsWithTags(logRows);
+    
+    // Get total count for pagination
+    let countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l`;
+    const countParams: any[] = [];
+    
+    if (tag_ids && tag_ids.length > 0) {
+      const placeholders = tag_ids.map(() => '?').join(',');
+      countSql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
+      countParams.push(...tag_ids);
+    }
+    
+    const countConditions: string[] = [];
+    if (tag_ids && tag_ids.length > 0) {
+      const placeholders = tag_ids.map(() => '?').join(',');
+      countConditions.push(`lta.tag_id IN (${placeholders})`);
+    }
+    
+    if (user_id) {
+      countConditions.push('l.user_id = ?');
+      countParams.push(user_id);
+    }
+    
+    if (countConditions.length > 0) {
+      countSql += ` WHERE ${countConditions.join(' AND ')}`;
+    }
+    
+    const totalResult = await this.db.queryFirst<{ total: number }>(countSql, countParams);
+    const total = totalResult?.total || 0;
+    
     return {
-      logs: [],
-      total: 0,
-      hasMore: false
+      logs,
+      total,
+      hasMore: offset + logs.length < total
     };
   }
 
@@ -70,57 +226,92 @@ export class LogService {
    * Get logs for a user
    */
   async getUserLogs(userId: string, limit = 20, offset = 0): Promise<LogSearchResult> {
-    // Placeholder implementation
-    return {
-      logs: [],
-      total: 0,
-      hasMore: false
-    };
+    return this.searchLogs({ user_id: userId, limit, offset });
   }
 
   /**
    * Get public logs (for discovery)
    */
   async getPublicLogs(limit = 20, offset = 0): Promise<LogSearchResult> {
-    // Placeholder implementation
+    const sql = `
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      FROM logs l
+      JOIN users u ON l.user_id = u.id
+      WHERE l.is_public = 1
+      ORDER BY l.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    
+    const logRows = await this.db.query(sql, [limit, offset]);
+    const logs = await this.enrichLogsWithTags(logRows);
+    
+    const totalResult = await this.db.queryFirst<{ total: number }>(
+      'SELECT COUNT(*) as total FROM logs WHERE is_public = 1'
+    );
+    const total = totalResult?.total || 0;
+    
     return {
-      logs: [],
-      total: 0,
-      hasMore: false
+      logs,
+      total,
+      hasMore: offset + logs.length < total
     };
   }
 
   /**
    * Get logs by tag
    */
-  async getLogsByTag(tagId: number, limit = 20, offset = 0): Promise<LogSearchResult> {
-    // Placeholder implementation
-    return {
-      logs: [],
-      total: 0,
-      hasMore: false
-    };
+  async getLogsByTag(tagId: string, limit = 20, offset = 0): Promise<LogSearchResult> {
+    return this.searchLogs({ tag_ids: [tagId], limit, offset });
   }
 
   /**
    * Associate tags with a log
    */
   async associateTagsWithLog(logId: string, tagIds: string[]): Promise<void> {
-    // Placeholder implementation
+    if (tagIds.length === 0) return;
+    
+    const stmt = this.db.prepare(
+      'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id) VALUES (?, ?)'
+    );
+    
+    for (const tagId of tagIds) {
+      await stmt.run([logId, tagId]);
+    }
   }
 
   /**
    * Remove tag associations from a log
    */
   async removeTagsFromLog(logId: string, tagIds: string[]): Promise<void> {
-    // Placeholder implementation
+    if (tagIds.length === 0) return;
+    
+    const placeholders = tagIds.map(() => '?').join(',');
+    const stmt = this.db.prepare(
+      `DELETE FROM log_tag_associations WHERE log_id = ? AND tag_id IN (${placeholders})`
+    );
+    
+    await stmt.run([logId, ...tagIds]);
   }
 
   /**
    * Delete a log entry
    */
   async deleteLog(logId: string, userId: string): Promise<void> {
-    // Placeholder implementation
+    // Verify ownership
+    const isOwner = await this.validateLogOwnership(logId, userId);
+    if (!isOwner) {
+      throw new Error('Unauthorized: User does not own this log');
+    }
+    
+    // Delete tag associations first
+    const deleteAssociationsStmt = this.db.prepare(
+      'DELETE FROM log_tag_associations WHERE log_id = ?'
+    );
+    await deleteAssociationsStmt.run([logId]);
+    
+    // Delete the log
+    const deleteLogStmt = this.db.prepare('DELETE FROM logs WHERE id = ?');
+    await deleteLogStmt.run([logId]);
   }
 
   /**
@@ -134,8 +325,17 @@ export class LogService {
    * Get recent logs for discovery
    */
   async getRecentLogs(limit = 10): Promise<Log[]> {
-    // Placeholder implementation
-    return [];
+    const sql = `
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      FROM logs l
+      JOIN users u ON l.user_id = u.id
+      WHERE l.is_public = 1
+      ORDER BY l.created_at DESC
+      LIMIT ?
+    `;
+    
+    const logRows = await this.db.query(sql, [limit]);
+    return this.enrichLogsWithTags(logRows);
   }
 
   /**
@@ -157,10 +357,27 @@ export class LogService {
     publicLogs: number;
     recentLogsCount: number;
   }> {
+    const totalResult = await this.db.queryFirst<{ count: number }>(
+      'SELECT COUNT(*) as count FROM logs WHERE user_id = ?',
+      [userId]
+    );
+    
+    const publicResult = await this.db.queryFirst<{ count: number }>(
+      'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND is_public = 1',
+      [userId]
+    );
+    
+    const recentDate = new Date();
+    recentDate.setDate(recentDate.getDate() - 7);
+    const recentResult = await this.db.queryFirst<{ count: number }>(
+      'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND created_at >= ?',
+      [userId, recentDate.toISOString()]
+    );
+    
     return {
-      totalLogs: 0,
-      publicLogs: 0,
-      recentLogsCount: 0
+      totalLogs: totalResult?.count || 0,
+      publicLogs: publicResult?.count || 0,
+      recentLogsCount: recentResult?.count || 0
     };
   }
 
@@ -168,7 +385,55 @@ export class LogService {
    * Validate user owns the log
    */
   async validateLogOwnership(logId: string, userId: string): Promise<boolean> {
-    // Placeholder implementation
-    return false;
+    const result = await this.db.queryFirst<{ count: number }>(
+      'SELECT COUNT(*) as count FROM logs WHERE id = ? AND user_id = ?',
+      [logId, userId]
+    );
+    
+    return (result?.count || 0) > 0;
+  }
+
+  /**
+   * Helper method to enrich log rows with tag information
+   */
+  private async enrichLogsWithTags(logRows: any[]): Promise<Log[]> {
+    if (logRows.length === 0) return [];
+    
+    const logIds = logRows.map(row => row.id);
+    const placeholders = logIds.map(() => '?').join(',');
+    
+    // Get all tags for these logs in one query
+    const tagAssociations = await this.db.query(`
+      SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+      FROM log_tag_associations lta
+      JOIN tags t ON lta.tag_id = t.id
+      WHERE lta.log_id IN (${placeholders})
+      ORDER BY t.name
+    `, logIds);
+    
+    // Group tags by log_id
+    const tagsByLogId = new Map<string, Tag[]>();
+    for (const tagRow of tagAssociations) {
+      const logId = tagRow.log_id;
+      if (!tagsByLogId.has(logId)) {
+        tagsByLogId.set(logId, []);
+      }
+      tagsByLogId.get(logId)!.push(TagModel.fromRow(tagRow));
+    }
+    
+    // Build log objects
+    return logRows.map(row => {
+      const user: User = {
+        id: row.user_id,
+        twitter_username: row.twitter_username,
+        display_name: row.display_name,
+        avatar_url: row.avatar_url,
+        created_at: row.user_created_at
+      };
+      
+      const tags = tagsByLogId.get(row.id) || [];
+      
+      return LogModel.fromRow(row, user, tags);
+    });
   }
 }

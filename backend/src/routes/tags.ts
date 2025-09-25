@@ -1,5 +1,9 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { getAuthUser, authMiddleware } from '../middleware/auth.js';
+import { TagService } from '../services/TagService.js';
+import { UserService } from '../services/UserService.js';
+import { SessionService } from '../services/SessionService.js';
 
 const tags = new Hono();
 
@@ -62,11 +66,8 @@ tags.get('/', async (c) => {
 
 // POST /tags - Create new tag
 tags.post('/', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
-  
-  if (!sessionToken) {
-    throw new HTTPException(401, { message: 'Not authenticated' });
-  }
+  // Use auth helper to get authenticated user
+  const user = getAuthUser(c);
 
   const body = await c.req.json();
   
@@ -78,16 +79,15 @@ tags.post('/', async (c) => {
     throw new HTTPException(400, { message: 'Tag name too long' });
   }
 
-  // TODO: Create tag in database
-  const newTag = {
-    id: crypto.randomUUID(),
+  // Get TagService from context
+  const tagService = (c as any).get('tagService') as TagService;
+  
+  // Create tag using TagService
+  const newTag = await tagService.createTag({
     name: body.name,
     description: body.description || '',
-    metadata: body.metadata || {},
-    created_by: 'user_123', // TODO: Get from session
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
+    metadata: body.metadata || {}
+  }, user.id);
 
   return c.json(newTag, 201);
 });

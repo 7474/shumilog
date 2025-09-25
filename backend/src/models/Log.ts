@@ -48,7 +48,7 @@ export interface LogSearchParams {
 // Import Tag interface (will be available after Tag model is fixed)
 interface Tag {
   id: string;
-  title: string;
+  name: string;
   description?: string;
   metadata: object;
   created_by: string;

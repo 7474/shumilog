@@ -78,15 +78,21 @@ paths:
         '401':
           description: Not authenticated
 
-  /content:
+  /tags:
     get:
-      summary: Search and list content
+      summary: Search and list tags
       parameters:
         - name: type
           in: query
           schema:
             type: string
-            enum: [anime, manga, game, movie, book, music, theater, figure, model, merchandise]
+            enum: [category, content, episode]
+            description: Filter by tag type (category, content, or episode)
+        - name: parent_id
+          in: query
+          schema:
+            type: string
+            description: Filter by parent tag ID
         - name: search
           in: query
           schema:
@@ -104,7 +110,7 @@ paths:
             default: 0
       responses:
         '200':
-          description: List of content items
+          description: List of tags
           content:
             application/json:
               schema:
@@ -113,7 +119,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Content'
+                      $ref: '#/components/schemas/Tag'
                   total:
                     type: integer
                   limit:
@@ -122,7 +128,7 @@ paths:
                     type: integer
 
     post:
-      summary: Create new content item
+      summary: Create new tag
       security:
         - sessionAuth: []
       requestBody:
@@ -130,14 +136,200 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ContentCreate'
+              $ref: '#/components/schemas/TagCreate'
       responses:
         '201':
-          description: Content created
+          description: Tag created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Content'
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid tag data
+        '401':
+          description: Not authenticated
+
+  /tags/{tagId}:
+    get:
+      summary: Get tag details
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDetail'
+        '404':
+          description: Tag not found
+
+    put:
+      summary: Update tag
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not tag owner
+        '404':
+          description: Tag not found
+
+    delete:
+      summary: Delete tag
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Tag deleted
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not tag owner
+        '404':
+          description: Tag not found
+
+  /tags/{tagId}/children:
+    get:
+      summary: List child tags (episodes, seasons, volumes, etc.)
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of child tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+
+    post:
+      summary: Add child tag to parent
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Child tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Not authenticated
+        '404':
+          description: Parent tag not found
+
+  /content:
+    get:
+      summary: Search and list content tags
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            description: Filter by category tag (e.g., anime, manga, game, movie, book, music)
+        - name: parent_id
+          in: query
+          schema:
+            type: string
+            description: Filter by parent content ID
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of content tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+    post:
+      summary: Create content as tag
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Content tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
         '400':
           description: Invalid content data
         '401':
@@ -145,7 +337,7 @@ paths:
 
   /content/{contentId}:
     get:
-      summary: Get content details
+      summary: Get content tag details
       parameters:
         - name: contentId
           in: path
@@ -154,17 +346,67 @@ paths:
             type: string
       responses:
         '200':
-          description: Content details
+          description: Content tag details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContentDetail'
+                $ref: '#/components/schemas/TagDetail'
         '404':
           description: Content not found
 
-  /content/{contentId}/subcontent:
+    put:
+      summary: Update content tag
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Content tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not content owner
+        '404':
+          description: Content not found
+
+    delete:
+      summary: Delete content tag
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Content tag deleted
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not content owner
+        '404':
+          description: Content not found
+
+  /content/{contentId}/episodes:
     get:
-      summary: List episodes/chapters for content
+      summary: List episode tags for content
       parameters:
         - name: contentId
           in: path
@@ -173,7 +415,7 @@ paths:
             type: string
       responses:
         '200':
-          description: List of sub-content items
+          description: List of episode tags
           content:
             application/json:
               schema:
@@ -388,56 +630,68 @@ components:
           type: string
           format: date-time
 
-    Content:
+    Tag:
       type: object
       properties:
         id:
           type: string
         title:
           type: string
-        content_type:
+        type:
           type: string
-          enum: [anime, manga, game, movie, book, music, theater, figure, model, merchandise]
+          enum: [category, content, episode]
+          description: Tag type - category (genre/medium), content (series/work), or episode (specific installment)
         description:
           type: string
-        wikipedia_url:
+        parent_id:
           type: string
-        official_url:
+          description: Parent tag ID for hierarchical relationships
+        metadata:
+          type: object
+          description: Flexible metadata storage (URLs, episode numbers, etc.)
+        created_by:
           type: string
-        has_episodes:
-          type: boolean
-        episode_count:
-          type: integer
+          description: User ID who created this tag
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
-    ContentCreate:
+    TagCreate:
       type: object
       required:
         - title
-        - content_type
+        - type
       properties:
         title:
           type: string
           maxLength: 200
-        content_type:
+        type:
           type: string
-          enum: [anime, manga, game, movie, book, music, theater, figure, model, merchandise]
+          enum: [category, content, episode]
         description:
           type: string
-        wikipedia_url:
+        parent_id:
           type: string
-        official_url:
-          type: string
-        has_episodes:
-          type: boolean
-        episode_count:
-          type: integer
+        metadata:
+          type: object
 
-    ContentDetail:
+    TagUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        metadata:
+          type: object
+
+    TagDetail:
       allOf:
-        - $ref: '#/components/schemas/Content'
+        - $ref: '#/components/schemas/Tag'
         - type: object
           properties:
             review_count:
@@ -448,23 +702,10 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Review'
-
-    SubContent:
-      type: object
-      properties:
-        id:
-          type: string
-        content_id:
-          type: string
-        number:
-          type: integer
-        title:
-          type: string
-        description:
-          type: string
-        release_date:
-          type: string
-          format: date
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
 
     SubContentCreate:
       type: object
@@ -489,10 +730,10 @@ components:
           type: string
         user:
           $ref: '#/components/schemas/User'
-        content:
-          $ref: '#/components/schemas/Content'
-        subcontent:
-          $ref: '#/components/schemas/SubContent'
+        content_tag:
+          $ref: '#/components/schemas/Tag'
+        episode_tag:
+          $ref: '#/components/schemas/Tag'
         title:
           type: string
         content_html:
@@ -517,13 +758,15 @@ components:
     ReviewCreate:
       type: object
       required:
-        - content_id
+        - content_tag_id
         - content_md
       properties:
-        content_id:
+        content_tag_id:
           type: string
-        subcontent_id:
+          description: ID of the content tag being reviewed
+        episode_tag_id:
           type: string
+          description: Optional ID of specific episode tag
         title:
           type: string
           maxLength: 200
@@ -545,6 +788,9 @@ components:
     ReviewUpdate:
       type: object
       properties:
+        episode_tag_id:
+          type: string
+          description: Update the episode tag being reviewed
         title:
           type: string
           maxLength: 200

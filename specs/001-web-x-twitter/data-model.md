@@ -16,7 +16,8 @@
 
 **Relationships**:
 - One-to-many with Review (user creates reviews)
-- One-to-many with UserContentProgress (tracking content consumption)
+- One-to-many with UserTagProgress (tracking tag consumption)
+- One-to-many with Tag (user creates tags)
 
 **Validation Rules**:
 - twitter_id must be unique and non-null
@@ -24,90 +25,79 @@
 - display_name max 50 characters
 - is_active defaults to true
 
-### Content
-**Purpose**: Represents media items (anime, manga, games, movies, books, music, theater)
+### Tag
+**Purpose**: Unified entity representing categories, content, and episodes in a flexible hierarchical system
 **Attributes**:
 - `id`: Primary key (UUID)
-- `title`: Content title (required)
-- `content_type`: Enum (anime, manga, game, movie, book, music, theater, figure, model, merchandise)
+- `title`: Tag title (required)
+- `type`: Tag type enum (category, content, episode) - required
 - `description`: Brief description
-- `wikipedia_url`: Wikipedia page URL
-- `official_url`: Official website URL
-- `metadata`: JSON field for type-specific data (year, studio, author, etc.)
-- `has_episodes`: Boolean flag for serialized content
-- `episode_count`: Total episodes/chapters (if applicable)
+- `parent_id`: Foreign key to parent Tag (nullable for root tags)
+- `metadata`: JSON field for flexible data storage (URLs, episode numbers, year, studio, etc.)
+- `created_by`: Foreign key to User who created this tag
 - `created_at`: Record creation timestamp
 - `updated_at`: Last update timestamp
 
 **Relationships**:
-- One-to-many with Review (content receives reviews)
-- One-to-many with SubContent (episodes, chapters)
-- One-to-many with UserContentProgress (user progress tracking)
+- Self-referential: Many-to-one with Tag (parent-child hierarchy)
+- One-to-many with Tag (parent can have multiple children)
+- One-to-many with Review (tags receive reviews)
+- One-to-many with UserTagProgress (user progress tracking)
+- Many-to-one with User (created by user)
 
 **Validation Rules**:
 - title required, max 200 characters
-- content_type must be valid enum value
-- wikipedia_url and official_url must be valid URLs if provided
-- episode_count must be positive integer if has_episodes is true
+- type must be 'category', 'content', or 'episode'
+- parent_id must reference existing Tag if provided
+- created_by must reference existing User
+- Category tags should not have parent_id (root level)
+- Content tags should have category tag as parent
+- Episode tags should have content tag as parent
 
-### SubContent
-**Purpose**: Represents episodes, chapters, or other sub-units of serialized content
-**Attributes**:
-- `id`: Primary key (UUID)
-- `content_id`: Foreign key to Content (required)
-- `number`: Episode/chapter number (required)
-- `title`: Sub-content title
-- `description`: Brief description
-- `release_date`: Release date (if known)
-- `created_at`: Record creation timestamp
-
-**Relationships**:
-- Many-to-one with Content (belongs to parent content)
-- One-to-many with Review (can be reviewed individually)
-
-**Validation Rules**:
-- content_id must reference existing Content
-- number must be positive integer
-- title max 200 characters
-- Unique constraint on (content_id, number)
+**Type-Specific Usage**:
+- **Category**: Root-level tags like "anime", "manga", "game", "movie", "book", "music", "figure"
+- **Content**: Specific works like "Attack on Titan", "Demon Slayer", "Elden Ring"  
+- **Episode**: Individual episodes/chapters like "Episode 1", "Chapter 145", "DLC Pack 1"
 
 ### Review
-**Purpose**: User-generated reviews and impressions
+**Purpose**: User-generated reviews and impressions for tags
 **Attributes**:
 - `id`: Primary key (UUID)
 - `user_id`: Foreign key to User (required)
-- `content_id`: Foreign key to Content (required)
-- `subcontent_id`: Foreign key to SubContent (optional)
+- `content_tag_id`: Foreign key to Tag (type='content', required)
+- `episode_tag_id`: Foreign key to Tag (type='episode', optional for episode-specific reviews)
 - `title`: Review title
 - `content_md`: Review content in Markdown (required)
-- `content_html`: Rendered HTML (derived)
-- `is_public`: Privacy flag (default false)
+- `content_html`: Rendered HTML from markdown
 - `rating`: Optional 1-5 star rating
 - `tags`: JSON array of user-defined tags
-- `posted_to_twitter`: Boolean flag
+- `is_public`: Privacy flag (default false)
+- `posted_to_twitter`: Whether review was shared to Twitter
 - `twitter_post_id`: Twitter post ID if shared
 - `created_at`: Review creation timestamp
 - `updated_at`: Last edit timestamp
 
 **Relationships**:
 - Many-to-one with User (user creates review)
-- Many-to-one with Content (review about content)
-- Many-to-one with SubContent (optional, for episode-specific reviews)
+- Many-to-one with Tag as content_tag (review is about content tag)
+- Many-to-one with Tag as episode_tag (review is about specific episode tag, optional)
 
 **Validation Rules**:
-- user_id and content_id required
-- content_md required, max 10,000 characters
-- title max 200 characters
+- user_id must reference existing User
+- content_tag_id must reference existing Tag with type='content'
+- episode_tag_id must reference existing Tag with type='episode' if provided
+- content_md required, max 10000 characters
 - rating must be 1-5 if provided
-- subcontent_id must belong to specified content_id if provided
+- title max 200 characters
+- If episode_tag_id provided, it must have content_tag as parent (episode belongs to content)
 
-### UserContentProgress
-**Purpose**: Tracks user's progress through serialized content
+### UserTagProgress
+**Purpose**: Tracks user's consumption progress through serialized content tags
 **Attributes**:
 - `id`: Primary key (UUID)
 - `user_id`: Foreign key to User (required)
-- `content_id`: Foreign key to Content (required)
-- `current_episode`: Last consumed episode/chapter number
+- `content_tag_id`: Foreign key to Tag (type='content', required)
+- `current_episode_number`: Current episode/chapter number (integer)
 - `status`: Enum (watching, completed, dropped, on_hold, plan_to_watch)
 - `started_at`: When user started consuming content
 - `completed_at`: When user completed content (if applicable)
@@ -115,11 +105,12 @@
 
 **Relationships**:
 - Many-to-one with User (user's progress)
-- Many-to-one with Content (progress on content)
+- Many-to-one with Tag (progress on content tag)
 
 **Validation Rules**:
-- Unique constraint on (user_id, content_id)
-- current_episode must be <= content.episode_count
+- Unique constraint on (user_id, content_tag_id)
+- content_tag_id must reference Tag with type='content'
+- current_episode_number must be positive integer
 - status must be valid enum value
 - completed_at only valid when status is 'completed'
 
@@ -139,19 +130,21 @@
 
 ```
 User (1) ─── (∞) Review
-User (1) ─── (∞) UserContentProgress
+User (1) ─── (∞) UserTagProgress  
+User (1) ─── (∞) Tag (created_by)
 User (1) ─── (∞) Session
 
-Content (1) ─── (∞) Review
-Content (1) ─── (∞) SubContent
-Content (1) ─── (∞) UserContentProgress
-
-SubContent (∞) ─── (1) Content
-SubContent (1) ─── (∞) Review
+Tag (1) ─── (∞) Tag (parent-child hierarchy)
+Tag (1) ─── (∞) Review (content tags)
+Tag (1) ─── (∞) Review (episode tags, optional)
+Tag (1) ─── (∞) UserTagProgress
 
 Review (∞) ─── (1) User
-Review (∞) ─── (1) Content
-Review (∞) ─── (1) SubContent [optional]
+Review (∞) ─── (1) Tag (content_tag)
+Review (∞) ─── (1) Tag (episode_tag, optional)
+
+UserTagProgress (∞) ─── (1) User
+UserTagProgress (∞) ─── (1) Tag (content_tag)
 ```
 
 ## Database Schema (SQLite/D1)
@@ -169,42 +162,29 @@ CREATE TABLE users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Content table
-CREATE TABLE content (
+-- Tags table (unified content, categories, and episodes)
+CREATE TABLE tags (
     id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    content_type TEXT NOT NULL CHECK (content_type IN ('anime', 'manga', 'game', 'movie', 'book', 'music', 'theater', 'figure', 'model', 'merchandise')),
+    title TEXT NOT NULL CHECK (LENGTH(title) <= 200),
+    type TEXT NOT NULL CHECK (type IN ('category', 'content', 'episode')),
     description TEXT,
-    wikipedia_url TEXT,
-    official_url TEXT,
-    metadata TEXT, -- JSON
-    has_episodes BOOLEAN DEFAULT 0,
-    episode_count INTEGER,
+    parent_id TEXT,
+    metadata TEXT, -- JSON for flexible data storage
+    created_by TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- SubContent table
-CREATE TABLE subcontent (
-    id TEXT PRIMARY KEY,
-    content_id TEXT NOT NULL,
-    number INTEGER NOT NULL,
-    title TEXT,
-    description TEXT,
-    release_date DATE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE,
-    UNIQUE(content_id, number)
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
 );
 
 -- Reviews table
 CREATE TABLE reviews (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    content_id TEXT NOT NULL,
-    subcontent_id TEXT,
-    title TEXT,
-    content_md TEXT NOT NULL,
+    content_tag_id TEXT NOT NULL,
+    episode_tag_id TEXT,
+    title TEXT CHECK (LENGTH(title) <= 200),
+    content_md TEXT NOT NULL CHECK (LENGTH(content_md) <= 10000),
     content_html TEXT NOT NULL,
     is_public BOOLEAN DEFAULT 0,
     rating INTEGER CHECK (rating >= 1 AND rating <= 5),
@@ -218,27 +198,75 @@ CREATE TABLE reviews (
     FOREIGN KEY (subcontent_id) REFERENCES subcontent(id) ON DELETE SET NULL
 );
 
--- User content progress table
-CREATE TABLE user_content_progress (
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (content_tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (episode_tag_id) REFERENCES tags(id) ON DELETE CASCADE
+);
+
+-- User Tag Progress table
+CREATE TABLE user_tag_progress (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    content_id TEXT NOT NULL,
-    current_episode INTEGER DEFAULT 0,
+    content_tag_id TEXT NOT NULL,
+    current_episode_number INTEGER DEFAULT 0,
     status TEXT NOT NULL CHECK (status IN ('watching', 'completed', 'dropped', 'on_hold', 'plan_to_watch')),
     started_at DATETIME,
     completed_at DATETIME,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE,
-    UNIQUE(user_id, content_id)
+    FOREIGN KEY (content_tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    UNIQUE(user_id, content_tag_id)
 );
+
+-- Initial Category Tags (seeded data)
+INSERT INTO tags (id, title, type, description, parent_id, metadata, created_by) VALUES
+('tag_anime', 'Anime', 'category', 'Japanese animated series and films', NULL, '{"supports_episodes": true}', 'system'),
+('tag_manga', 'Manga', 'category', 'Japanese comics and graphic novels', NULL, '{"supports_episodes": true}', 'system'),
+('tag_game', 'Game', 'category', 'Video games and interactive entertainment', NULL, '{"supports_episodes": false}', 'system'),
+('tag_movie', 'Movie', 'category', 'Films and motion pictures', NULL, '{"supports_episodes": false}', 'system'),
+('tag_book', 'Book', 'category', 'Books, novels, and literature', NULL, '{"supports_episodes": true}', 'system'),
+('tag_music', 'Music', 'category', 'Music albums, songs, and audio content', NULL, '{"supports_episodes": true}', 'system'),
+('tag_theater', 'Theater', 'category', 'Stage performances and live entertainment', NULL, '{"supports_episodes": false}', 'system'),
+('tag_figure', 'Figure', 'category', 'Collectible figures and statues', NULL, '{"supports_episodes": false}', 'system'),
+('tag_model', 'Model Kit', 'category', 'Model kits and building sets', NULL, '{"supports_episodes": false}', 'system'),
+('tag_merchandise', 'Merchandise', 'category', 'General merchandise and collectibles', NULL, '{"supports_episodes": false}', 'system');
+
+-- Indexes for performance
+CREATE INDEX idx_reviews_user_id ON reviews(user_id);
+CREATE INDEX idx_reviews_content_tag_id ON reviews(content_tag_id);
+CREATE INDEX idx_reviews_episode_tag_id ON reviews(episode_tag_id);
+CREATE INDEX idx_reviews_public ON reviews(is_public);
+CREATE INDEX idx_reviews_created_at ON reviews(created_at);
+CREATE INDEX idx_tags_type ON tags(type);
+CREATE INDEX idx_tags_parent_id ON tags(parent_id);
+CREATE INDEX idx_tags_created_by ON tags(created_by);
+CREATE INDEX idx_user_tag_progress_user_id ON user_tag_progress(user_id);
+CREATE INDEX idx_user_tag_progress_content_tag_id ON user_tag_progress(content_tag_id);
+
+-- Insert default content types
+INSERT INTO content_types (id, name, display_name, category, supports_episodes, description) VALUES
+('ct_anime', 'anime', 'Anime', 'media', 1, 'Japanese animated series and movies'),
+('ct_manga', 'manga', 'Manga', 'media', 1, 'Japanese comics and graphic novels'),
+('ct_game', 'game', 'Game', 'media', 0, 'Video games and interactive entertainment'),
+('ct_movie', 'movie', 'Movie', 'media', 0, 'Films and motion pictures'),
+('ct_book', 'book', 'Book', 'media', 1, 'Books, novels, and literature'),
+('ct_music', 'music', 'Music', 'media', 1, 'Music albums, songs, and audio content'),
+('ct_theater', 'theater', 'Theater', 'media', 0, 'Stage performances and live entertainment'),
+('ct_figure', 'figure', 'Figure', 'product', 0, 'Collectible figures and statues'),
+('ct_model', 'model', 'Model Kit', 'product', 0, 'Model kits and building sets'),
+('ct_merchandise', 'merchandise', 'Merchandise', 'product', 0, 'General merchandise and collectibles');
 
 -- Indexes for performance
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
 CREATE INDEX idx_reviews_content_id ON reviews(content_id);
 CREATE INDEX idx_reviews_public ON reviews(is_public);
 CREATE INDEX idx_reviews_created_at ON reviews(created_at);
-CREATE INDEX idx_content_type ON content(content_type);
+CREATE INDEX idx_content_type_id ON content(content_type_id);
+CREATE INDEX idx_content_types_name ON content_types(name);
+CREATE INDEX idx_content_types_category ON content_types(category);
+CREATE INDEX idx_content_types_active ON content_types(is_active);
 CREATE INDEX idx_subcontent_content_id ON subcontent(content_id);
 CREATE INDEX idx_progress_user_id ON user_content_progress(user_id);
 ```
@@ -250,15 +278,15 @@ CREATE INDEX idx_progress_user_id ON user_content_progress(user_id);
 - `public` → `private`: User makes review private again
 - No restrictions on transitions
 
-### Content Progress States
-- `plan_to_watch` → `watching`: User starts consuming content
-- `watching` → `completed`: User finishes content
-- `watching` → `dropped`: User stops consuming content
+### Tag Progress States
+- `plan_to_watch` → `watching`: User starts consuming content tag
+- `watching` → `completed`: User finishes content tag
+- `watching` → `dropped`: User stops consuming content tag
 - `watching` → `on_hold`: User pauses consumption
 - `on_hold` → `watching`: User resumes consumption
-- `on_hold` → `dropped`: User abandons content
-- `dropped` → `watching`: User resumes dropped content
-- `completed` → `watching`: User rewatches/rereads content
+- `on_hold` → `dropped`: User abandons content tag
+- `dropped` → `watching`: User resumes dropped content tag
+- `completed` → `watching`: User rewatches/rereads content tag
 
 ### Session States
 - `active` → `expired`: Automatic expiration after TTL

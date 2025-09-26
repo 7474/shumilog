@@ -13,7 +13,7 @@ logs.get('/', async (c) => {
   const offset = Math.max(parseInt(c.req.query('offset') || '0'), 0);
 
   // Validate pagination
-  if (limit <= 0) {
+  if (limit <= 0 || limit > 100) {
     throw new HTTPException(400, { message: 'Invalid limit parameter' });
   }
 
@@ -115,7 +115,11 @@ logs.get('/:logId', async (c) => {
       throw new HTTPException(403, { message: 'Access denied' });
     }
 
-    return c.json(log);
+    return c.json({
+      ...log,
+      author: log.user,
+      tags: log.associated_tags
+    });
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;

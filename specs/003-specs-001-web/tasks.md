@@ -7,7 +7,7 @@
 - [x] T001 Prune repository to allowlist by deleting legacy assets (`docs/`, `specs/002-*`, `specs/003-web-cloudflare-cloudflare`, `frontend/src/pages/legacy`, `tests/performance`, `tests/integration/legacy`, unused Dockerfiles) and update `.gitignore` accordingly.
 - [x] T002 Update `backend/package.json` (and associated config files) for Node.js 22 LTS + npm 10, remove unused dependencies, and ensure scripts include `dev:worker`, `test:contract`, `db:seed`.
 - [x] T003 [P] Update `frontend/package.json` to Node.js 22 LTS, trim dependencies to the minimal Vite React surface, and refresh scripts (`dev`, `build`, `preview`).
-- [ ] T004 Create `.nvmrc` (Node 22 LTS) at repo root and refresh `README.md` prerequisites and quickstart summary to match the trimmed workflow.
+- [x] T004 Create `.nvmrc` (Node 22 LTS) at repo root and refresh `README.md` prerequisites and quickstart summary to match the trimmed workflow.
 
 ## Phase 3.2: Tests First (TDD)
 - [ ] T005 [P] Create failing auth contract suite in `backend/tests/contract/auth.contract.test.ts` (covers `/auth/twitter`, `/auth/callback`, `/auth/logout`).

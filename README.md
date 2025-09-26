@@ -1,244 +1,110 @@
 # Shumilog - Hobby Content Log Service
 
-A web application for logging and tracking hobby content consumption with social sharing features.
+Minimal Cloudflare Worker backend paired with a lightweight Vite-driven frontend for logging hobby content.
 
-## 🚀 Quick Start with Cloudflare D1
+## Requirements
 
-The fastest way to get started is using Cloudflare Wrangler for local development:
+- **Node.js 22 LTS** – `nvm use` picks up the version defined in [`.nvmrc`](./.nvmrc)
+- **npm 10+** (bundled with Node 22)
+- **Wrangler CLI 3+** for local Worker and D1 development (`npm install -g wrangler`)
+- *(Optional)* Twitter API credentials if you plan to exercise the share endpoint
+
+## Quick start
 
 ```bash
-# Clone the repository
+# Clone and enter the repository
 git clone <repository-url>
 cd shumilog
 
-# Install dependencies
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
+# Align Node/npm versions
+nvm use
 
-# Install Wrangler globally (if not already installed)
-npm install -g wrangler
+# Install backend and frontend dependencies
+npm install --prefix backend
+npm install --prefix frontend
 
-# Start the backend with D1 database
+# Seed the local D1-compatible database (creates .wrangler/state on first run)
 cd backend
-npx wrangler d1 migrations apply shumilog-db-dev --local --env development
-npx wrangler dev --env development
+mkdir -p .wrangler/state/d1
+DB_PATH=.wrangler/state/d1/shumilog-db.sqlite npm run db:seed
 
-# In another terminal, start the frontend
+# Start the Worker locally (runs on http://127.0.0.1:8787)
+npm run dev:worker
+```
+
+Open a second terminal for the frontend:
+
+```bash
 cd frontend
 npm run dev
-
-# Access the application
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:8787
-# Health Check: http://localhost:8787/health
 ```
 
-That's it! The application will be running with:
-- ✅ Auto-reloading backend and frontend using Wrangler dev
-- ✅ Local D1 database with persistent storage
-- ✅ Hot module replacement for rapid development
-- ✅ Production-compatible D1 database environment
-- ✅ Health monitoring and logging
+Access the application at:
 
-## 📋 Prerequisites
+- Frontend UI: http://localhost:5173
+- REST API: http://127.0.0.1:8787
+- Health check: http://127.0.0.1:8787/health
 
-- **Node.js** (18+) and **npm**
-- **Wrangler CLI** (for Cloudflare D1 local development)
-- **Twitter Developer Account** (for OAuth integration)
-- **Cloudflare Account** (for D1 database and Workers deployment)
+## Useful scripts
 
-## 🏗️ Architecture
+| Location | Command | Purpose |
+|----------|---------|---------|
+| `backend/` | `npm run dev:worker` | Run the Worker via Wrangler with local persistence |
+| `backend/` | `npm run dev:server` | Node-based dev server powered by Nodemon |
+| `backend/` | `npm run test:contract` | Execute the contract test suite with Vitest |
+| `backend/` | `npm run db:migrate` | Apply schema changes without seed data |
+| `backend/` | `npm run db:seed` | Recreate schema and load deterministic fixtures |
+| `frontend/` | `npm run dev` | Launch the Vite dev server with HMR |
+| `frontend/` | `npm run build` | Produce a production build into `frontend/dist/` |
 
-### Services Overview
-
-| Service | Port | Purpose | Framework |
-|---------|------|---------|-----------|
-| **Frontend** | 5173 | Web interface | Vite + TypeScript |
-| **Backend** | 8787 | REST API | Hono + TypeScript |
-| **Database** | - | Data storage | SQLite (D1 compatible) |
-
-### Technology Stack
-
-- **Backend**: TypeScript, Hono framework, Cloudflare Workers compatible
-- **Frontend**: TypeScript, Vite, HTML5/CSS3
-- **Database**: SQLite (Cloudflare D1 compatible)
-- **Development**: Docker Compose, hot-reload, health monitoring
-- **Testing**: Vitest, contract testing, integration testing
-
-## 🛠️ Development
-
-### Docker Development (Recommended)
+## Testing & linting
 
 ```bash
-# First time setup: Install dependencies
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
+# Contract tests (from backend/)
+npm run test:contract
 
-# Start all services (build images first time)
-docker-compose up --build
+# Type checking (from backend/)
+npm run build
 
-# Start in background
-docker-compose up --build -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+# Lint backend sources (from backend/)
+npm run lint
 ```
 
-### Native Development
+Frontend linting is intentionally omitted while the UI is rebuilt; the Vite build and React typings keep the UI in check.
 
-```bash
-# Install dependencies
-cd backend && npm install
-cd ../frontend && npm install
-
-# Start backend
-cd backend && npm run dev
-
-# Start frontend (in another terminal)
-cd frontend && npm run dev
-```
-
-### Testing
-
-```bash
-# Run all tests
-docker-compose exec backend npm test
-
-# Run tests with coverage
-docker-compose exec backend npm run test:coverage
-
-# Run specific test
-docker-compose exec backend npm test -- tests/contract/health.test.ts
-```
-
-## 📖 Documentation
-
-- **[Docker Development Guide](docs/docker-development.md)** - Comprehensive setup and usage
-- **[API Documentation](docs/api.md)** - REST API endpoints and contracts
-- **[Database Schema](backend/src/db/schema.sql.ts)** - Data model documentation
-- **[Testing Guide](backend/tests/README.md)** - Testing strategies and examples
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Key configuration options (see `.env.example`):
-
-```bash
-# Service Ports
-API_PORT=8787
-FRONTEND_PORT=5173
-
-# Database
-DATABASE_URL=file:/data/shumilog.db
-
-# Development Features
-ENABLE_HOT_RELOAD=true
-ENABLE_DEBUG_LOGS=true
-ENABLE_DEV_ENDPOINTS=true
-```
-
-### Development APIs
-
-Available in development mode at `http://localhost:8787/dev/`:
-
-- `GET /dev/config` - View current configuration
-- `GET /dev/logs` - Application logs
-- `POST /dev/reload` - Trigger service reload
-
-## 🏥 Health Monitoring
-
-- **Application Health**: `GET /health`
-- **Service Status**: `docker-compose ps`
-- **Logs**: `docker-compose logs [service]`
-
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Start development environment**: `docker-compose up`
-4. **Make your changes** with hot-reload feedback
-5. **Run tests**: `docker-compose exec backend npm test`
-6. **Commit changes**: `git commit -m 'Add amazing feature'`
-7. **Push to branch**: `git push origin feature/amazing-feature`
-8. **Open a Pull Request**
-
-### Development Workflow
-
-1. **Code Changes**: Edit files in `backend/src/` or `frontend/src/`
-2. **Auto-Reload**: Services restart/reload automatically
-3. **Test**: Run `npm test` to verify changes
-4. **Debug**: Use dev endpoints and health checks
-5. **Commit**: Push changes when tests pass
-
-## 📚 Project Structure
+## Project structure
 
 ```
 shumilog/
-├── backend/                 # API server (Hono + TypeScript)
+├── backend/                # Cloudflare Worker + D1 logic
 │   ├── src/
-│   │   ├── routes/         # API endpoints
-│   │   ├── services/       # Business logic
+│   │   ├── routes/         # Hono route handlers
+│   │   ├── services/       # Domain services
 │   │   ├── models/         # Data models
-│   │   └── db/            # Database layer
-│   └── tests/             # Test suites
-├── frontend/              # Web interface (Vite + TypeScript)
-│   └── src/
-│       ├── pages/         # HTML pages
-│       └── styles/        # CSS styles
-├── docs/                  # Documentation
-├── docker-compose.yml     # Development orchestration
-└── .env.example          # Environment template
+│   │   └── db/             # Migration + seed helpers
+│   └── tests/              # Contract, integration, and unit suites
+├── frontend/               # Minimal Vite surface for manual validation
+│   └── src/pages/          # Temporary HTML entry points (React shell coming later)
+├── specs/                  # Product plans, research, and task tracking
+├── tests/                  # Repository-level integration smoke tests
+└── README.md               # You are here
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
-### Common Issues
+- **Database path errors** → ensure the directory exists before seeding: `mkdir -p backend/.wrangler/state/d1`.
+- **Wrangler complains about bindings** → delete `.wrangler/state` and rerun `npm run dev:worker` to recreate the local environment.
+- **Port already in use** → override via `API_PORT` (backend) or Vite’s `--port` flag.
+- **Type errors after dependency bumps** → rerun `npm install --prefix backend` / `npm install --prefix frontend` to refresh local packages.
 
-**Dependencies not synced:**
-```bash
-# Install dependencies first
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
-docker-compose up --build
-```
+## Contributing
 
-**Port conflicts:**
-```bash
-# Change ports in .env file
-echo "API_PORT=8788" >> .env
-```
+1. Fork the repository
+2. Create a branch: `git checkout -b feature/my-update`
+3. Install dependencies and run the Worker locally
+4. Make changes and ensure `npm run test:contract` passes
+5. Commit with a descriptive message and open a pull request
 
-**Database issues:**
-```bash
-# Reset database
-docker-compose down -v && docker-compose up --build
-```
+## License
 
-**Build failures:**
-```bash
-# Clean rebuild with dependencies
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
-docker-compose build --no-cache
-docker-compose up
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🔗 Links
-
-- **Repository**: [GitHub](https://github.com/your-org/shumilog)
-- **Issues**: [GitHub Issues](https://github.com/your-org/shumilog/issues)
-- **Documentation**: [docs/](docs/)
-
----
-
-**Happy coding! 🎉**
-
-For detailed setup instructions, see the [Docker Development Guide](docs/docker-development.md).
+Licensed under the MIT License. See [LICENSE](./LICENSE) for details.

@@ -1,9 +1,8 @@
 # Multi-stage build for optimization
 FROM node:18-alpine AS base
 
-# Install system dependencies for SQLite and other tools
+# Install system dependencies
 RUN apk add --no-cache \
-    sqlite \
     curl \
     bash \
     && rm -rf /var/cache/apk/*

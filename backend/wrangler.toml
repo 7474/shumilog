@@ -1,6 +1,7 @@
 name = "shumilog-backend"
 main = "src/index.ts"
 compatibility_date = "2023-09-25"
+compatibility_flags = ["nodejs_compat"]
 
 [env.development]
 name = "shumilog-backend-dev"

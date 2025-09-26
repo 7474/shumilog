@@ -8,17 +8,19 @@ services:
       - ./backend/src/db:/docker-entrypoint-initdb.d:ro
     environment:
       - DB_PATH=/data/shumilog.db
-    command: >
-      sh -c "
-        apk add --no-cache sqlite &&
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache sqlite
         if [ ! -f /data/shumilog.db ]; then
-          echo 'Initializing database...' &&
-          sqlite3 /data/shumilog.db < /docker-entrypoint-initdb.d/schema.sql.ts 2>/dev/null || echo 'Schema initialization completed' &&
-          sqlite3 /data/shumilog.db < /docker-entrypoint-initdb.d/seeds.sql.ts 2>/dev/null || echo 'Seed data initialization completed'
-        fi &&
-        echo 'Database ready, keeping container alive...' &&
+          echo 'Creating empty database file...'
+          sqlite3 /data/shumilog.db 'PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;'
+          sqlite3 /data/shumilog.db < /docker-entrypoint-initdb.d/init-dev.sql
+          echo 'Database file created'
+        fi
+        echo 'Database ready, keeping container alive...'
         tail -f /dev/null
-      "
     healthcheck:
       test: ["CMD", "sh", "-c", "sqlite3 /data/shumilog.db 'SELECT 1' && echo 'Database healthy'"]
       interval: 10s

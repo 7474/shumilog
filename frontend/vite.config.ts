@@ -12,6 +12,12 @@ export default defineConfig({
     watch: {
       usePolling: true,
       interval: 1000
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8787',
+        changeOrigin: true
+      }
     }
   },
   build: {

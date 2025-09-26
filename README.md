@@ -2,17 +2,30 @@
 
 A web application for logging and tracking hobby content consumption with social sharing features.
 
-## 🚀 Quick Start with Docker
+## 🚀 Quick Start with Cloudflare D1
 
-The fastest way to get started is using Docker Compose:
+The fastest way to get started is using Cloudflare Wrangler for local development:
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd shumilog
 
-# Start the development environment
-docker-compose up
+# Install dependencies
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
+
+# Install Wrangler globally (if not already installed)
+npm install -g wrangler
+
+# Start the backend with D1 database
+cd backend
+npx wrangler d1 migrations apply shumilog-db-dev --local --env development
+npx wrangler dev --env development
+
+# In another terminal, start the frontend
+cd frontend
+npm run dev
 
 # Access the application
 # Frontend: http://localhost:5173
@@ -21,20 +34,18 @@ docker-compose up
 ```
 
 That's it! The application will be running with:
-- ✅ Auto-reloading backend and frontend
-- ✅ SQLite database with sample data
+- ✅ Auto-reloading backend and frontend using Wrangler dev
+- ✅ Local D1 database with persistent storage
 - ✅ Hot module replacement for rapid development
+- ✅ Production-compatible D1 database environment
 - ✅ Health monitoring and logging
 
 ## 📋 Prerequisites
 
-- **Docker** and **Docker Compose** installed
-- **Git** for cloning the repository
-- **Modern web browser** for accessing the frontend
-
-Optional for native development:
-- **Node.js 18+** for running services locally
-- **TypeScript 5.2+** for development
+- **Node.js** (18+) and **npm**
+- **Wrangler CLI** (for Cloudflare D1 local development)
+- **Twitter Developer Account** (for OAuth integration)
+- **Cloudflare Account** (for D1 database and Workers deployment)
 
 ## 🏗️ Architecture
 
@@ -59,11 +70,15 @@ Optional for native development:
 ### Docker Development (Recommended)
 
 ```bash
-# Start all services
-docker-compose up
+# First time setup: Install dependencies
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
+
+# Start all services (build images first time)
+docker-compose up --build
 
 # Start in background
-docker-compose up -d
+docker-compose up --build -d
 
 # View logs
 docker-compose logs -f
@@ -183,6 +198,14 @@ shumilog/
 
 ### Common Issues
 
+**Dependencies not synced:**
+```bash
+# Install dependencies first
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
+docker-compose up --build
+```
+
 **Port conflicts:**
 ```bash
 # Change ports in .env file
@@ -192,19 +215,16 @@ echo "API_PORT=8788" >> .env
 **Database issues:**
 ```bash
 # Reset database
-docker-compose down -v && docker-compose up
-```
-
-**Hot-reload not working:**
-```bash
-# Restart services
-docker-compose restart backend frontend
+docker-compose down -v && docker-compose up --build
 ```
 
 **Build failures:**
 ```bash
-# Clean rebuild
+# Clean rebuild with dependencies
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
 docker-compose build --no-cache
+docker-compose up
 ```
 
 ## 📄 License

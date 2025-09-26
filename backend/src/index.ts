@@ -21,38 +21,102 @@ import userRoutes from './routes/users.js';
 import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
 import healthRoutes from './routes/health.js';
-import devRoutes from './routes/dev.js';
+// import devRoutes from './routes/dev.js'; // Disabled for Cloudflare Workers compatibility
 
 /**
- * Create and configure the Hono application
+ * Initialize database with migrations
  */
 export async function initializeDatabase(database: Database): Promise<void> {
   try {
-    // Check if tables exist, if not initialize schema
-    await database.query('SELECT name FROM sqlite_master WHERE type="table" AND name="users"');
-    console.log('Database connection verified');
-  } catch (error) {
-    console.log('Initializing database schema...');
-    // In development, we'll initialize tables if they don't exist
-    // This would be handled by migrations in production
-    try {
-      // Basic initialization - this would normally be handled by migration scripts
-      await database.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          id TEXT PRIMARY KEY,
-          twitter_id TEXT UNIQUE,
-          username TEXT,
-          display_name TEXT,
-          avatar_url TEXT,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-      console.log('Database schema initialized');
-    } catch (initError) {
-      console.error('Failed to initialize database:', initError);
+    console.log('Connecting to database...');
+    await database.connect();
+    
+    // Check if migrations have been run
+    const migrationCheck = await database.query('SELECT name FROM sqlite_master WHERE type="table" AND name="schema_migrations"');
+    
+    if (migrationCheck.length === 0) {
+      console.log('Running database migrations...');
+      await runDatabaseMigrations(database);
+      console.log('Database migrations completed');
+    } else {
+      console.log('Database already migrated');
     }
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    throw error;
   }
+}
+
+/**
+ * Run database migrations using TypeScript schemas
+ */
+async function runDatabaseMigrations(database: Database): Promise<void> {
+  // Import migrations dynamically to avoid circular dependencies
+  const { DATABASE_SCHEMAS } = await import('./db/schema.sql.js');
+  const { SEED_TAGS } = await import('./db/seeds.sql.js');
+  
+  // Execute schema creation
+  for (const schema of DATABASE_SCHEMAS) {
+    await database.exec(schema);
+  }
+  
+  // Insert seed data
+  const existingTags = await database.query('SELECT COUNT(*) as count FROM tags');
+  if (existingTags[0]?.count === 0) {
+    console.log('Inserting seed data...');
+    await insertSeedData(database, SEED_TAGS);
+  }
+}
+
+/**
+ * Insert seed data
+ */
+async function insertSeedData(database: Database, seedTags: any[]): Promise<void> {
+  const insertTagStmt = database.prepare(`
+    INSERT OR IGNORE INTO tags (id, name, description, category, metadata, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const now = new Date().toISOString();
+  
+  for (const tag of seedTags) {
+    const id = crypto.randomUUID();
+    const metadata = tag.metadata ? JSON.stringify(tag.metadata) : null;
+    const category = getCategoryFromTag(tag);
+    
+    await insertTagStmt.run([
+      id,
+      tag.name,
+      tag.description || null,
+      category,
+      metadata,
+      now,
+      now
+    ]);
+  }
+}
+
+/**
+ * Determine category from tag data
+ */
+function getCategoryFromTag(tag: any): string {
+  if (['anime', 'manga', 'game', 'novel', 'movie'].includes(tag.name)) {
+    return 'category';
+  }
+  
+  if (['action', 'adventure', 'comedy', 'drama', 'fantasy', 'romance', 'sci-fi', 'slice-of-life'].includes(tag.name)) {
+    return 'genre';
+  }
+  
+  if (['completed', 'watching', 'reading', 'on-hold', 'dropped', 'plan-to-watch', 'plan-to-read'].includes(tag.name)) {
+    return 'status';
+  }
+  
+  if (tag.metadata?.japanese_name || tag.metadata?.mal_id) {
+    return 'anime';
+  }
+  
+  return 'other';
 }
 
 export function createApp(env: any) {
@@ -113,7 +177,7 @@ export function createApp(env: any) {
   app.route('/health', healthRoutes);
 
   // Development routes (no auth required, but restricted to development mode)
-  app.route('/dev', devRoutes);
+  // app.route('/dev', devRoutes); // Disabled for Cloudflare Workers compatibility
 
   // Auth routes (no auth required)
   app.route('/auth', authRoutes);

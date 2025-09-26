@@ -27,6 +27,7 @@ class MockD1Database {
   private users: Map<string, any> = new Map();
   private tags: Map<string, any> = new Map();
   private logs: Map<string, any> = new Map();
+  private sessions: Map<string, any> = new Map(); // Add sessions storage
   private tagAssociations: Map<string, Set<string>> = new Map();
   private logTagAssociations: Map<string, Set<string>> = new Map();
 
@@ -52,6 +53,10 @@ class MockD1Database {
               const [id, user_id, title, content_md, is_public, created_at, updated_at] = params;
               database.logs.set(id, { id, user_id, title, content_md, is_public, created_at, updated_at });
               return { success: true, meta: { last_row_id: id, changes: 1 } };
+            } else if (query.includes('INSERT INTO sessions')) {
+              const [token, user_id, created_at, expires_at] = params;
+              database.sessions.set(token, { token, user_id, created_at, expires_at });
+              return { success: true, meta: { last_row_id: token, changes: 1 } };
             } 
             else if (query.includes('INSERT INTO log_tag_associations')) {
               const [logId, tagId] = params;
@@ -248,6 +253,10 @@ class MockD1Database {
               const logId = params[0];
               const log = database.logs.get(logId);
               return log || null;
+            } else if (query.includes('SELECT') && query.includes('FROM sessions') && query.includes('WHERE token = ?')) {
+              const token = params[0];
+              const session = database.sessions.get(token);
+              return session || null;
             } else if (query.includes('SELECT l.*, u.twitter_username') && query.includes('JOIN users u')) {
               // Handle log with user info JOIN query
               const logId = params[0];
@@ -342,10 +351,15 @@ class MockD1Database {
     return this.tags.get(id);
   }
 
+  insertSession(session: { token: string; user_id: string; created_at: string; expires_at: string }) {
+    this.sessions.set(session.token, session);
+  }
+
   clear() {
     this.users.clear();
     this.tags.clear();
     this.logs.clear();
+    this.sessions.clear(); // Clear sessions too
     this.tagAssociations.clear();
     this.logTagAssociations.clear();
   }
@@ -369,18 +383,19 @@ const app = createApp(mockEnv);
 
 // Export helper functions for tests
 export async function createTestSession(userId: string = 'mock-user-id'): Promise<string> {
-  const sessionId = 'valid_session_token'; // Match what tests expect
-  const session = {
-    sessionId,
-    userId,
-    createdAt: Date.now(),
-    lastAccessedAt: Date.now()
-  };
+  const sessionToken = 'valid_session_token'; // Match what tests expect
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
   
-  await mockKV.put(`session:${sessionId}`, JSON.stringify(session));
-  await mockKV.put(`user_session:${userId}`, sessionId);
+  // Insert session into mock database instead of KV
+  mockDB.insertSession({
+    token: sessionToken,
+    user_id: userId,
+    created_at: now,
+    expires_at: expiresAt
+  });
   
-  return sessionId;
+  return sessionToken;
 }
 
 export async function createTestUser(userId: string = 'mock-user-id', username: string = 'testuser'): Promise<void> {

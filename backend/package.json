@@ -4,7 +4,8 @@
   "description": "Backend API for Hobby Content Log Service",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "nodemon",
+    "dev:wrangler": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "tsc",
     "test": "vitest run",
@@ -28,6 +29,8 @@
     "@vitest/coverage-v8": "^0.34.0",
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
+    "nodemon": "^3.0.0",
+    "tsx": "^4.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "miniflare": "^3.20230717.0",
     "prettier": "^3.0.0",

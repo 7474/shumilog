@@ -43,21 +43,21 @@
 - Tests in respective service directories
 
 ## Phase 3.1: Setup
-- [ ] T001 Create Docker Compose configuration structure at repository root
-- [ ] T002 [P] Create .env.example file for development environment variables
-- [ ] T003 [P] Create .dockerignore files for backend and frontend services
-- [ ] T004 [P] Create .devcontainer/devcontainer.json for VSCode integration
+- [x] T001 Create Docker Compose configuration structure at repository root
+- [x] T002 [P] Create .env.example file for development environment variables
+- [x] T003 [P] Create .dockerignore files for backend and frontend services
+- [x] T004 [P] Create .devcontainer/devcontainer.json for VSCode integration
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T005 [P] Contract test GET /health endpoint in backend/tests/contract/health.test.ts
-- [ ] T006 [P] Contract test GET /dev/config endpoint in backend/tests/contract/dev-config.test.ts
-- [ ] T007 [P] Contract test GET /dev/logs endpoint in backend/tests/contract/dev-logs.test.ts
-- [ ] T008 [P] Contract test POST /dev/reload endpoint in backend/tests/contract/dev-reload.test.ts
-- [ ] T009 [P] Integration test: Docker Compose startup in tests/integration/docker-startup.test.ts
-- [ ] T010 [P] Integration test: Service health checks in tests/integration/health-checks.test.ts
-- [ ] T011 [P] Integration test: Hot reload functionality in tests/integration/hot-reload.test.ts
-- [ ] T012 [P] Integration test: Database persistence in tests/integration/database-persistence.test.ts
+- [x] T005 [P] Contract test GET /health endpoint in backend/tests/contract/health.test.ts
+- [x] T006 [P] Contract test GET /dev/config endpoint in backend/tests/contract/dev-config.test.ts
+- [x] T007 [P] Contract test GET /dev/logs endpoint in backend/tests/contract/dev-logs.test.ts
+- [x] T008 [P] Contract test POST /dev/reload endpoint in backend/tests/contract/dev-reload.test.ts
+- [x] T009 [P] Integration test: Docker Compose startup in tests/integration/docker-startup.test.ts
+- [x] T010 [P] Integration test: Service health checks in tests/integration/health-checks.test.ts
+- [x] T011 [P] Integration test: Hot reload functionality in tests/integration/hot-reload.test.ts
+- [x] T012 [P] Integration test: Database persistence in tests/integration/database-persistence.test.ts
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 - [ ] T013 [P] Create backend/Dockerfile with Node.js and development setup

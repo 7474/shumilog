@@ -20,15 +20,47 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
+import healthRoutes from './routes/health.js';
+import devRoutes from './routes/dev.js';
 
 /**
  * Create and configure the Hono application
  */
+export async function initializeDatabase(database: Database): Promise<void> {
+  try {
+    // Check if tables exist, if not initialize schema
+    await database.query('SELECT name FROM sqlite_master WHERE type="table" AND name="users"');
+    console.log('Database connection verified');
+  } catch (error) {
+    console.log('Initializing database schema...');
+    // In development, we'll initialize tables if they don't exist
+    // This would be handled by migrations in production
+    try {
+      // Basic initialization - this would normally be handled by migration scripts
+      await database.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          twitter_id TEXT UNIQUE,
+          username TEXT,
+          display_name TEXT,
+          avatar_url TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('Database schema initialized');
+    } catch (initError) {
+      console.error('Failed to initialize database:', initError);
+    }
+  }
+}
+
 export function createApp(env: any) {
-  // Initialize database
+  // Initialize database with proper path for Docker environment
+  const databasePath = env.DATABASE_URL || env.DB_PATH || ':memory:';
   const database = new Database({
-    d1Database: env.DB, // Cloudflare D1 binding
-    databasePath: env.NODE_ENV === 'test' ? ':memory:' : undefined,
+    d1Database: env.DB, // Cloudflare D1 binding (for production)
+    databasePath: env.NODE_ENV === 'test' ? ':memory:' : databasePath,
     options: {
       enableForeignKeys: true
     }
@@ -76,6 +108,12 @@ export function createApp(env: any) {
     (c as any).set('twitterService', twitterService);
     await next();
   });
+
+  // Health check route (no auth required)
+  app.route('/health', healthRoutes);
+
+  // Development routes (no auth required, but restricted to development mode)
+  app.route('/dev', devRoutes);
 
   // Auth routes (no auth required)
   app.route('/auth', authRoutes);

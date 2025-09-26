@@ -1,4 +1,6 @@
 import { Context, Next } from 'hono';
+import { getCookie, setCookie } from 'hono/cookie';
+import { HTTPException } from 'hono/http-exception';
 
 /**
  * Security headers middleware
@@ -33,6 +35,58 @@ export const securityHeaders = () => {
       c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
   };
+};
+
+/**
+ * Basic CSRF protection middleware
+ * For state-changing operations, validate CSRF token
+ */
+export const csrfProtection = () => {
+  return async (c: Context, next: Next) => {
+    const method = c.req.method;
+    
+    // Only check CSRF for state-changing operations
+    if (!['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      await next();
+      return;
+    }
+    
+    // Skip CSRF for auth endpoints (they use other protections)
+    if (c.req.url.includes('/auth/')) {
+      await next();
+      return;
+    }
+    
+    // Get CSRF token from header or form data
+    let token = c.req.header('X-CSRF-Token');
+    if (!token) {
+      const body = await c.req.parseBody();
+      token = body._csrf_token as string;
+    }
+    
+    // Get expected token from cookie
+    const expectedToken = getCookie(c, 'csrf_token');
+    
+    if (!token || !expectedToken || token !== expectedToken) {
+      throw new HTTPException(403, { message: 'CSRF token missing or invalid' });
+    }
+    
+    await next();
+  };
+};
+
+/**
+ * Generate and set CSRF token
+ */
+export const generateCSRFToken = (c: Context): string => {
+  const token = generateRandomToken(32);
+  setCookie(c, 'csrf_token', token, {
+    httpOnly: true,
+    secure: c.req.url.startsWith('https://'),
+    sameSite: 'Strict',
+    maxAge: 60 * 60 * 24 // 24 hours
+  });
+  return token;
 };
 
 /**
@@ -102,3 +156,15 @@ export const rateLimiter = (windowMs: number = 15 * 60 * 1000, maxRequests: numb
     await next();
   };
 };
+
+/**
+ * Generate a random token for CSRF protection
+ */
+function generateRandomToken(length: number): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}

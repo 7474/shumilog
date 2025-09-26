@@ -223,4 +223,63 @@ export class TagService {
     );
     await deleteTagStmt.run([tagId]);
   }
+
+  /**
+   * Create tag-to-tag association (for tag hierarchies)
+   */
+  async createTagAssociation(parentTagId: string, childTagId: string, associationType: string = 'parent'): Promise<void> {
+    // Prevent self-association
+    if (parentTagId === childTagId) {
+      throw new Error('Cannot create self-association');
+    }
+
+    const stmt = this.db.prepare(`
+      INSERT OR IGNORE INTO tag_associations (parent_tag_id, child_tag_id, association_type, created_at)
+      VALUES (?, ?, ?, ?)
+    `);
+    
+    await stmt.run([parentTagId, childTagId, associationType, new Date().toISOString()]);
+  }
+
+  /**
+   * Get tag associations for a tag
+   */
+  async getTagAssociations(tagId: string): Promise<{
+    parents: Tag[];
+    children: Tag[];
+  }> {
+    // Get parent tags
+    const parentRows = await this.db.query(
+      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+       FROM tags t
+       JOIN tag_associations ta ON t.id = ta.parent_tag_id
+       WHERE ta.child_tag_id = ?`,
+      [tagId]
+    );
+
+    // Get child tags
+    const childRows = await this.db.query(
+      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+       FROM tags t
+       JOIN tag_associations ta ON t.id = ta.child_tag_id
+       WHERE ta.parent_tag_id = ?`,
+      [tagId]
+    );
+
+    return {
+      parents: parentRows.map(row => TagModel.fromRow(row)),
+      children: childRows.map(row => TagModel.fromRow(row))
+    };
+  }
+
+  /**
+   * Remove tag association
+   */
+  async removeTagAssociation(parentTagId: string, childTagId: string): Promise<void> {
+    const stmt = this.db.prepare(
+      'DELETE FROM tag_associations WHERE parent_tag_id = ? AND child_tag_id = ?'
+    );
+    
+    await stmt.run([parentTagId, childTagId]);
+  }
 }

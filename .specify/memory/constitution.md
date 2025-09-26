@@ -1,10 +1,9 @@
 <!--
 Sync Impact Report:
-- Version change: initial template → 1.0.0
-- New constitution created for shumilog hobby hosting project
-- Principles defined: Quick Experimentation, Low-Cost Hosting, Iterative Exploration, Simplicity First, Cost-Conscious Development
-- Added sections: Technology Constraints, Development Workflow  
-- Templates requiring updates: ✅ plan-template.md ✅ spec-template.md ✅ tasks-template.md
+- Version change: 1.0.0 → 1.0.1
+- Modified Development Workflow: Added task management and commit discipline rule
+- No sections added or removed
+- Templates requiring updates: ✅ plan-template.md ✅ spec-template.md ✅ tasks-template.md  
 - No deferred placeholders
 -->
 
@@ -45,6 +44,7 @@ All changes follow this lightweight process:
 3. **Monitor costs**: Weekly cost review for all services and infrastructure
 4. **Iterate fast**: Prefer multiple small releases over comprehensive updates
 5. **Document decisions**: Brief rationale for technology choices and major changes
+6. **Task management discipline**: Each task completion requires (a) git commit with clear message, (b) marking task as completed in tasks.md to track progress
 
 Quality gates are minimal but enforced: basic functionality verification, cost impact assessment, security baseline (authentication/authorization where needed).
 
@@ -58,4 +58,4 @@ This constitution supersedes all other development practices and guidelines. All
 
 **Complexity Justification**: Any deviation from simplicity principles requires explicit documentation of cost/benefit analysis and sunset timeline for increased complexity.
 
-**Version**: 1.0.0 | **Ratified**: 2025-09-26 | **Last Amended**: 2025-09-26
+**Version**: 1.0.1 | **Ratified**: 2025-09-26 | **Last Amended**: 2025-09-26

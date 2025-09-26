@@ -27,8 +27,8 @@ class MockD1Database {
   private users: Map<string, any> = new Map();
   private tags: Map<string, any> = new Map();
   private logs: Map<string, any> = new Map();
-  private tagAssociations: Map<string, any> = new Map();
-  private logTagAssociations: Map<string, any> = new Map();
+  private tagAssociations: Map<string, Set<string>> = new Map();
+  private logTagAssociations: Map<string, Set<string>> = new Map();
 
   prepare(query: string) {
     const database = this;
@@ -53,6 +53,11 @@ class MockD1Database {
               database.logs.set(id, { id, user_id, title, content_md, is_public, created_at, updated_at });
               return { success: true, meta: { last_row_id: id, changes: 1 } };
             } 
+            else if (query.includes('INSERT INTO log_tag_associations')) {
+              const [logId, tagId] = params;
+              database.seedLogTagAssociation(logId, tagId);
+              return { success: true, meta: { last_row_id: `${logId}:${tagId}`, changes: 1 } };
+            }
             // Handle UPDATE operations
             else if (query.includes('UPDATE tags') && query.includes('SET') && query.includes('WHERE id = ?')) {
               const tagId = params[params.length - 1]; // Last parameter is the ID
@@ -125,8 +130,16 @@ class MockD1Database {
               const existed = database.tags.has(tagId);
               database.tags.delete(tagId);
               return { success: true, meta: { changes: existed ? 1 : 0 } };
+            } else if (query.includes('DELETE FROM log_tag_associations WHERE log_id = ? AND tag_id = ?')) {
+              const [logId, tagId] = params;
+              database.removeLogTagAssociation(logId, tagId);
+              return { success: true, meta: { changes: 1 } };
+            } else if (query.includes('DELETE FROM log_tag_associations WHERE log_id = ?')) {
+              const [logId] = params;
+              database.clearLogTagAssociations(logId);
+              return { success: true, meta: { changes: 1 } };
             } else if (query.includes('DELETE FROM log_tag_associations WHERE tag_id = ?')) {
-              // Just return success for associations
+              // Return success for tag cascade deletions
               return { success: true, meta: { changes: 0 } };
             }
             return { success: true, meta: { changes: 0 } };
@@ -184,6 +197,39 @@ class MockD1Database {
             } else if (query.includes('SELECT') && query.includes('FROM logs')) {
               const logsArray = Array.from(database.logs.values());
               return { results: logsArray.slice(0, 10) };
+            } else if (query.includes('FROM log_tag_associations')) {
+              // Handle association lookups
+              if (query.includes('JOIN tags')) {
+                const logId = params[0];
+                const tagIds = database.getLogTagAssociations(logId);
+                const tags = tagIds
+                  .map(tagId => database.tags.get(tagId))
+                  .filter((tag): tag is any => Boolean(tag));
+                return { results: tags };
+              }
+
+              if (query.includes('SELECT tag_id')) {
+                const logId = params[0];
+                const tagIds = database.getLogTagAssociations(logId);
+                return {
+                  results: tagIds.map(tagId => ({ tag_id: tagId }))
+                };
+              }
+
+              if (query.includes('SELECT log_id')) {
+                const tagId = params[0];
+                const matchingLogIds: string[] = [];
+                database.logTagAssociations.forEach((tagSet, logId) => {
+                  if (tagSet.has(tagId)) {
+                    matchingLogIds.push(logId);
+                  }
+                });
+                return {
+                  results: matchingLogIds.map(logId => ({ log_id: logId }))
+                };
+              }
+
+              return { results: [] };
             }
             return { results: [] };
           },
@@ -261,6 +307,31 @@ class MockD1Database {
 
   seedLog(id: string, data: any) {
     this.logs.set(id, { id, ...data });
+  }
+
+  seedLogTagAssociation(logId: string, tagId: string) {
+    if (!this.logTagAssociations.has(logId)) {
+      this.logTagAssociations.set(logId, new Set());
+    }
+    this.logTagAssociations.get(logId)!.add(tagId);
+  }
+
+  removeLogTagAssociation(logId: string, tagId: string) {
+    const associations = this.logTagAssociations.get(logId);
+    if (associations) {
+      associations.delete(tagId);
+      if (associations.size === 0) {
+        this.logTagAssociations.delete(logId);
+      }
+    }
+  }
+
+  clearLogTagAssociations(logId: string) {
+    this.logTagAssociations.delete(logId);
+  }
+
+  getLogTagAssociations(logId: string) {
+    return Array.from(this.logTagAssociations.get(logId) ?? []);
   }
 
   getUser(id: string) {
@@ -360,6 +431,61 @@ export async function seedTestTags(): Promise<void> {
   testTags.forEach(tag => {
     mockDB.seedTag(tag.id, tag);
   });
+}
+
+export async function seedTestLogs(): Promise<{
+  ownerId: string;
+  otherUserId: string;
+  publicLogId: string;
+  privateLogId: string;
+  otherPublicLogId: string;
+}> {
+  const ownerId = 'user_log_owner';
+  const otherUserId = 'user_other_owner';
+  await createTestUser(ownerId, 'log_owner');
+  await createTestUser(otherUserId, 'other_owner');
+  await seedTestTags();
+
+  const now = new Date().toISOString();
+
+  mockDB.seedLog('log_public_entry', {
+    user_id: ownerId,
+    title: 'First Public Entry',
+    content_md: '# Public Entry\nHello world',
+    is_public: 1,
+    created_at: now,
+    updated_at: now
+  });
+
+  mockDB.seedLog('log_private_entry', {
+    user_id: ownerId,
+    title: 'Private Thoughts',
+    content_md: 'Secret notes',
+    is_public: 0,
+    created_at: now,
+    updated_at: now
+  });
+
+  mockDB.seedLog('log_other_public_entry', {
+    user_id: otherUserId,
+    title: 'Friend Public Log',
+    content_md: 'Sharing experiences',
+    is_public: 1,
+    created_at: now,
+    updated_at: now
+  });
+
+  mockDB.seedLogTagAssociation('log_public_entry', 'tag_anime');
+  mockDB.seedLogTagAssociation('log_public_entry', 'tag_manga');
+  mockDB.seedLogTagAssociation('log_other_public_entry', 'tag_manga');
+
+  return {
+    ownerId,
+    otherUserId,
+    publicLogId: 'log_public_entry',
+    privateLogId: 'log_private_entry',
+    otherPublicLogId: 'log_other_public_entry'
+  };
 }
 
 export async function setupTestEnvironment(): Promise<string> {

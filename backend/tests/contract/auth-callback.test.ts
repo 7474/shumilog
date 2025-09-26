@@ -1,3 +1,9 @@
+import { describe, it } from 'vitest';
+
 // Legacy contract tests replaced by `auth.contract.test.ts`.
-// Intentionally left empty to avoid duplicate expectations during Phase 3 migrations.
-export {};
+// Marked as skipped placeholder so Vitest discovers the file without executing tests.
+describe.skip('Legacy auth callback contract (removed)', () => {
+	it('placeholder', () => {
+		// no-op
+	});
+});

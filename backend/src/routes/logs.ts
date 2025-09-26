@@ -1,302 +1,295 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { LogService } from '../services/LogService.js';
+import { TwitterService } from '../services/TwitterService.js';
 
 const logs = new Hono();
 
-// Mock log data for now
-const mockLogs = [
-  {
-    id: '123',
-    user: {
-      id: 'user_123',
-      twitter_username: 'testuser',
-      display_name: 'Test User',
-      avatar_url: 'https://example.com/avatar.jpg',
-      created_at: '2023-01-01T00:00:00Z'
-    },
-    associated_tags: [
-      {
-        id: 'tag_anime',
-        name: 'Anime',
-        description: 'Japanese animated series and films',
-        metadata: { supports_episodes: true },
-        created_by: 'system',
-        created_at: '2023-01-01T00:00:00Z',
-        updated_at: '2023-01-01T00:00:00Z'
-      }
-    ],
-    title: 'Watched Attack on Titan Episode 1',
-    content_md: 'Amazing first episode! The animation quality is incredible.',
-    is_public: true,
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
-  },
-  {
-    id: '456',
-    user: {
-      id: 'user_456',
-      twitter_username: 'privateuser',
-      display_name: 'Private User',
-      avatar_url: 'https://example.com/avatar2.jpg',
-      created_at: '2023-01-01T00:00:00Z'
-    },
-    associated_tags: [
-      {
-        id: 'tag_manga',
-        name: 'Manga',
-        description: 'Japanese comics and graphic novels',
-        metadata: { supports_chapters: true },
-        created_by: 'system',
-        created_at: '2023-01-01T00:00:00Z',
-        updated_at: '2023-01-01T00:00:00Z'
-      }
-    ],
-    title: 'My Private Reading Log',
-    content_md: 'This is a private log entry about manga reading.',
-    is_public: false,
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
-  }
-];
-
 // GET /logs - List public logs
 logs.get('/', async (c) => {
-  const tagIds = c.req.query('tag_ids')?.split(',') || [];
+  const tagIds = c.req.query('tag_ids')?.split(',').filter(id => id.trim()) || [];
   const userId = c.req.query('user_id');
-  const limit = parseInt(c.req.query('limit') || '20');
-  const offset = parseInt(c.req.query('offset') || '0');
+  const limit = Math.min(parseInt(c.req.query('limit') || '20'), 100);
+  const offset = Math.max(parseInt(c.req.query('offset') || '0'), 0);
 
-  // Apply filters
-  let filteredLogs = mockLogs;
-  
-  if (tagIds.length > 0) {
-    filteredLogs = filteredLogs.filter(log =>
-      log.associated_tags.some(tag => tagIds.includes(tag.id))
-    );
-  }
-  
-  if (userId) {
-    filteredLogs = filteredLogs.filter(log => log.user.id === userId);
+  // Validate pagination
+  if (limit <= 0) {
+    throw new HTTPException(400, { message: 'Invalid limit parameter' });
   }
 
-  // Apply pagination
-  const paginatedLogs = filteredLogs.slice(offset, offset + limit);
+  const logService = c.get('logService') as LogService;
+  
+  try {
+    const searchParams = {
+      tag_ids: tagIds.length > 0 ? tagIds : undefined,
+      user_id: userId || undefined,
+      limit,
+      offset,
+      is_public: true // Only show public logs on the public endpoint
+    };
 
-  return c.json({
-    items: paginatedLogs,
-    total: filteredLogs.length
-  });
+    const result = await logService.searchLogs(searchParams);
+    
+    return c.json({
+      items: result.logs,
+      total: result.total
+    });
+  } catch (error) {
+    console.error('Error fetching logs:', error);
+    throw new HTTPException(500, { message: 'Internal server error' });
+  }
 });
 
 // POST /logs - Create new log
 logs.post('/', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
+  const logService = c.get('logService') as LogService;
+  const auth = c.get('auth'); // Set by auth middleware
   
-  if (!sessionToken) {
+  if (!auth || !auth.user) {
     throw new HTTPException(401, { message: 'Not authenticated' });
   }
 
-  // Validate session token (for testing, accept 'valid_session_token')
-  if (sessionToken !== 'valid_session_token') {
-    throw new HTTPException(401, { message: 'Invalid session' });
+  let body;
+  try {
+    body = await c.req.json();
+  } catch (error) {
+    throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
-
-  const body = await c.req.json();
   
+  // Validation
   if (!body.tag_ids || !Array.isArray(body.tag_ids) || body.tag_ids.length === 0) {
     throw new HTTPException(400, { message: 'tag_ids must be a non-empty array' });
   }
 
-  if (!body.content_md) {
-    throw new HTTPException(400, { message: 'Content is required' });
+  if (!body.content_md || typeof body.content_md !== 'string') {
+    throw new HTTPException(400, { message: 'content_md is required and must be a string' });
   }
 
   if (body.content_md.length > 10000) {
-    throw new HTTPException(400, { message: 'Content too long' });
+    throw new HTTPException(400, { message: 'Content too long (maximum 10000 characters)' });
   }
 
-  if (body.title && body.title.length > 200) {
-    throw new HTTPException(400, { message: 'Title too long' });
+  if (body.title && (typeof body.title !== 'string' || body.title.length > 200)) {
+    throw new HTTPException(400, { message: 'Title must be a string with maximum 200 characters' });
   }
 
-  // TODO: Create log in database and associate with tags
-  // Find associated tags based on tag_ids
-  const associatedTags = body.tag_ids.map((tagId: string) => {
-    // For now, return mock tag data based on tag ID
-    return {
-      id: tagId,
-      name: tagId === 'tag_anime' ? 'Anime' : 'Unknown Tag',
-      description: tagId === 'tag_anime' ? 'Japanese animated series and films' : 'Description',
-      metadata: { supports_episodes: true },
-      created_by: 'system',
-      created_at: '2023-01-01T00:00:00Z',
-      updated_at: '2023-01-01T00:00:00Z'
-    };
-  });
+  try {
+    const newLog = await logService.createLog({
+      title: body.title,
+      content_md: body.content_md,
+      is_public: body.is_public || false,
+      tag_ids: body.tag_ids
+    }, auth.user.id);
 
-  const newLog = {
-    id: crypto.randomUUID(),
-    user: {
-      id: 'user_123',
-      twitter_username: 'testuser',
-      display_name: 'Test User',
-      avatar_url: 'https://example.com/avatar.jpg',
-      created_at: '2023-01-01T00:00:00Z'
-    },
-    associated_tags: associatedTags,
-    title: body.title || '',
-    content_md: body.content_md,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-
-  return c.json(newLog, 201);
+    return c.json(newLog, 201);
+  } catch (error) {
+    console.error('Error creating log:', error);
+    throw new HTTPException(500, { message: 'Failed to create log' });
+  }
 });
 
 // GET /logs/{logId} - Get log details
 logs.get('/:logId', async (c) => {
   const logId = c.req.param('logId');
+  const logService = c.get('logService') as LogService;
+  const auth = c.get('auth'); // May be null if not authenticated
   
-  // Validate log ID format (should be numeric)
-  if (!/^\d+$/.test(logId)) {
+  // Validate log ID format
+  if (!logId || logId.trim().length === 0) {
     throw new HTTPException(400, { message: 'Invalid log ID format' });
   }
   
-  const log = mockLogs.find(l => l.id === logId);
-  
-  if (!log) {
-    throw new HTTPException(404, { message: 'Log not found' });
-  }
+  try {
+    // Get log with details
+    const log = await logService.getLogById(logId, auth?.user?.id);
+    
+    if (!log) {
+      throw new HTTPException(404, { message: 'Log not found' });
+    }
 
-  // Check if log is public or user is owner
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
-  const isOwner = sessionToken === 'valid_session_token' && log.user.id === 'user_123';
-  const isOwnerOfPrivateLog = sessionToken === 'valid_session_token_456' && log.user.id === 'user_456';
-  const isPublic = log.is_public;
-  
-  if (!isPublic && !isOwner && !isOwnerOfPrivateLog) {
-    throw new HTTPException(403, { message: 'Access denied' });
-  }
+    // Check access permissions
+    const isOwner = auth && log.user_id === auth.user.id;
+    const isPublic = log.is_public;
+    
+    if (!isPublic && !isOwner) {
+      throw new HTTPException(403, { message: 'Access denied' });
+    }
 
-  // Return log with additional details
-  return c.json({
-    ...log,
-    tags: log.associated_tags
-  });
+    return c.json(log);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Error fetching log:', error);
+    throw new HTTPException(500, { message: 'Internal server error' });
+  }
 });
 
 // PUT /logs/{logId} - Update log
 logs.put('/:logId', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
+  const logId = c.req.param('logId');
+  const logService = c.get('logService') as LogService;
+  const auth = c.get('auth'); // Set by auth middleware
   
-  if (!sessionToken || sessionToken !== 'valid_session_token') {
+  if (!auth || !auth.user) {
     throw new HTTPException(401, { message: 'Not authenticated' });
   }
 
-  const logId = c.req.param('logId');
-  const log = mockLogs.find(l => l.id === logId);
-  
-  if (!log) {
-    throw new HTTPException(404, { message: 'Log not found' });
+  let body;
+  try {
+    body = await c.req.json();
+  } catch (error) {
+    throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
-
-  // Check if user owns log
-  if (log.user.id !== 'user_123') {
-    throw new HTTPException(403, { message: 'Not log owner' });
-  }
-
-  const body = await c.req.json();
   
   // Validate required fields
-  if (!body.content_md) {
-    throw new HTTPException(400, { message: 'content_md is required' });
+  if (!body.content_md || typeof body.content_md !== 'string') {
+    throw new HTTPException(400, { message: 'content_md is required and must be a string' });
+  }
+
+  if (body.content_md.length > 10000) {
+    throw new HTTPException(400, { message: 'Content too long (maximum 10000 characters)' });
+  }
+
+  if (body.title && (typeof body.title !== 'string' || body.title.length > 200)) {
+    throw new HTTPException(400, { message: 'Title must be a string with maximum 200 characters' });
   }
   
-  // TODO: Update log in database
-  const updatedLog = {
-    ...log,
-    title: body.title !== undefined ? body.title : log.title,
-    content_md: body.content_md,
-    is_public: body.is_public !== undefined ? body.is_public : log.is_public,
-    updated_at: new Date().toISOString()
-  };
+  try {
+    // Check if log exists and user owns it
+    const existingLog = await logService.getLogById(logId, auth.user.id);
+    
+    if (!existingLog) {
+      throw new HTTPException(404, { message: 'Log not found' });
+    }
 
-  return c.json(updatedLog);
+    if (existingLog.user_id !== auth.user.id) {
+      throw new HTTPException(403, { message: 'Not log owner' });
+    }
+
+    // Update the log
+    const updatedLog = await logService.updateLog(logId, {
+      title: body.title,
+      content_md: body.content_md,
+      is_public: body.is_public,
+      tag_ids: body.tag_ids
+    }, auth.user.id);
+
+    return c.json(updatedLog);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Error updating log:', error);
+    throw new HTTPException(500, { message: 'Failed to update log' });
+  }
 });
 
 // DELETE /logs/{logId} - Delete log
 logs.delete('/:logId', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
+  const logId = c.req.param('logId');
+  const logService = c.get('logService') as LogService;
+  const auth = c.get('auth'); // Set by auth middleware
   
-  if (!sessionToken || sessionToken !== 'valid_session_token') {
+  if (!auth || !auth.user) {
     throw new HTTPException(401, { message: 'Not authenticated' });
   }
 
-  const logId = c.req.param('logId');
-  
-  // Validate log ID format (should be numeric)
-  if (!/^\d+$/.test(logId)) {
-    throw new HTTPException(400, { message: 'Invalid log ID format' });
-  }
-  
-  const log = mockLogs.find(l => l.id === logId);
-  
-  if (!log) {
-    throw new HTTPException(404, { message: 'Log not found' });
-  }
+  try {
+    // Check if log exists and user owns it
+    const existingLog = await logService.getLogById(logId, auth.user.id);
+    
+    if (!existingLog) {
+      throw new HTTPException(404, { message: 'Log not found' });
+    }
 
-  // Check if user owns log
-  if (log.user.id !== 'user_123') {
-    throw new HTTPException(403, { message: 'Not log owner' });
-  }
+    if (existingLog.user_id !== auth.user.id) {
+      throw new HTTPException(403, { message: 'Not log owner' });
+    }
 
-  // TODO: Delete log from database
-  
-  return c.body(null, 204);
+    // Delete the log
+    await logService.deleteLog(logId, auth.user.id);
+    
+    return c.body(null, 204);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Error deleting log:', error);
+    throw new HTTPException(500, { message: 'Failed to delete log' });
+  }
 });
 
-// POST /logs/{logId}/share - Share log to Twitter
+// POST /logs/{logId}/share - Share log to Twitter  
 logs.post('/:logId/share', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
+  const logId = c.req.param('logId');
+  const logService = c.get('logService') as LogService;
+  const twitterService = c.get('twitterService') as TwitterService;
+  const auth = c.get('auth'); // Set by auth middleware
   
-  if (!sessionToken || (sessionToken !== 'valid_session_token' && sessionToken !== 'valid_session_token_456')) {
+  if (!auth || !auth.user) {
     throw new HTTPException(401, { message: 'Not authenticated' });
   }
 
-  const logId = c.req.param('logId');
-  const log = mockLogs.find(l => l.id === logId);
-  
-  if (!log) {
-    throw new HTTPException(404, { message: 'Log not found' });
+  try {
+    // Check if log exists and user owns it
+    const log = await logService.getLogById(logId, auth.user.id);
+    
+    if (!log) {
+      throw new HTTPException(404, { message: 'Log not found' });
+    }
+
+    if (log.user_id !== auth.user.id) {
+      throw new HTTPException(403, { message: 'Not log owner' });
+    }
+
+    // Check if log is public
+    if (!log.is_public) {
+      throw new HTTPException(400, { message: 'Cannot share private log' });
+    }
+
+    // Parse request body
+    let body;
+    try {
+      body = await c.req.json();
+    } catch (error) {
+      body = {};
+    }
+    
+    // Simulate Twitter API failure for test
+    if (body.simulate_failure) {
+      throw new HTTPException(502, { message: 'Twitter API error' });
+    }
+
+    // Share to Twitter using the Twitter service
+    try {
+      const result = await twitterService.shareLogToTwitter(
+        'mock_access_token', // In real implementation, get from user's stored tokens
+        log.title || 'Shared Log',
+        log.content_md,
+        `${c.req.url.split('/').slice(0, -2).join('/')}/${logId}` // Build share URL
+      );
+      
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      
+      return c.json({
+        twitter_post_id: result.tweetId
+      });
+    } catch (twitterError) {
+      console.error('Twitter API error:', twitterError);
+      throw new HTTPException(502, { message: 'Twitter API error' });
+    }
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Error sharing log:', error);
+    throw new HTTPException(500, { message: 'Failed to share log' });
   }
-
-  // Check if user owns log
-  const isOwner123 = sessionToken === 'valid_session_token' && log.user.id === 'user_123';
-  const isOwner456 = sessionToken === 'valid_session_token_456' && log.user.id === 'user_456';
-  
-  if (!isOwner123 && !isOwner456) {
-    throw new HTTPException(403, { message: 'Not log owner' });
-  }
-
-  // Check if log is public
-  if (!log.is_public) {
-    throw new HTTPException(400, { message: 'Cannot share private log' });
-  }
-
-  // Validate request body if needed
-  const body = await c.req.json().catch(() => ({}));
-  
-  // Simulate Twitter API failure for test
-  if (body.simulate_failure) {
-    throw new HTTPException(502, { message: 'Twitter API error' });
-  }
-
-  // Post to Twitter
-  const twitterPostId = crypto.randomUUID();
-
-  return c.json({
-    twitter_post_id: twitterPostId
-  });
 });
+
+// Remove all the mock data since we're now using real services
 
 export default logs;

@@ -10,7 +10,7 @@
 - [x] T004 Create `.nvmrc` (Node 22 LTS) at repo root and refresh `README.md` prerequisites and quickstart summary to match the trimmed workflow.
 
 ## Phase 3.2: Tests First (TDD)
-- [ ] T005 [P] Create failing auth contract suite in `backend/tests/contract/auth.contract.test.ts` (covers `/auth/twitter`, `/auth/callback`, `/auth/logout`).
+- [x] T005 [P] Create failing auth contract suite in `backend/tests/contract/auth.contract.test.ts` (covers `/auth/twitter`, `/auth/callback`, `/auth/logout`).
 - [ ] T006 [P] Create failing user contract suite in `backend/tests/contract/users.contract.test.ts` (covers `/users/me`).
 - [ ] T007 [P] Create failing tag contract suite in `backend/tests/contract/tags.contract.test.ts` (covers list/create/detail/update/delete/associations flows).
 - [ ] T008 [P] Create failing log contract suite in `backend/tests/contract/logs.contract.test.ts` (covers list/create/detail/update/delete/share flows).

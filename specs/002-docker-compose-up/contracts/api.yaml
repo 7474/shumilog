@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Docker Compose Development Environment API
+  description: Configuration and management endpoints for local development environment
+  version: 1.0.0
+  
+servers:
+  - url: http://localhost:8787
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Service health check
+      description: Check if the service is running and healthy
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        enum: [connected, disconnected]
+                      backend:
+                        type: string
+                        enum: [running, stopped]
+                required:
+                  - status
+                  - timestamp
+                  
+  /dev/config:
+    get:
+      summary: Get development configuration
+      description: Retrieve current development environment configuration
+      responses:
+        '200':
+          description: Configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  environment:
+                    type: string
+                    enum: [development]
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        status:
+                          type: string
+                          enum: [running, stopped, starting, unhealthy]
+                        ports:
+                          type: array
+                          items:
+                            type: string
+                        volumes:
+                          type: array
+                          items:
+                            type: string
+                required:
+                  - environment
+                  - services
+                  
+  /dev/logs:
+    get:
+      summary: Get service logs
+      description: Retrieve logs from all services or specific service
+      parameters:
+        - name: service
+          in: query
+          description: Specific service to get logs from
+          schema:
+            type: string
+            enum: [backend, frontend, database]
+        - name: lines
+          in: query
+          description: Number of log lines to retrieve
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          format: date-time
+                        level:
+                          type: string
+                          enum: [debug, info, warn, error]
+                        message:
+                          type: string
+                      required:
+                        - timestamp
+                        - level
+                        - message
+                required:
+                  - service
+                  - logs
+                  
+  /dev/reload:
+    post:
+      summary: Trigger service reload
+      description: Manually trigger hot-reload for development services
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                service:
+                  type: string
+                  enum: [backend, frontend, all]
+                force:
+                  type: boolean
+                  default: false
+              required:
+                - service
+      responses:
+        '200':
+          description: Reload triggered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [reloading, reloaded]
+                  service:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                required:
+                  - status
+                  - service
+                  - timestamp
+                  
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - error
+        - message
+        - timestamp

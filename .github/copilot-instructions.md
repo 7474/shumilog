@@ -4,6 +4,8 @@ Auto-generated from all feature plans. Last updated: 2025-09-26
 
 ## Active Technologies
 - TypeScript (latest stable) + Cloudflare Workers, Hono (lightweight framework), Twitter OAuth API, Cloudflare D1 (SQLite), GitHub Flavored Markdown parser (001-web-x-twitter)
+- TypeScript 5.2+ (latest stable), Node.js 18+ + Hono (backend), Vite (frontend), Wrangler (Cloudflare Workers), Vitest (testing) (002-docker-compose-up)
+- Cloudflare D1 (SQLite) for development database with persistent volumes (002-docker-compose-up)
 
 ## Project Structure
 ```
@@ -19,6 +21,7 @@ npm test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNO
 TypeScript (latest stable): Follow standard conventions
 
 ## Recent Changes
+- 002-docker-compose-up: Added TypeScript 5.2+ (latest stable), Node.js 18+ + Hono (backend), Vite (frontend), Wrangler (Cloudflare Workers), Vitest (testing)
 - 001-web-x-twitter: Added TypeScript (latest stable) + Cloudflare Workers, Hono (lightweight framework), Twitter OAuth API, Cloudflare D1 (SQLite), GitHub Flavored Markdown parser
 
 <!-- MANUAL ADDITIONS START -->

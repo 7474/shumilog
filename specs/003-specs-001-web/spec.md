@@ -15,9 +15,14 @@ As a developer tasked with reviving the project, I need to run a minimal version
 2. **Given** the curated project files after cleanup, **When** the developer inspects the repository structure, **Then** only the assets required for the minimal Cloudflare Worker setup remain and no deleted components are referenced by the README or runtime flow.
 
 ### Edge Cases
-- What happens when the developer lacks a Cloudflare account or required tokens—are alternative local run instructions provided or must the user obtain credentials? [NEEDS CLARIFICATION: clarify credential expectations]
+- Developers follow a fully local `wrangler dev` workflow without supplying Cloudflare account credentials; documentation must highlight any local-only configuration required to mimic hosted behavior.
 - How does the system behave if a contract endpoint remains unimplemented or returns an error despite the minimal setup?
 - What occurs if the README prerequisites are missing tooling versions or operating-system-specific steps?
+
+## Clarifications
+
+### Session 2025-09-26
+- Q: How should local developers handle Cloudflare credentials when running the backend? → A: Provide a fully local workflow that uses `wrangler dev` (or mocks) without any Cloudflare account credentials.
 
 ## Requirements *(mandatory)*
 
@@ -26,7 +31,7 @@ As a developer tasked with reviving the project, I need to run a minimal version
 - **FR-002**: The README MUST provide an accurate, sequential local run guide that enables a developer to start the application from scratch and confirm API availability via documented verification steps.
 - **FR-003**: The repository MUST exclude components, services, or assets that are not required for the minimal Cloudflare Worker scenario, while ensuring no remaining documentation references removed items. [NEEDS CLARIFICATION: define criteria for "不要なファイル"]
 - **FR-004**: The system MUST include a simple validation procedure (manual or automated) that confirms API conformity after running the README instructions (e.g., sample requests and expected responses summarized for each core endpoint).
-- **FR-005**: The project MUST call out any mandatory external dependencies (accounts, environment variables, tooling versions) so that developers understand what must be prepared before running the local flow.
+- **FR-005**: The project MUST call out any mandatory external dependencies (accounts, environment variables, tooling versions) so that developers understand what must be prepared before running the local flow, explicitly confirming that the default `wrangler dev` setup runs without Cloudflare account credentials.
 
 ### Key Entities *(include if feature involves data)*
 - **Minimal Cloudflare API Surface**: Represents the subset of endpoints and behaviors from `api.yaml` that the revived application must honor, including request/response structures and success criteria.

@@ -18,28 +18,28 @@
 - [x] T010 [P] Add frontend smoke test `frontend/tests/smoke/log_list.spec.ts` (Playwright or Vitest + jsdom) validating log list, filtering, and share action wiring.
 
 ## Phase 3.3: Data Model & Persistence (ONLY after tests fail)
-- [ ] T011 [P] Align `backend/src/models/User.ts` with minimal fields and validation derived from data-model blueprint.
-- [ ] T012 [P] Align `backend/src/models/Session.ts` with token expiry handling for Worker cookies.
-- [ ] T013 [P] Align `backend/src/models/Tag.ts` including metadata JSON typing and timestamps.
-- [ ] T014 [P] Align `backend/src/models/TagAssociation.ts` enforcing self-association guard.
-- [ ] T015 [P] Align `backend/src/models/Log.ts` including markdown limits and public visibility flag.
-- [ ] T016 [P] Align `backend/src/models/LogTagAssociation.ts` for log↔tag join management.
-- [ ] T017 Update `backend/src/db/schema.sql.ts` and `backend/migrations/0001_initial_schema.sql` to match the pared-down D1 schema (users, sessions, tags, tag_associations, logs, log_tag_associations, helper views).
-- [ ] T018 Refresh `backend/src/db/seeds.sql.ts` and `backend/src/db/init-dev.sql` with the deterministic fixtures referenced by tests/quickstart.
+- [x] T011 [P] Align `backend/src/models/User.ts` with minimal fields and validation derived from data-model blueprint.
+- [x] T012 [P] Align `backend/src/models/Session.ts` with token expiry handling for Worker cookies.
+- [x] T013 [P] Align `backend/src/models/Tag.ts` including metadata JSON typing and timestamps.
+- [x] T014 [P] Align `backend/src/models/TagAssociation.ts` enforcing self-association guard.
+- [x] T015 [P] Align `backend/src/models/Log.ts` including markdown limits and public visibility flag.
+- [x] T016 [P] Align `backend/src/models/LogTagAssociation.ts` for log↔tag join management.
+- [x] T017 Update `backend/src/db/schema.sql.ts` and `backend/migrations/0001_initial_schema.sql` to match the pared-down D1 schema (users, sessions, tags, tag_associations, logs, log_tag_associations, helper views).
+- [x] T018 Refresh `backend/src/db/seeds.sql.ts` and `backend/src/db/init-dev.sql` with the deterministic fixtures referenced by tests/quickstart.
 
 ## Phase 3.4: Services & Middleware
-- [ ] T019 Implement minimal session utilities in `backend/src/services/SessionService.ts` (issue, validate, revoke tokens via D1).
-- [ ] T020 Implement user access helpers in `backend/src/services/UserService.ts` (profile fetch, create-if-missing during OAuth callback).
-- [ ] T021 Implement tag helpers in `backend/src/services/TagService.ts` (CRUD + association helpers backed by D1 queries).
-- [ ] T022 Implement log helpers in `backend/src/services/LogService.ts` (CRUD, share preconditions, public listing filters).
-- [ ] T023 Stub Twitter posting logic in `backend/src/services/TwitterService.ts` for local logging while preserving interface for `/logs/{id}/share`.
-- [ ] T024 Update `backend/src/middleware/auth.ts` and `backend/src/middleware/security.ts` for session cookie parsing, CSRF basics, and security headers consistent with Workers.
+- [x] T019 Implement minimal session utilities in `backend/src/services/SessionService.ts` (issue, validate, revoke tokens via D1).
+- [x] T020 Implement user access helpers in `backend/src/services/UserService.ts` (profile fetch, create-if-missing during OAuth callback).
+- [ ] T021 Implement tag helpers in `backend/src/services/TagService.ts` (CRUD + association helpers backed by D1 queries). *Status: TagService still mixes mock data/legacy column names (`parent_tag_id`) and requires D1 rewiring.*
+- [x] T022 Implement log helpers in `backend/src/services/LogService.ts` (CRUD, share preconditions, public listing filters).
+- [x] T023 Stub Twitter posting logic in `backend/src/services/TwitterService.ts` for local logging while preserving interface for `/logs/{id}/share`.
+- [ ] T024 Update `backend/src/middleware/auth.ts` and `backend/src/middleware/security.ts` for session cookie parsing, CSRF basics, and security headers consistent with Workers. *Status: security headers exist, but auth routes still return mock OAuth/session handling and aren't wired to SessionService.*
 
 ## Phase 3.5: API Routes & Server Wiring
-- [ ] T025 Implement Hono auth routes in `backend/src/routes/auth.ts` using session + Twitter service stubs.
-- [ ] T026 Implement user profile route in `backend/src/routes/users.ts` with session guard.
-- [ ] T027 Implement tag routes in `backend/src/routes/tags.ts` (list/search, CRUD, associations) using tag service helpers.
-- [x] T028 Implement log routes in `backend/src/routes/logs.ts` (public listing, CRUD, share) using log service helpers and ensuring ownership checks.
+- [ ] T025 Implement Hono auth routes in `backend/src/routes/auth.ts` using session + Twitter service stubs. *Current file still mocks OAuth and doesn't persist sessions.*
+- [ ] T026 Implement user profile route in `backend/src/routes/users.ts` with session guard. *Route remains placeholder.*
+- [ ] T027 Implement tag routes in `backend/src/routes/tags.ts` (list/search, CRUD, associations) using tag service helpers. *File relies on mock tag data & TODOs.*
+- [ ] T028 Implement log routes in `backend/src/routes/logs.ts` (public listing, CRUD, share) using log service helpers and ensuring ownership checks. *Initial implementation exists but still enforces auth on public endpoints—needs alignment with latest clarifications (FR-007) and failing contract suite.*
 - [ ] T029 Update `backend/src/server.ts` (and `backend/src/index.ts`) to register middleware, mount route groups, and expose `/health` + `/dev` utilities per simplified stack.
 - [ ] T030 Refresh Wrangler config in `backend/wrangler.toml` and associated environment declarations to bind local D1 database and set Worker entry point.
 
@@ -81,3 +81,4 @@ Task: "T010 Add frontend smoke test frontend/tests/smoke/log_list.spec.ts"
 - Ensure contract and integration tests fail before implementing corresponding services/routes.
 - Update documentation and scripts only after verifying the minimal workflow works end-to-end.
 - Commit after each task to maintain clear history and cost-awareness per constitution guidelines.
+- Clarifications on 2025-09-27 added FR-006/FR-007: ensure endpoints intended for the minimal revival can serve the public contract without authentication and persist via Cloudflare D1.

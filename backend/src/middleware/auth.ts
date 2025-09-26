@@ -1,9 +1,8 @@
 import { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { getCookie } from 'hono/cookie';
+import { getCookie, setCookie } from 'hono/cookie';
 import { SessionService } from '../services/SessionService.js';
 import { UserService } from '../services/UserService.js';
-import { Database } from '../db/database.js';
 
 export interface AuthContext {
   user: {
@@ -16,6 +15,39 @@ export interface AuthContext {
   sessionId: string;
 }
 
+const SESSION_COOKIE_NAME = 'session';
+
+const buildSessionCookieOptions = (_c: Context, maxAgeSeconds: number) => ({
+  httpOnly: true,
+  secure: true,
+  sameSite: 'Lax' as const,
+  path: '/',
+  maxAge: maxAgeSeconds
+});
+
+const getSessionToken = (c: Context): string | null => {
+  const cookieSession = getCookie(c, SESSION_COOKIE_NAME) || getCookie(c, 'session_id');
+  if (cookieSession) {
+    return cookieSession;
+  }
+
+  const authHeader = c.req.header('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  return null;
+};
+
+export const setSessionCookie = (c: Context, token: string, daysToExpire = 30): void => {
+  const maxAgeSeconds = daysToExpire * 24 * 60 * 60;
+  setCookie(c, SESSION_COOKIE_NAME, token, buildSessionCookieOptions(c, maxAgeSeconds));
+};
+
+export const clearSessionCookie = (c: Context): void => {
+  setCookie(c, SESSION_COOKIE_NAME, '', buildSessionCookieOptions(c, 0));
+};
+
 /**
  * Authentication middleware for protected routes
  * Validates session and adds user info to context
@@ -23,21 +55,7 @@ export interface AuthContext {
 export const authMiddleware = (sessionService: SessionService, userService: UserService) => {
   return async (c: Context, next: Next) => {
     try {
-      // Get session ID from cookie or Authorization header
-      let sessionId: string | undefined;
-      
-      // Try cookie first (check both session_id and session for compatibility)
-      const cookieSession = getCookie(c, 'session_id') || getCookie(c, 'session');
-      if (cookieSession) {
-        sessionId = cookieSession;
-      } else {
-        // Try Authorization header
-        const authHeader = c.req.header('Authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          sessionId = authHeader.substring(7);
-        }
-      }
-
+      const sessionId = getSessionToken(c);
       if (!sessionId) {
         throw new HTTPException(401, { message: 'No session provided' });
       }
@@ -81,18 +99,7 @@ export const authMiddleware = (sessionService: SessionService, userService: User
 export const optionalAuthMiddleware = (sessionService: SessionService, userService: UserService) => {
   return async (c: Context, next: Next) => {
     try {
-      // Get session ID from cookie or Authorization header
-      let sessionId: string | undefined;
-      
-      const cookieSession = getCookie(c, 'session_id') || getCookie(c, 'session');
-      if (cookieSession) {
-        sessionId = cookieSession;
-      } else {
-        const authHeader = c.req.header('Authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          sessionId = authHeader.substring(7);
-        }
-      }
+      const sessionId = getSessionToken(c);
 
       if (sessionId) {
         const session = await sessionService.validateSession(sessionId);

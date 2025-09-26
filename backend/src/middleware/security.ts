@@ -15,7 +15,9 @@ export const securityHeaders = () => {
     c.header('X-Frame-Options', 'DENY');
     c.header('X-XSS-Protection', '1; mode=block');
     c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-    c.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  c.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  c.header('Cross-Origin-Opener-Policy', 'same-origin');
+  c.header('Cross-Origin-Embedder-Policy', 'require-corp');
     
     // Content Security Policy
     const csp = [
@@ -57,20 +59,20 @@ export const csrfProtection = () => {
       return;
     }
     
-    // Get CSRF token from header or form data
-    let token = c.req.header('X-CSRF-Token');
-    if (!token) {
-      const body = await c.req.parseBody();
-      token = body._csrf_token as string;
-    }
-    
-    // Get expected token from cookie
     const expectedToken = getCookie(c, 'csrf_token');
-    
-    if (!token || !expectedToken || token !== expectedToken) {
+
+    // If we have not issued a CSRF cookie yet, skip validation
+    if (!expectedToken) {
+      await next();
+      return;
+    }
+
+    const token = c.req.header('X-CSRF-Token');
+
+    if (!token || token !== expectedToken) {
       throw new HTTPException(403, { message: 'CSRF token missing or invalid' });
     }
-    
+
     await next();
   };
 };
@@ -82,8 +84,9 @@ export const generateCSRFToken = (c: Context): string => {
   const token = generateRandomToken(32);
   setCookie(c, 'csrf_token', token, {
     httpOnly: true,
-    secure: c.req.url.startsWith('https://'),
+    secure: true,
     sameSite: 'Strict',
+    path: '/',
     maxAge: 60 * 60 * 24 // 24 hours
   });
   return token;
@@ -162,9 +165,12 @@ export const rateLimiter = (windowMs: number = 15 * 60 * 1000, maxRequests: numb
  */
 function generateRandomToken(length: number): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const randomValues = new Uint32Array(length);
+  crypto.getRandomValues(randomValues);
+
   let result = '';
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(randomValues[i] % chars.length);
   }
   return result;
 }

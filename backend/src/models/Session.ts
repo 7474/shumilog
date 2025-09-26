@@ -34,11 +34,13 @@ export class SessionModel {
   }
 
   static generateToken(): string {
-    // Generate a secure random token
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const randomValues = new Uint32Array(32);
+    crypto.getRandomValues(randomValues);
+
     let result = '';
-    for (let i = 0; i < 32; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < randomValues.length; i++) {
+      result += chars.charAt(randomValues[i] % chars.length);
     }
     return result;
   }

@@ -33,10 +33,10 @@
 - [x] T021 Implement tag helpers in `backend/src/services/TagService.ts` (CRUD + association helpers backed by D1 queries).
 - [x] T022 Implement log helpers in `backend/src/services/LogService.ts` (CRUD, share preconditions, public listing filters).
 - [x] T023 Stub Twitter posting logic in `backend/src/services/TwitterService.ts` for local logging while preserving interface for `/logs/{id}/share`.
-- [ ] T024 Update `backend/src/middleware/auth.ts` and `backend/src/middleware/security.ts` for session cookie parsing, CSRF basics, and security headers consistent with Workers. *Status: security headers exist, but auth routes still return mock OAuth/session handling and aren't wired to SessionService.*
+- [x] T024 Update `backend/src/middleware/auth.ts` and `backend/src/middleware/security.ts` for session cookie parsing, CSRF basics, and security headers consistent with Workers.
 
 ## Phase 3.5: API Routes & Server Wiring
-- [ ] T025 Implement Hono auth routes in `backend/src/routes/auth.ts` using session + Twitter service stubs. *Current file still mocks OAuth and doesn't persist sessions.*
+- [x] T025 Implement Hono auth routes in `backend/src/routes/auth.ts` using session + Twitter service stubs.
 - [ ] T026 Implement user profile route in `backend/src/routes/users.ts` with session guard. *Route remains placeholder.*
 - [x] T027 Implement tag routes in `backend/src/routes/tags.ts` (list/search, CRUD, associations) using tag service helpers.
 - [ ] T028 Implement log routes in `backend/src/routes/logs.ts` (public listing, CRUD, share) using log service helpers and ensuring ownership checks. *Initial implementation exists but still enforces auth on public endpoints—needs alignment with latest clarifications (FR-007) and failing contract suite.*

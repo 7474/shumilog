@@ -135,8 +135,8 @@ export function createApp(env: any) {
   const tagService = new TagService(database);
   const logService = new LogService(database);
   const twitterService = new TwitterService(
-    env.TWITTER_CLIENT_ID,
-    env.TWITTER_CLIENT_SECRET
+    process.env.TWITTER_CLIENT_ID || env.TWITTER_CLIENT_ID || '',
+    process.env.TWITTER_CLIENT_SECRET || env.TWITTER_CLIENT_SECRET || ''
   );
 
   // Initialize Hono app
@@ -163,12 +163,21 @@ export function createApp(env: any) {
 
   // Add services to context for routes to access
   app.use('*', async (c, next) => {
+    const runtimeConfig = {
+      nodeEnv: process.env.NODE_ENV || env.NODE_ENV || 'development',
+      twitterClientId: process.env.TWITTER_CLIENT_ID || env.TWITTER_CLIENT_ID || '',
+      twitterRedirectUri: process.env.TWITTER_REDIRECT_URI || env.TWITTER_REDIRECT_URI || 'http://localhost:8787/api/auth/callback',
+      oauthSuccessRedirect: process.env.APP_BASE_URL || env.APP_BASE_URL || '/',
+      oauthFailureRedirect: process.env.APP_LOGIN_URL || env.APP_LOGIN_URL || '/login?error=auth'
+    };
+
     (c as any).set('database', database);
     (c as any).set('userService', userService);
     (c as any).set('tagService', tagService);
     (c as any).set('logService', logService);
     (c as any).set('sessionService', sessionService);
     (c as any).set('twitterService', twitterService);
+    (c as any).set('config', runtimeConfig);
     await next();
   });
 

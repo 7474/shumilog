@@ -1,13 +1,11 @@
 #!/usr/bin/env node
 /**
- * Database migration and initialization script
- * Executes schema creation and seed data insertion using TypeScript modules
+ * Database migration and initialization script aligned with minimal D1 schema
  */
 
 import { Database } from './database.js';
 import { DATABASE_SCHEMAS } from './schema.sql.js';
-import { SEED_TAGS } from './seeds.sql.js';
-import { v4 as uuidv4 } from 'uuid';
+import { seedDatabase, isDatabaseSeeded } from './seeds.sql.js';
 
 interface MigrationConfig {
   databasePath: string;
@@ -18,154 +16,98 @@ interface MigrationConfig {
 /**
  * Execute database migrations and initialization
  */
-export async function runMigrations(config: MigrationConfig): Promise<void> {
-  const db = new Database({
-    databasePath: config.databasePath,
-    options: {
-      enableWAL: true,
-      enableForeignKeys: true
-    }
-  });
+async function migrate(config: MigrationConfig): Promise<void> {
+  console.log('Starting database migration...');
+  console.log(`Database path: ${config.databasePath}`);
 
   try {
-    console.log('Connecting to database...');
-    await db.connect();
-
-    console.log('Running database migrations...');
+    const db = new Database({ databasePath: config.databasePath });
     
-    // Execute schema creation
-    for (const schema of DATABASE_SCHEMAS) {
-      console.log('Executing schema...');
-      await db.exec(schema);
+    // Drop existing schema if force flag is set
+    if (config.force) {
+      console.log('Force flag set - dropping existing schema...');
+      await dropExistingSchema(db);
     }
 
-    console.log('Schema creation completed');
+    // Create database schema
+    console.log('Creating database schema...');
+    await createSchema(db);
 
     // Insert seed data if requested
     if (config.seedData) {
-      console.log('Inserting seed data...');
-      await insertSeedData(db);
-      console.log('Seed data insertion completed');
+      console.log('Checking if database needs seeding...');
+      if (!(await isDatabaseSeeded(db))) {
+        console.log('Inserting seed data...');
+        await seedDatabase(db);
+      } else {
+        console.log('Database already seeded, skipping...');
+      }
     }
 
-    console.log('Database initialization completed successfully');
+    await db.close();
+    console.log('Migration completed successfully!');
+    
   } catch (error) {
     console.error('Migration failed:', error);
-    throw error;
-  } finally {
-    await db.close();
+    process.exit(1);
   }
 }
 
 /**
- * Insert seed data into database
+ * Create database schema using exported schemas
  */
-async function insertSeedData(db: Database): Promise<void> {
-  // Check if already seeded
-  const existingTags = await db.query('SELECT COUNT(*) as count FROM tags');
-  if (existingTags[0]?.count > 0) {
-    console.log('Database already contains tags, skipping seed data insertion');
-    return;
+async function createSchema(db: Database): Promise<void> {
+  // Enable foreign key constraints
+  await db.exec('PRAGMA foreign_keys = ON;');
+  
+  // Create all tables in order
+  for (const schema of DATABASE_SCHEMAS) {
+    await db.exec(schema);
   }
+  
+  console.log('Database schema created successfully');
+}
 
-  // Insert tags
-  const insertTagStmt = db.prepare(`
-    INSERT OR IGNORE INTO tags (id, name, description, category, metadata, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const now = new Date().toISOString();
-
-  for (const tag of SEED_TAGS) {
-    const id = uuidv4();
-    const metadata = tag.metadata ? JSON.stringify(tag.metadata) : null;
-    const category = getCategoryFromTag(tag);
-    
-    await insertTagStmt.run([
-      id,
-      tag.name,
-      tag.description || null,
-      category,
-      metadata,
-      now,
-      now
-    ]);
-  }
-
-  console.log(`Inserted ${SEED_TAGS.length} seed tags`);
-
-  // Create some basic tag associations
-  const associations = [
-    { parent: 'anime', children: ['attack-on-titan', 'demon-slayer', 'one-piece'] },
-    { parent: 'action', children: ['attack-on-titan'] },
-    { parent: 'adventure', children: ['one-piece'] },
+/**
+ * Drop existing database schema
+ */
+async function dropExistingSchema(db: Database): Promise<void> {
+  const tables = [
+    'schema_migrations',
+    'log_tag_associations',
+    'tag_associations', 
+    'logs',
+    'sessions',
+    'tags',
+    'users'
   ];
 
-  const insertAssocStmt = db.prepare(`
-    INSERT OR IGNORE INTO tag_associations (id, parent_tag_id, child_tag_id, relationship_type, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-
-  for (const assoc of associations) {
-    const parentTag = await db.queryFirst('SELECT id FROM tags WHERE name = ?', [assoc.parent]);
-    if (!parentTag) continue;
-
-    for (const childName of assoc.children) {
-      const childTag = await db.queryFirst('SELECT id FROM tags WHERE name = ?', [childName]);
-      if (!childTag) continue;
-
-      await insertAssocStmt.run([
-        uuidv4(),
-        parentTag.id,
-        childTag.id,
-        'parent_child',
-        now
-      ]);
-    }
+  await db.exec('PRAGMA foreign_keys = OFF;');
+  
+  for (const table of tables) {
+    await db.exec(`DROP TABLE IF EXISTS ${table};`);
   }
-
-  console.log('Tag associations created');
+  
+  await db.exec('PRAGMA foreign_keys = ON;');
+  console.log('Existing schema dropped');
 }
 
 /**
- * Determine category from tag data
+ * Main CLI entry point
  */
-function getCategoryFromTag(tag: any): string {
-  if (['anime', 'manga', 'game', 'novel', 'movie'].includes(tag.name)) {
-    return 'category';
-  }
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
   
-  if (['action', 'adventure', 'comedy', 'drama', 'fantasy', 'romance', 'sci-fi', 'slice-of-life'].includes(tag.name)) {
-    return 'genre';
-  }
-  
-  if (['completed', 'watching', 'reading', 'on-hold', 'dropped', 'plan-to-watch', 'plan-to-read'].includes(tag.name)) {
-    return 'status';
-  }
-  
-  if (tag.metadata?.japanese_name || tag.metadata?.mal_id) {
-    return 'anime';
-  }
-  
-  return 'other';
+  const config: MigrationConfig = {
+    databasePath: args[0] || 'shumilog.db',
+    force: args.includes('--force'),
+    seedData: args.includes('--seed')
+  };
+
+  await migrate(config);
 }
 
-/**
- * CLI execution
- */
+// Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const databasePath = process.env.DB_PATH || process.env.DATABASE_URL?.replace('file:', '') || '/data/shumilog.db';
-  const force = process.argv.includes('--force');
-  const seedData = !process.argv.includes('--no-seed');
-
-  console.log(`Starting database migration for: ${databasePath}`);
-  
-  runMigrations({
-    databasePath,
-    force,
-    seedData
-  }).catch((error) => {
-    console.error('Migration failed:', error);
-    process.exit(1);
-  });
+  main().catch(console.error);
 }

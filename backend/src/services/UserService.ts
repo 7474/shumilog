@@ -12,17 +12,15 @@ export class UserService {
     const userId = crypto.randomUUID();
     
     const stmt = this.db.prepare(`
-      INSERT INTO users (id, twitter_id, twitter_username, display_name, avatar_url, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, twitter_username, display_name, avatar_url, created_at)
+      VALUES (?, ?, ?, ?, ?)
     `);
     
     await stmt.run([
       userId,
-      data.twitter_id,
-      data.twitter_username,
+      data.twitter_username || null,
       data.display_name,
       data.avatar_url || null,
-      now,
       now
     ]);
 

@@ -39,19 +39,17 @@ export interface TagDetail extends Tag {
 export const TAG_TABLE_SCHEMA = `
   CREATE TABLE IF NOT EXISTS tags (
     id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
     description TEXT,
     metadata TEXT NOT NULL DEFAULT '{}',
     created_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
   );
   
   CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
-  CREATE INDEX IF NOT EXISTS idx_tags_created_by ON tags(created_by);
-  CREATE INDEX IF NOT EXISTS idx_tags_created_at ON tags(created_at);
 `;
 
 export class TagModel {
@@ -68,7 +66,11 @@ export class TagModel {
   }
 
   static isValidName(name: string): boolean {
-    return name.length > 0 && name.length <= 200;
+    return name.length > 0 && name.length <= 100;
+  }
+
+  static isValidDescription(description?: string): boolean {
+    return !description || description.length <= 500;
   }
 
   static fromRow(row: any): Tag {

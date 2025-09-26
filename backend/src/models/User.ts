@@ -1,18 +1,17 @@
 /**
- * User model matching API specification
+ * User model aligned with minimal data model blueprint
  */
 
 export interface User {
   id: string;
-  twitter_username: string;
+  twitter_username?: string;
   display_name: string;
   avatar_url?: string;
   created_at: string;
 }
 
 export interface CreateUserData {
-  twitter_id: string;
-  twitter_username: string;
+  twitter_username?: string;
   display_name: string;
   avatar_url?: string;
 }
@@ -25,26 +24,22 @@ export interface UpdateUserData {
 export const USER_TABLE_SCHEMA = `
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
-    twitter_id TEXT UNIQUE NOT NULL,
-    twitter_username TEXT NOT NULL,
+    twitter_username TEXT,
     display_name TEXT NOT NULL,
     avatar_url TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   
-  CREATE INDEX IF NOT EXISTS idx_users_twitter_id ON users(twitter_id);
   CREATE INDEX IF NOT EXISTS idx_users_twitter_username ON users(twitter_username);
-  CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 `;
 
 export class UserModel {
-  static isValidTwitterId(twitterId: string): boolean {
-    return /^\d+$/.test(twitterId) && twitterId.length > 0;
+  static isValidTwitterUsername(username: string): boolean {
+    return !username || /^[a-zA-Z0-9_]{1,15}$/.test(username);
   }
 
-  static isValidTwitterUsername(username: string): boolean {
-    return /^[a-zA-Z0-9_]{1,15}$/.test(username);
+  static isValidDisplayName(displayName: string): boolean {
+    return displayName.length > 0 && displayName.length <= 100;
   }
 
   static fromRow(row: any): User {

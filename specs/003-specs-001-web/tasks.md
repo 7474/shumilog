@@ -12,7 +12,7 @@
 ## Phase 3.2: Tests First (TDD)
 - [x] T005 [P] Create failing auth contract suite in `backend/tests/contract/auth.contract.test.ts` (covers `/auth/twitter`, `/auth/callback`, `/auth/logout`).
 - [x] T006 [P] Create failing user contract suite in `backend/tests/contract/users.contract.test.ts` (covers `/users/me`).
-- [ ] T007 [P] Create failing tag contract suite in `backend/tests/contract/tags.contract.test.ts` (covers list/create/detail/update/delete/associations flows).
+- [x] T007 [P] Create failing tag contract suite in `backend/tests/contract/tags.contract.test.ts` (covers list/create/detail/update/delete/associations flows).
 - [ ] T008 [P] Create failing log contract suite in `backend/tests/contract/logs.contract.test.ts` (covers list/create/detail/update/delete/share flows).
 - [ ] T009 [P] Add integration test `backend/tests/integration/log_share.flow.test.ts` walking seeded user through log creation, tag association, and share response.
 - [ ] T010 [P] Add frontend smoke test `frontend/tests/smoke/log_list.spec.ts` (Playwright or Vitest + jsdom) validating log list, filtering, and share action wiring.

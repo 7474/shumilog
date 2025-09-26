@@ -46,15 +46,10 @@ export class UserService {
   }
 
   /**
-   * Find user by Twitter ID
+   * Find user by Twitter username (since no twitter_id field in minimal schema)
    */
-  async findByTwitterId(twitterId: string): Promise<User | null> {
-    const row = await this.db.queryFirst(
-      'SELECT id, twitter_username, display_name, avatar_url, created_at FROM users WHERE twitter_id = ?',
-      [twitterId]
-    );
-    
-    return row ? UserModel.fromRow(row) : null;
+  async findByTwitterId(twitterUsername: string): Promise<User | null> {
+    return await this.findByTwitterUsername(twitterUsername);
   }
 
   /**
@@ -109,6 +104,34 @@ export class UserService {
     }
     
     return updatedUser;
+  }
+
+  /**
+   * Find or create user during OAuth callback
+   * Creates user if missing, updates profile if exists
+   */
+  async findOrCreateUserByTwitter(twitterData: {
+    twitter_username: string;
+    display_name: string;
+    avatar_url?: string;
+  }): Promise<User> {
+    // First try to find by Twitter username
+    let user = await this.findByTwitterUsername(twitterData.twitter_username);
+    
+    if (user) {
+      // Update existing user with latest Twitter data
+      return await this.updateUser(user.id, {
+        display_name: twitterData.display_name,
+        avatar_url: twitterData.avatar_url
+      });
+    }
+    
+    // Create new user
+    return await this.createUser({
+      twitter_username: twitterData.twitter_username,
+      display_name: twitterData.display_name,
+      avatar_url: twitterData.avatar_url
+    });
   }
 
   /**

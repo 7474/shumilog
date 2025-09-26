@@ -1,251 +1,106 @@
-export interface Session {
-  sessionId: string;
-  userId: string;
-  accessToken?: string;
-  refreshToken?: string;
-  expiresAt?: number;
-  createdAt: number;
-  lastAccessedAt: number;
-  ipAddress?: string;
-  userAgent?: string;
-}
-
-export interface SessionTokens {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt: number;
-}
+import { Session, SessionModel, CreateSessionData } from '../models/Session.js';
+import { Database } from '../db/database.js';
 
 export class SessionService {
-  private readonly kv: any; // Cloudflare KV binding
-  private readonly sessionPrefix = 'session:';
-  private readonly userSessionPrefix = 'user_session:';
-  private readonly defaultTTL = 30 * 24 * 60 * 60; // 30 days in seconds
+  constructor(private db: Database) {}
 
-  constructor(kvBinding?: any) {
-    this.kv = kvBinding;
+  /**
+   * Issue a new session token for a user
+   */
+  async issueSession(userId: string, daysToExpire: number = 30): Promise<string> {
+    const token = SessionModel.generateToken();
+    const expiresAt = SessionModel.createExpiryDate(daysToExpire);
+    const now = new Date().toISOString();
+
+    const stmt = this.db.prepare(`
+      INSERT INTO sessions (token, user_id, created_at, expires_at)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    await stmt.run([token, userId, now, expiresAt]);
+    return token;
   }
 
   /**
-   * Create a new session
+   * Validate session token and return session if valid
    */
-  async createSession(userId: string, tokens?: SessionTokens, metadata?: {
-    ipAddress?: string;
-    userAgent?: string;
-  }): Promise<string> {
-    const sessionId = this.generateSessionId();
-    const now = Date.now();
-
-    const session: Session = {
-      sessionId,
-      userId,
-      accessToken: tokens?.accessToken,
-      refreshToken: tokens?.refreshToken,
-      expiresAt: tokens?.expiresAt,
-      createdAt: now,
-      lastAccessedAt: now,
-      ipAddress: metadata?.ipAddress,
-      userAgent: metadata?.userAgent
-    };
-
-    // Store session in KV
-    if (this.kv) {
-      await this.kv.put(
-        `${this.sessionPrefix}${sessionId}`,
-        JSON.stringify(session),
-        { expirationTtl: this.defaultTTL }
-      );
-
-      // Also store user -> session mapping for quick lookups
-      await this.kv.put(
-        `${this.userSessionPrefix}${userId}`,
-        sessionId,
-        { expirationTtl: this.defaultTTL }
-      );
-    }
-
-    return sessionId;
-  }
-
-  /**
-   * Validate and retrieve session
-   */
-  async validateSession(sessionId: string): Promise<Session | null> {
-    if (!this.kv || !sessionId) {
+  async validateSession(token: string): Promise<Session | null> {
+    if (!token) {
       return null;
     }
 
-    try {
-      const sessionData = await this.kv.get(`${this.sessionPrefix}${sessionId}`);
-      if (!sessionData) {
-        return null;
-      }
+    const row = await this.db.queryFirst(
+      'SELECT token, user_id, created_at, expires_at FROM sessions WHERE token = ?',
+      [token]
+    );
 
-      const session: Session = JSON.parse(sessionData);
-      
-      // Update last accessed time
-      session.lastAccessedAt = Date.now();
-      await this.kv.put(
-        `${this.sessionPrefix}${sessionId}`,
-        JSON.stringify(session),
-        { expirationTtl: this.defaultTTL }
-      );
-
-      return session;
-    } catch (error) {
-      console.error('Session validation error:', error);
+    if (!row) {
       return null;
     }
+
+    const session = SessionModel.fromRow(row);
+    
+    // Check if session is expired
+    if (SessionModel.isExpired(session)) {
+      // Clean up expired session
+      await this.revokeSession(token);
+      return null;
+    }
+
+    return session;
   }
 
   /**
-   * Get session by user ID
+   * Revoke a session token
+   */
+  async revokeSession(token: string): Promise<void> {
+    if (!token) {
+      return;
+    }
+
+    const stmt = this.db.prepare('DELETE FROM sessions WHERE token = ?');
+    await stmt.run([token]);
+  }
+
+  /**
+   * Revoke all sessions for a user
+   */
+  async revokeUserSessions(userId: string): Promise<void> {
+    const stmt = this.db.prepare('DELETE FROM sessions WHERE user_id = ?');
+    await stmt.run([userId]);
+  }
+
+  /**
+   * Clean up expired sessions
+   */
+  async cleanupExpiredSessions(): Promise<number> {
+    const now = new Date().toISOString();
+    const stmt = this.db.prepare('DELETE FROM sessions WHERE expires_at < ?');
+    const result = await stmt.run([now]);
+    return result.changes || 0;
+  }
+
+  /**
+   * Get session by user ID (most recent if multiple)
    */
   async getSessionByUserId(userId: string): Promise<Session | null> {
-    if (!this.kv) {
-      return null;
-    }
-
-    try {
-      const sessionId = await this.kv.get(`${this.userSessionPrefix}${userId}`);
-      if (!sessionId) {
-        return null;
-      }
-
-      return this.validateSession(sessionId);
-    } catch (error) {
-      console.error('Get session by user ID error:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Update session tokens
-   */
-  async updateSessionTokens(sessionId: string, tokens: SessionTokens): Promise<void> {
-    if (!this.kv) {
-      return;
-    }
-
-    const session = await this.validateSession(sessionId);
-    if (!session) {
-      throw new Error('Session not found');
-    }
-
-    session.accessToken = tokens.accessToken;
-    session.refreshToken = tokens.refreshToken;
-    session.expiresAt = tokens.expiresAt;
-    session.lastAccessedAt = Date.now();
-
-    await this.kv.put(
-      `${this.sessionPrefix}${sessionId}`,
-      JSON.stringify(session),
-      { expirationTtl: this.defaultTTL }
+    const row = await this.db.queryFirst(
+      'SELECT token, user_id, created_at, expires_at FROM sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [userId]
     );
-  }
 
-  /**
-   * Destroy a session
-   */
-  async destroySession(sessionId: string): Promise<void> {
-    if (!this.kv || !sessionId) {
-      return;
+    if (!row) {
+      return null;
     }
 
-    try {
-      // Get session to find user ID
-      const session = await this.validateSession(sessionId);
-      
-      // Remove session
-      await this.kv.delete(`${this.sessionPrefix}${sessionId}`);
-      
-      // Remove user session mapping
-      if (session) {
-        await this.kv.delete(`${this.userSessionPrefix}${session.userId}`);
-      }
-    } catch (error) {
-      console.error('Session destruction error:', error);
-    }
-  }
-
-  /**
-   * Destroy all sessions for a user
-   */
-  async destroyUserSessions(userId: string): Promise<void> {
-    if (!this.kv) {
-      return;
+    const session = SessionModel.fromRow(row);
+    
+    // Check if session is expired
+    if (SessionModel.isExpired(session)) {
+      await this.revokeSession(session.token);
+      return null;
     }
 
-    try {
-      const sessionId = await this.kv.get(`${this.userSessionPrefix}${userId}`);
-      if (sessionId) {
-        await this.destroySession(sessionId);
-      }
-    } catch (error) {
-      console.error('User session destruction error:', error);
-    }
-  }
-
-  /**
-   * Check if session exists
-   */
-  async sessionExists(sessionId: string): Promise<boolean> {
-    if (!this.kv || !sessionId) {
-      return false;
-    }
-
-    try {
-      const sessionData = await this.kv.get(`${this.sessionPrefix}${sessionId}`);
-      return sessionData !== null;
-    } catch (error) {
-      console.error('Session existence check error:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Extend session expiration
-   */
-  async extendSession(sessionId: string, additionalTTL = this.defaultTTL): Promise<void> {
-    const session = await this.validateSession(sessionId);
-    if (session) {
-      await this.kv.put(
-        `${this.sessionPrefix}${sessionId}`,
-        JSON.stringify(session),
-        { expirationTtl: additionalTTL }
-      );
-    }
-  }
-
-  /**
-   * Generate secure session ID
-   */
-  private generateSessionId(): string {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-  }
-
-  /**
-   * Clean up expired sessions (for local development without KV TTL)
-   */
-  async cleanupExpiredSessions(): Promise<void> {
-    // This would be implemented for local development
-    // Cloudflare KV handles TTL automatically
-  }
-
-  /**
-   * Get session statistics
-   */
-  async getSessionStats(): Promise<{
-    activeSessions: number;
-    totalSessions: number;
-  }> {
-    // Placeholder implementation
-    // In production, this would query KV for session counts
-    return {
-      activeSessions: 0,
-      totalSessions: 0
-    };
+    return session;
   }
 }

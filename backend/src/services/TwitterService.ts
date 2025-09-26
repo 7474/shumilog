@@ -235,4 +235,48 @@ export class TwitterService {
       }
     }
   }
+
+  /**
+   * Share log to Twitter (stub for local logging)
+   */
+  async shareLogToTwitter(
+    accessToken: string, 
+    logTitle: string, 
+    logContent: string, 
+    shareUrl: string
+  ): Promise<{ success: boolean; tweetId?: string; message: string }> {
+    // For local development, just log the share attempt
+    console.log('Twitter Share (STUB):', {
+      timestamp: new Date().toISOString(),
+      logTitle,
+      logContent: logContent.substring(0, 100) + (logContent.length > 100 ? '...' : ''),
+      shareUrl,
+      accessToken: accessToken.substring(0, 10) + '...' // Log partial token for debugging
+    });
+
+    // Return mock success response
+    return {
+      success: true,
+      tweetId: `mock_tweet_${Date.now()}`,
+      message: 'Log sharing simulated successfully (local development mode)'
+    };
+  }
+
+  /**
+   * Create tweet text from log data
+   */
+  formatLogForTweet(logTitle: string, logContent: string, shareUrl: string): string {
+    const maxLength = 240; // Leave room for URL
+    let tweetText = `📝 ${logTitle}`;
+    
+    // Add content if there's room
+    const remainingSpace = maxLength - tweetText.length - shareUrl.length - 10; // Extra buffer
+    if (remainingSpace > 20 && logContent) {
+      const trimmedContent = logContent.substring(0, remainingSpace);
+      tweetText += `\n\n${trimmedContent}${trimmedContent.length < logContent.length ? '...' : ''}`;
+    }
+    
+    tweetText += `\n\n${shareUrl}`;
+    return tweetText;
+  }
 }

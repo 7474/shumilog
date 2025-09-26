@@ -315,6 +315,47 @@ export class LogService {
   }
 
   /**
+   * Check if log can be shared (share preconditions)
+   */
+  async canShareLog(logId: string, userId: string): Promise<{ canShare: boolean; reason?: string }> {
+    const log = await this.getLogById(logId, userId);
+    
+    if (!log) {
+      return { canShare: false, reason: 'Log not found' };
+    }
+
+    if (log.user_id !== userId) {
+      return { canShare: false, reason: 'Not authorized - user does not own this log' };
+    }
+
+    if (!log.is_public) {
+      return { canShare: false, reason: 'Cannot share private log' };
+    }
+
+    return { canShare: true };
+  }
+
+  /**
+   * Share a log (placeholder for Twitter sharing)
+   */
+  async shareLog(logId: string, userId: string): Promise<{ success: boolean; message: string; shareUrl?: string }> {
+    const shareCheck = await this.canShareLog(logId, userId);
+    
+    if (!shareCheck.canShare) {
+      return { success: false, message: shareCheck.reason || 'Cannot share log' };
+    }
+
+    // For now, just return a mock share URL - TwitterService will handle actual sharing
+    const shareUrl = this.generateShareUrl();
+    
+    return {
+      success: true,
+      message: 'Log shared successfully',
+      shareUrl: `https://example.com/logs/${shareUrl}`
+    };
+  }
+
+  /**
    * Generate share URL for a log
    */
   generateShareUrl(): string {

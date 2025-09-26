@@ -49,19 +49,17 @@ export const authMiddleware = (sessionService: SessionService, userService: User
       }
 
       // Get user info
-      const user = await userService.findById(session.userId);
+      const user = await userService.findById(session.user_id);
       if (!user) {
         // User was deleted, clean up session
-        await sessionService.destroySession(sessionId);
+        await sessionService.revokeSession(session.token);
         throw new HTTPException(401, { message: 'User not found' });
       }
-
-      // Note: validateSession already updated lastAccessedAt
 
       // Add auth context to request
       c.set('auth', {
         user,
-        sessionId
+        sessionId: session.token
       } as AuthContext);
 
       await next();
@@ -99,13 +97,11 @@ export const optionalAuthMiddleware = (sessionService: SessionService, userServi
       if (sessionId) {
         const session = await sessionService.validateSession(sessionId);
         if (session) {
-          const user = await userService.findById(session.userId);
+          const user = await userService.findById(session.user_id);
           if (user) {
-            // Note: validateSession already updated lastAccessedAt
-            
             c.set('auth', {
               user,
-              sessionId
+              sessionId: session.token
             } as AuthContext);
           }
         }

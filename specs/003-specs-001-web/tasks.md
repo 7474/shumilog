@@ -39,7 +39,7 @@
 - [ ] T025 Implement Hono auth routes in `backend/src/routes/auth.ts` using session + Twitter service stubs.
 - [ ] T026 Implement user profile route in `backend/src/routes/users.ts` with session guard.
 - [ ] T027 Implement tag routes in `backend/src/routes/tags.ts` (list/search, CRUD, associations) using tag service helpers.
-- [ ] T028 Implement log routes in `backend/src/routes/logs.ts` (public listing, CRUD, share) using log service helpers and ensuring ownership checks.
+- [x] T028 Implement log routes in `backend/src/routes/logs.ts` (public listing, CRUD, share) using log service helpers and ensuring ownership checks.
 - [ ] T029 Update `backend/src/server.ts` (and `backend/src/index.ts`) to register middleware, mount route groups, and expose `/health` + `/dev` utilities per simplified stack.
 - [ ] T030 Refresh Wrangler config in `backend/wrangler.toml` and associated environment declarations to bind local D1 database and set Worker entry point.
 

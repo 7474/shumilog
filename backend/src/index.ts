@@ -130,7 +130,7 @@ export function createApp(env: any) {
   });
 
   // Initialize services
-  const sessionService = new SessionService(env.KV);
+  const sessionService = new SessionService(database);
   const userService = new UserService(database);
   const tagService = new TagService(database);
   const logService = new LogService(database);
@@ -203,7 +203,8 @@ export function createApp(env: any) {
     if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
       await authMiddleware(sessionService, userService)(c, next);
     } else {
-      await next();
+      // Use optional auth for GET requests - allows anonymous and authenticated access
+      await optionalAuthMiddleware(sessionService, userService)(c, next);
     }
   });
 

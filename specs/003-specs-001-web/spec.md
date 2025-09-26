@@ -23,13 +23,14 @@ As a developer tasked with reviving the project, I need to run a minimal version
 
 ### Session 2025-09-26
 - Q: How should local developers handle Cloudflare credentials when running the backend? → A: Provide a fully local workflow that uses `wrangler dev` (or mocks) without any Cloudflare account credentials.
+- Q: When trimming unnecessary files, how aggressively should we remove existing assets? → A: Keep only assets strictly required for the minimal Cloudflare Worker backend and the README instructions.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 - **FR-001**: The project MUST expose a runnable minimal application that serves the endpoints defined in `specs/001-web-x-twitter/contracts/api.yaml` through the Cloudflare Workers local environment so that contract testing can proceed.
 - **FR-002**: The README MUST provide an accurate, sequential local run guide that enables a developer to start the application from scratch and confirm API availability via documented verification steps.
-- **FR-003**: The repository MUST exclude components, services, or assets that are not required for the minimal Cloudflare Worker scenario, while ensuring no remaining documentation references removed items. [NEEDS CLARIFICATION: define criteria for "不要なファイル"]
+- **FR-003**: The repository MUST retain only the assets strictly required for the minimal Cloudflare Worker backend and the README instructions, ensuring that removed items leave no lingering references in documentation or runtime paths.
 - **FR-004**: The system MUST include a simple validation procedure (manual or automated) that confirms API conformity after running the README instructions (e.g., sample requests and expected responses summarized for each core endpoint).
 - **FR-005**: The project MUST call out any mandatory external dependencies (accounts, environment variables, tooling versions) so that developers understand what must be prepared before running the local flow, explicitly confirming that the default `wrangler dev` setup runs without Cloudflare account credentials.
 

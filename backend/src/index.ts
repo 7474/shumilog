@@ -53,18 +53,17 @@ export async function initializeDatabase(database: Database): Promise<void> {
 async function runDatabaseMigrations(database: Database): Promise<void> {
   // Import migrations dynamically to avoid circular dependencies
   const { DATABASE_SCHEMAS } = await import('./db/schema.sql.js');
-  const { SEED_TAGS } = await import('./db/seeds.sql.js');
+  const { seedDatabase, isDatabaseSeeded } = await import('./db/seeds.sql.js');
   
   // Execute schema creation
   for (const schema of DATABASE_SCHEMAS) {
     await database.exec(schema);
   }
   
-  // Insert seed data
-  const existingTags = await database.query('SELECT COUNT(*) as count FROM tags');
-  if (existingTags[0]?.count === 0) {
+  // Insert seed data if not already seeded
+  if (!(await isDatabaseSeeded(database))) {
     console.log('Inserting seed data...');
-    await insertSeedData(database, SEED_TAGS);
+    await seedDatabase(database);
   }
 }
 

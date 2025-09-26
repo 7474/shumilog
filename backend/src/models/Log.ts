@@ -1,13 +1,23 @@
 /**
- * Log model matching API specification
+ * Log model aligned with minimal data model blueprint
  */
 
 export interface User {
   id: string;
-  twitter_username: string;
+  twitter_username?: string;
   display_name: string;
   avatar_url?: string;
   created_at: string;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  description?: string;
+  metadata: object;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Log {
@@ -46,15 +56,6 @@ export interface LogSearchParams {
 }
 
 // Import Tag interface (will be available after Tag model is fixed)
-interface Tag {
-  id: string;
-  name: string;
-  description?: string;
-  metadata: object;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
 
 export const LOG_TABLE_SCHEMA = `
   CREATE TABLE IF NOT EXISTS logs (
@@ -62,20 +63,21 @@ export const LOG_TABLE_SCHEMA = `
     user_id TEXT NOT NULL,
     title TEXT,
     content_md TEXT NOT NULL,
-    is_public BOOLEAN NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
+    is_public INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CHECK (length(title) <= 200),
+    CHECK (length(content_md) <= 10000)
   );
   
   CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
-  CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at);
   CREATE INDEX IF NOT EXISTS idx_logs_is_public ON logs(is_public);
 `;
 
 export class LogModel {
-  static isValidTitle(title: string): boolean {
+  static isValidTitle(title?: string): boolean {
     return !title || (title.length > 0 && title.length <= 200);
   }
 
@@ -90,6 +92,19 @@ export class LogModel {
       associated_tags: tags,
       title: row.title,
       content_md: row.content_md,
+      created_at: row.created_at,
+      updated_at: row.updated_at
+    };
+  }
+
+  static fromRowWithVisibility(row: any, user: User, tags: Tag[]): LogDetail {
+    return {
+      id: row.id,
+      user,
+      associated_tags: tags,
+      title: row.title,
+      content_md: row.content_md,
+      is_public: Boolean(row.is_public),
       created_at: row.created_at,
       updated_at: row.updated_at
     };

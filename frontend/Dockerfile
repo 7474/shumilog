@@ -1,19 +1,24 @@
-# Use Node.js 18 LTS Alpine for smaller image size
-FROM node:18-alpine
+# Multi-stage build for optimization
+FROM node:18-alpine AS base
+
+# Install system dependencies and clean cache
+RUN apk add --no-cache \
+    curl \
+    bash \
+    && rm -rf /var/cache/apk/*
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apk add --no-cache \
-    curl \
-    bash
+# Development stage
+FROM base AS development
 
-# Copy package files first for better layer caching
+# Copy package files for better layer caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --include=dev
+# Install dependencies and clean npm cache
+RUN npm ci --include=dev \
+    && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -21,7 +26,7 @@ COPY . .
 # Expose the port for Vite dev server
 EXPOSE 5173
 
-# Set environment variables
+# Set environment variables for development
 ENV NODE_ENV=development
 ENV VITE_API_URL=http://backend:8787
 

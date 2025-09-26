@@ -27,6 +27,7 @@ health.get('/', async (c) => {
     const healthData = {
       status: 'healthy',
       timestamp,
+      version: '1.0.0-dev-hotreload',
       services: {
         database: databaseStatus,
         backend: 'running'

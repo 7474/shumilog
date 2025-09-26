@@ -1,23 +1,29 @@
-# Use Node.js 18 LTS Alpine for smaller image size
-FROM node:18-alpine
-
-# Set working directory
-WORKDIR /app
+# Multi-stage build for optimization
+FROM node:18-alpine AS base
 
 # Install system dependencies for SQLite and other tools
 RUN apk add --no-cache \
     sqlite \
     curl \
-    bash
+    bash \
+    && rm -rf /var/cache/apk/*
 
-# Copy package files first for better layer caching
+# Set working directory
+WORKDIR /app
+
+# Development stage
+FROM base AS development
+
+# Copy package files for better layer caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --include=dev
+# Install all dependencies including dev dependencies
+RUN npm ci --include=dev \
+    && npm cache clean --force
 
-# Install nodemon globally for hot-reload in development
-RUN npm install -g nodemon
+# Install nodemon globally for hot-reload
+RUN npm install -g nodemon@3.0.0 \
+    && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -28,7 +34,7 @@ RUN mkdir -p /data
 # Expose the port
 EXPOSE 8787
 
-# Set environment variables
+# Set environment variables for development
 ENV NODE_ENV=development
 ENV LOG_LEVEL=debug
 ENV API_PORT=8787

@@ -1,8 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { app } from "../helpers/app";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { app, setupTestEnvironment } from "../helpers/app";
 
 // Contract tests for POST /logs endpoint (create new log)
 describe('Contract: POST /logs', () => {
+  let sessionToken: string;
+
+  beforeEach(async () => {
+    sessionToken = await setupTestEnvironment();
+  });
 
   it('should create new log for authenticated user', async () => {
     const logData = {
@@ -16,7 +21,7 @@ describe('Contract: POST /logs', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': 'session=valid_session_token'
+        'Cookie': `session=${sessionToken}`
       },
       body: JSON.stringify(logData)
     });
@@ -83,11 +88,13 @@ describe('Contract: POST /logs', () => {
       // Missing required content_md and empty tag_ids (violates minItems: 1)
       title: 'Valid title',
       tag_ids: []
-    };    const response = await app.request('/logs', {
+    };
+    
+    const response = await app.request('/logs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': 'session=valid_session_token'
+        'Cookie': `session=${sessionToken}`
       },
       body: JSON.stringify(invalidLogData)
     });
@@ -109,7 +116,7 @@ describe('Contract: POST /logs', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': 'session=valid_session_token'
+        'Cookie': `session=${sessionToken}`
       },
       body: JSON.stringify(logData)
     });

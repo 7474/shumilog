@@ -49,7 +49,7 @@
 - [x] T033 Update `frontend/vite.config.ts` and `frontend/.env.example` (if needed) to proxy API requests to `http://localhost:8787/api` during development. *Vite proxy modernized with env overrides and sample env file 2025-09-27.*
 
 ## Phase 3.7: Validation & Polish
-- [ ] T034 Update `README.md` quickstart section with the final Node 22 workflow, D1 commands, frontend steps, and test verification checklist.
+- [x] T034 Update `README.md` quickstart section with the final Node 22 workflow, D1 commands, frontend steps, and test verification checklist. *README quickstart revised with D1 migration + validation steps 2025-09-27.*
 - [ ] T035 [P] Document Worker/D1 operations in `docs/docker-development.md` or new `docs/local-worker.md`, focusing on offline migration + seed process.
 - [ ] T036 [P] Add npm scripts or task runner entries to simplify `wrangler d1 migrations apply` and `wrangler d1 execute` in `backend/package.json`.
 - [ ] T037 [P] Implement lint configuration or formatting adjustments (ESLint/Prettier) consistent with reduced stack and ensure `npm run lint` succeeds.

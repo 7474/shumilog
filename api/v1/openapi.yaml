@@ -4,10 +4,10 @@ info:
   description: |
     API for logging and sharing personal content logs
     
-    **DEPRECATED**: This file has been moved to `/api/v1/openapi.yaml` as the canonical source.
-    Please use the canonical location for all future references and updates.
+    **CANONICAL SOURCE**: This is the source of truth for the API specification.
+    All development, testing, and documentation should reference this file.
     
-    This file is kept for historical reference only.
+    Maintain this specification continuously as features are developed.
   version: 1.0.0
 servers:
   - url: https://shumilog.example.com/api

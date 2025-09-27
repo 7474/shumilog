@@ -94,24 +94,39 @@ npm run lint
 
 Frontend linting will be introduced in Phase 3.7 (see `specs/003-specs-001-web/tasks.md`); for now, React typings and the smoke harness cover UI regression checks.
 
+## API Development
+
+The canonical API specification is located at `/api/v1/openapi.yaml`. This file is the **source of truth** for all API development and must be continuously maintained.
+
+### API Development Workflow
+
+1. **Update the specification first** - Modify `/api/v1/openapi.yaml` to reflect planned changes
+2. **Update contract tests** - Ensure tests in `backend/tests/contract/` match the specification
+3. **Implement changes** - Update the backend implementation to match the specification
+4. **Verify conformance** - Run `npm run test:contract` to ensure implementation matches specification
+
+The specification should always be kept current with the actual API implementation.
+
 ## Project structure
 
 ```
 shumilog/
-├── backend/                # Cloudflare Worker + D1 logic
+├── api/                     # Canonical API specifications (source of truth)
+│   └── v1/openapi.yaml      # OpenAPI 3.0 specification - MUST be kept current
+├── backend/                 # Cloudflare Worker + D1 logic
 │   ├── src/
-│   │   ├── routes/         # Hono route handlers
-│   │   ├── services/       # Domain services
-│   │   ├── models/         # Data models
-│   │   └── db/             # Migration + seed helpers
-│   └── tests/              # Contract, integration, and unit suites
-├── frontend/               # Minimal Vite surface for manual validation
-│   ├── src/App.tsx         # React log list + share UI
-│   ├── src/main.tsx        # React entry point wired to Vite
-│   └── src/services/       # API client helpers for the Worker backend
-├── specs/                  # Product plans, research, and task tracking
-├── tests/                  # Repository-level integration smoke tests
-└── README.md               # You are here
+│   │   ├── routes/          # Hono route handlers
+│   │   ├── services/        # Domain services
+│   │   ├── models/          # Data models
+│   │   └── db/              # Migration + seed helpers
+│   └── tests/               # Contract, integration, and unit suites
+├── frontend/                # Minimal Vite surface for manual validation
+│   ├── src/App.tsx          # React log list + share UI
+│   ├── src/main.tsx         # React entry point wired to Vite
+│   └── src/services/        # API client helpers for the Worker backend
+├── specs/                   # Product plans, research, and task tracking
+├── tests/                   # Repository-level integration smoke tests
+└── README.md                # You are here
 ```
 
 ## Contributing

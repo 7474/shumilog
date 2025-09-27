@@ -17,7 +17,7 @@ Terraform configuration for deploying the Shumilog backend Worker and frontend P
    ```bash
    cd backend
    npm install
-   npm run deploy -- --dry-run --out=../infrastructure/terraform/artifacts/backend-worker.mjs
+   npm run deploy -- --dry-run --outfile ../infrastructure/terraform/artifacts/backend-worker.mjs
    ```
 3. Copy the example variable file and provide real values:
    ```bash

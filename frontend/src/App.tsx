@@ -1,36 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-
-type Tag = {
-  id: string;
-  name: string;
-};
-
-type Author = {
-  id: string;
-  display_name: string;
-  twitter_username: string;
-};
-
-type LogItem = {
-  id: string;
-  title: string;
-  excerpt?: string;
-  content_md?: string;
-  created_at: string;
-  tags: Tag[];
-  author: Author;
-};
-
-type PaginatedResponse<T> = {
-  items: T[];
-  total: number;
-  limit?: number;
-  offset?: number;
-};
+import {
+  ApiError,
+  fetchPublicLogs,
+  shareLog,
+  type LogItem,
+} from './services/api';
 
 type ShareState = 'idle' | 'loading' | 'success' | 'error';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787/api';
 
 const formatDate = (iso: string): string => {
   const date = new Date(iso);
@@ -65,22 +41,10 @@ export function App(): JSX.Element {
       setError(null);
 
       try {
-        const url = new URL(`${API_BASE_URL}/logs`);
-        if (selectedTag !== 'all') {
-          url.searchParams.set('tag_ids', selectedTag);
-        }
-
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          credentials: 'include',
+        const payload = await fetchPublicLogs({
+          tagIds: selectedTag === 'all' ? undefined : [selectedTag],
           signal: controller.signal,
         });
-
-        if (!response.ok) {
-          throw new Error(`Failed to load logs (${response.status})`);
-        }
-
-        const payload = (await response.json()) as PaginatedResponse<LogItem>;
         if (cancelled) {
           return;
         }
@@ -97,7 +61,11 @@ export function App(): JSX.Element {
           return;
         }
         console.error('Failed to load logs', err);
-        setError('Failed to load logs. Please try again later.');
+        if (err instanceof ApiError) {
+          setError(err.message);
+        } else {
+          setError('Failed to load logs. Please try again later.');
+        }
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -144,30 +112,22 @@ export function App(): JSX.Element {
       return;
     }
 
-  setShareState((prev) => ({ ...prev, [log.id]: 'loading' }));
-  setToast('Sharing log...');
+    setShareState((prev) => ({ ...prev, [log.id]: 'loading' }));
+    setToast('Sharing log...');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/logs/${log.id}/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ message: `Sharing "${log.title}" via Shumilog!` }),
-      });
+      await shareLog(log.id, { message: `Sharing "${log.title}" via Shumilog!` });
 
-      if (!response.ok) {
-        const problem = await response.json().catch(() => ({}));
-        throw new Error(problem.error ?? `Failed to share log (${response.status})`);
-      }
-
-  setShareState((prev) => ({ ...prev, [log.id]: 'success' }));
-  setToast('Log shared successfully.');
+      setShareState((prev) => ({ ...prev, [log.id]: 'success' }));
+      setToast('Log shared successfully.');
     } catch (err) {
       console.error('Share failed', err);
-  setShareState((prev) => ({ ...prev, [log.id]: 'error' }));
-  setToast('Unable to share log. Please try again.');
+      setShareState((prev) => ({ ...prev, [log.id]: 'error' }));
+      if (err instanceof ApiError && err.message) {
+        setToast(err.message);
+      } else {
+        setToast('Unable to share log. Please try again.');
+      }
     }
   };
 

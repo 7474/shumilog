@@ -45,8 +45,8 @@
 
 ## Phase 3.6: Frontend Minimal UI
 - [x] T031 Build trimmed React entry (`frontend/src/main.tsx`, `frontend/src/App.tsx`, optional component files) that lists logs, filters by tag, and triggers share action with optimistic UI feedback. *Implemented smoke-test-driven UI 2025-09-27.*
-- [ ] T032 Create `frontend/src/services/api.ts` (or equivalent hook) encapsulating Worker API calls and error handling aligned with contract responses.
-- [ ] T033 Update `frontend/vite.config.ts` and `frontend/.env.example` (if needed) to proxy API requests to `http://localhost:8787/api` during development.
+- [x] T032 Create `frontend/src/services/api.ts` (or equivalent hook) encapsulating Worker API calls and error handling aligned with contract responses. *API client extracted and App.tsx updated 2025-09-27.*
+- [x] T033 Update `frontend/vite.config.ts` and `frontend/.env.example` (if needed) to proxy API requests to `http://localhost:8787/api` during development. *Vite proxy modernized with env overrides and sample env file 2025-09-27.*
 
 ## Phase 3.7: Validation & Polish
 - [ ] T034 Update `README.md` quickstart section with the final Node 22 workflow, D1 commands, frontend steps, and test verification checklist.

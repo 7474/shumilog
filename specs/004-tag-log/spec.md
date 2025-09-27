@@ -23,8 +23,13 @@ As a user, I want to log in, manage my Tags, and manage my Logs, so I can track 
 
 ### Edge Cases
 - What happens if Twitter authentication fails? The user should see an error message.
-- How does the system handle an attempt to create a tag that already exists? [NEEDS CLARIFICATION: Should it show an error or silently ignore?]
+- How does the system handle an attempt to create a tag that already exists? The system will automatically select the existing tag for the user.
 - What is displayed if a user has no logs or no tags? A message indicating the empty state should be shown.
+
+## Clarifications
+
+### Session 2025-09-28
+- Q: How should the system handle an attempt to create a tag that already exists? → A: Automatically select the existing tag for the user.
 
 ## Requirements *(mandatory)*
 
@@ -33,14 +38,15 @@ As a user, I want to log in, manage my Tags, and manage my Logs, so I can track 
 - **FR-002**: The system MUST handle the OAuth callback from Twitter to establish a user session.
 - **FR-003**: Authenticated users MUST be able to view a list of their tags.
 - **FR-004**: Authenticated users MUST be able to create new tags.
-- **FR-005**: Authenticated users MUST be able to edit the names of existing tags.
-- **FR-006**: Authenticated users MUST be able to delete tags.
-- **FR-007**: Authenticated users MUST be able to view a paginated list of their logs.
-- **FR-008**: Authenticated users MUST be able to create a new log entry.
-- **FR-009**: Authenticated users MUST be able to edit an existing log entry.
-- **FR-010**: Authenticated users MUST be able to delete a log entry.
-- **FR-011**: The system MUST provide a mechanism for users to log out.
-- **FR-012**: The system MUST protect routes for managing logs and tags, redirecting unauthenticated users to a login page.
+- **FR-005**: If a user attempts to create a tag that already exists, the system MUST automatically select the existing tag instead of creating a duplicate.
+- **FR-006**: Authenticated users MUST be able to edit the names of existing tags.
+- **FR-007**: Authenticated users MUST be able to delete tags.
+- **FR-008**: Authenticated users MUST be able to view a paginated list of their logs.
+- **FR-009**: Authenticated users MUST be able to create a new log entry.
+- **FR-010**: Authenticated users MUST be able to edit an existing log entry.
+- **FR-011**: Authenticated users MUST be able to delete a log entry.
+- **FR-012**: The system MUST provide a mechanism for users to log out.
+- **FR-013**: The system MUST protect routes for managing logs and tags, redirecting unauthenticated users to a login page.
 
 ### Key Entities *(include if feature involves data)*
 - **Log**: Represents a user's content entry. It has content, a creation date, and can be associated with multiple Tags.

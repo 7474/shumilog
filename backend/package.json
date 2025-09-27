@@ -4,9 +4,7 @@
   "description": "Backend API for Hobby Content Log Service",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "npm run dev:server",
-    "dev:server": "nodemon",
-    "dev:worker": "wrangler dev --local --persist-to=.wrangler/state",
+    "dev": "wrangler dev --local",
     "build": "tsc --noEmit",
     "deploy": "wrangler deploy",
     "test": "vitest run",
@@ -19,7 +17,6 @@
     "db:seed": "NO_D1_WARNING=true wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.4",
     "hono": "^4.9.9",
     "uuid": "^13.0.0"
   },
@@ -34,9 +31,7 @@
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "tsx": "^4.20.6",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
     "wrangler": "^4.40.2"

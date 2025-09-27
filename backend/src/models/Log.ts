@@ -22,17 +22,17 @@ export interface Tag {
 
 export interface Log {
   id: string;
+  user_id: string;
   user: User;
   associated_tags: Tag[];
   title?: string;
   content_md: string;
+  is_public: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface LogDetail extends Log {
-  is_public: boolean;
-}
+export interface LogDetail extends Log {}
 
 export interface CreateLogData {
   tag_ids: string[];
@@ -51,6 +51,7 @@ export interface UpdateLogData {
 export interface LogSearchParams {
   tag_ids?: string[];
   user_id?: string;
+  is_public?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -88,18 +89,7 @@ export class LogModel {
   static fromRow(row: any, user: User, tags: Tag[]): Log {
     return {
       id: row.id,
-      user,
-      associated_tags: tags,
-      title: row.title,
-      content_md: row.content_md,
-      created_at: row.created_at,
-      updated_at: row.updated_at
-    };
-  }
-
-  static fromRowWithVisibility(row: any, user: User, tags: Tag[]): LogDetail {
-    return {
-      id: row.id,
+      user_id: row.user_id,
       user,
       associated_tags: tags,
       title: row.title,
@@ -108,5 +98,9 @@ export class LogModel {
       created_at: row.created_at,
       updated_at: row.updated_at
     };
+  }
+
+  static fromRowWithVisibility(row: any, user: User, tags: Tag[]): LogDetail {
+    return LogModel.fromRow(row, user, tags);
   }
 }

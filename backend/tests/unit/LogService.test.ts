@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LogService } from '../../src/services/LogService.js';
 import { Database } from '../../src/db/database.js';
-import { mockDB } from '../helpers/app.js';
+import { clearTestData, getTestD1Database, createTestUser, seedTestTags } from '../helpers/app.js';
 import { CreateLogData, UpdateLogData } from '../../src/models/Log.js';
 
 describe('LogService', () => {
@@ -9,15 +9,17 @@ describe('LogService', () => {
   let mockDatabase: Database;
 
   beforeEach(async () => {
-    mockDB.clear(); // Clear data between tests
-    mockDatabase = new Database({ d1Database: mockDB });
+    await clearTestData();
+    mockDatabase = new Database({ d1Database: getTestD1Database() });
     logService = new LogService(mockDatabase);
 
-    // Create a test user that will be used in tests
-    await mockDB.prepare(`
-      INSERT INTO users (id, twitter_id, twitter_username, display_name, avatar_url, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind('user-123', 'twitter-123', 'testuser', 'Test User', 'https://example.com/avatar.jpg', new Date().toISOString(), new Date().toISOString()).run();
+    await Promise.all([
+      createTestUser('user-123', 'testuser'),
+      createTestUser('user-1', 'testuser1'),
+      createTestUser('user-456', 'testuser456'),
+      createTestUser('other-user', 'otheruser')
+    ]);
+    await seedTestTags();
   });
 
   describe('createLog', () => {
@@ -40,7 +42,7 @@ describe('LogService', () => {
 
     it('should create a log with title and tags', async () => {
       const createData: CreateLogData = {
-        tag_ids: ['tag_1', 'tag_2'],
+        tag_ids: ['tag_anime', 'tag_manga'],
         title: 'My Awesome Log',
         content_md: 'This is detailed content with **markdown**.',
         is_public: false
@@ -114,7 +116,7 @@ describe('LogService', () => {
         title: 'Multi-Update Title',
         content_md: 'Multi-update content',
         is_public: false,
-        tag_ids: ['tag_new']
+        tag_ids: ['tag_manga']
       };
 
       const result = await logService.updateLog(existingLogId, updateData, userId);
@@ -281,7 +283,7 @@ describe('LogService', () => {
     beforeEach(async () => {
       // Create test data
       await logService.createLog({
-        tag_ids: ['anime', 'review'],
+        tag_ids: ['tag_anime', 'tag_manga'],
         title: 'Anime Review',
         content_md: 'Great anime series!',
         is_public: true

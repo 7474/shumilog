@@ -61,7 +61,7 @@ export function LogsPage() {
     setShowForm(true);
   };
 
-  if (loading && !logs.length) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
@@ -85,21 +85,25 @@ export function LogsPage() {
         </div>
       )}
 
-      <ul>
-        {logs.map((log) => (
-          <li key={log.id} className="mb-2 p-2 border rounded flex justify-between items-center">
-            <span>{log.title}</span>
-            <div>
-              <Button variant="outline" size="sm" onClick={() => handleEdit(log)} className="mr-2">
-                Edit
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => handleDelete(log.id)}>
-                Delete
-              </Button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {logs.length === 0 && !showForm ? (
+        <div>No logs found.</div>
+      ) : (
+        <ul>
+          {logs.map((log) => (
+            <li key={log.id} className="mb-2 p-2 border rounded flex justify-between items-center">
+              <span>{log.content_md}</span>
+              <div>
+                <Button variant="outline" size="sm" onClick={() => handleEdit(log)} className="mr-2">
+                  Edit
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => handleDelete(log.id)}>
+                  Delete
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

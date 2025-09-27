@@ -28,9 +28,9 @@
 
 ## Phase 3.4: Testing
 - [x] T018 [P] Write unit tests for `LogForm` and `TagForm` components.
-- [ ] T019 [P] Write integration tests for the login flow.
-- [ ] T020 [P] Write integration tests for the log management workflow (create, read, update, delete).
-- [ ] T021 [P] Write integration tests for the tag management workflow (create, read, update, delete).
+- [x] T019 [P] Write integration tests for the login flow.
+- [x] T020 [P] Write integration tests for the log management workflow (create, read, update, delete).
+- [x] T021 [P] Write integration tests for the tag management workflow (create, read, update, delete).
 
 ## Dependencies
 - `T001-T004` must be completed before all other tasks.

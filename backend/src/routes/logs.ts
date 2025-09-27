@@ -19,7 +19,7 @@ const sanitizeTagIds = (value: unknown): string[] => {
     throw new HTTPException(400, { message: 'tag_ids must be an array of strings' });
   }
 
-  const tagIds = value
+  return value
     .map((id) => {
       if (typeof id !== 'string') {
         throw new HTTPException(400, { message: 'tag_ids must contain only strings' });
@@ -31,12 +31,6 @@ const sanitizeTagIds = (value: unknown): string[] => {
       return trimmed;
     })
     .filter((id, index, self) => self.indexOf(id) === index);
-
-  if (tagIds.length === 0) {
-    throw new HTTPException(400, { message: 'tag_ids must be a non-empty array' });
-  }
-
-  return tagIds;
 };
 
 const optionalTagIds = (value: unknown): string[] | undefined => {
@@ -78,6 +72,7 @@ const toLogResponse = (log: Log) => ({
   title: log.title ?? null,
   content_md: log.content_md,
   is_public: Boolean(log.is_public),
+  privacy: log.is_public ? 'public' : 'private',
   created_at: log.created_at,
   updated_at: log.updated_at,
   author: {
@@ -105,6 +100,34 @@ logs.use('*', async (c, next) => {
   const userService = getUserService(c);
   await optionalAuthMiddleware(sessionService, userService)(c, next);
 });
+
+const parsePrivacyInput = (value: unknown, allowUndefined = false): boolean | undefined => {
+  if (value === undefined || value === null) {
+    return allowUndefined ? undefined : false;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+
+    if (normalized === 'public') {
+      return true;
+    }
+
+    if (normalized === 'private') {
+      return false;
+    }
+
+    if (normalized === 'true' || normalized === 'false') {
+      return normalized === 'true';
+    }
+  }
+
+  throw new HTTPException(400, { message: 'Invalid visibility value. Use boolean or "public"/"private".' });
+};
 
 // GET /logs - List public logs
 logs.get('/', async (c) => {
@@ -177,10 +200,12 @@ logs.post('/', async (c) => {
   const tagIds = sanitizeTagIds(body.tag_ids);
 
   try {
+    const isPublic = parsePrivacyInput(body.is_public ?? body.privacy, false) as boolean;
+
     const newLog = await logService.createLog({
       title: body.title,
       content_md: body.content_md,
-      is_public: body.is_public === true,
+      is_public: isPublic,
       tag_ids: tagIds
     }, user.id);
 
@@ -258,6 +283,7 @@ logs.put('/:logId', async (c) => {
   }
 
   const tagIds = optionalTagIds(body.tag_ids);
+  const visibility = parsePrivacyInput(body.is_public ?? body.privacy, true);
   
   try {
     // Check if log exists and user owns it
@@ -275,7 +301,7 @@ logs.put('/:logId', async (c) => {
     const updatedLog = await logService.updateLog(logId, {
       title: body.title,
       content_md: body.content_md,
-      is_public: body.is_public,
+      is_public: visibility,
       tag_ids: tagIds
     }, user.id);
 

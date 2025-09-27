@@ -41,7 +41,7 @@
 - [x] T027 Implement tag routes in `backend/src/routes/tags.ts` (list/search, CRUD, associations) using tag service helpers.
 - [x] T028 Implement log routes in `backend/src/routes/logs.ts` (public listing, CRUD, share) using log service helpers and ensuring ownership checks. *Completed and aligned with FR-007; public log contract suite passing 2025-09-27.*
 - [x] T029 Update `backend/src/server.ts` (and `backend/src/index.ts`) to register middleware, mount route groups, and expose `/health` + `/dev` utilities per simplified stack. *Completed with short-circuited `/dev/reload`; dev contract suite passing 2025-09-27.*
-- [ ] T030 Refresh Wrangler config in `backend/wrangler.toml` and associated environment declarations to bind local D1 database and set Worker entry point.
+- [x] T030 Refresh Wrangler config in `backend/wrangler.toml` and associated environment declarations to bind local D1 database and set Worker entry point. *Updated local dev bindings, vars, and dev persistence 2025-09-27.*
 
 ## Phase 3.6: Frontend Minimal UI
 - [ ] T031 Build trimmed React entry (`frontend/src/main.tsx`, `frontend/src/App.tsx`, optional component files) that lists logs, filters by tag, and triggers share action with optimistic UI feedback.

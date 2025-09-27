@@ -10,6 +10,8 @@ Auto-generated from all feature plans. Last updated: 2025-09-26
 - Cloudflare D1 (SQLite-compatible) for both local and production (003-web-cloudflare-cloudflare)
 - TypeScript 5.2+ (Cloudflare Workers runtime) + Hono (HTTP routing), Wrangler CLI, Cloudflare D1 binding, Vite (frontend dev server) (003-specs-001-web)
 - Cloudflare D1 (SQLite) with seed data for logs/tags/users (003-specs-001-web)
+- TypeScript 5.x on Node.js 22 (Workers-compatible) + Hono 4, Cloudflare Wrangler 3, React 18, Vite 5, Vitest 1.x (004-lts-lts)
+- Cloudflare D1 (SQLite-compatible) for backend persistence (004-lts-lts)
 
 ## Project Structure
 ```
@@ -25,9 +27,9 @@ npm test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNO
 TypeScript (latest stable): Follow standard conventions
 
 ## Recent Changes
+- 004-lts-lts: Added TypeScript 5.x on Node.js 22 (Workers-compatible) + Hono 4, Cloudflare Wrangler 3, React 18, Vite 5, Vitest 1.x
 - 003-specs-001-web: Added TypeScript 5.2+ (Cloudflare Workers runtime) + Hono (HTTP routing), Wrangler CLI, Cloudflare D1 binding, Vite (frontend dev server)
 - 003-web-cloudflare-cloudflare: Added TypeScript 5.2+ (latest stable), Node.js 18+ + Hono (web framework), Wrangler CLI (Cloudflare tooling), Vite (frontend), Vitest (testing)
-- 002-docker-compose-up: Added TypeScript 5.2+ (latest stable), Node.js 18+ + Hono (backend), Vite (frontend), Wrangler (Cloudflare Workers), Vitest (testing)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

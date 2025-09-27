@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://shumilog.dev/schemas/dependency-inventory.json",
+  "title": "Dependency Inventory",
+  "type": "object",
+  "required": ["policy", "dependencies"],
+  "properties": {
+    "policy": {
+      "type": "object",
+      "required": [
+        "cadence",
+        "adoptionSLA",
+        "securityTriageSLA",
+        "securityMitigationSLA",
+        "communicationLeadTime",
+        "exceptionApprover",
+        "lastUpdated"
+      ],
+      "properties": {
+        "cadence": { "const": "quarterly" },
+        "adoptionSLA": { "const": "P60D" },
+        "securityTriageSLA": { "const": "PT24H" },
+        "securityMitigationSLA": { "const": "P3D" },
+        "communicationLeadTime": { "const": "P14D" },
+        "exceptionApprover": { "const": "Cross-functional review board" },
+        "lastUpdated": { "type": "string", "format": "date" }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "workspace",
+          "package",
+          "currentVersion",
+          "targetChannel",
+          "targetVersion",
+          "lastReviewedAt",
+          "nextReviewDue",
+          "graceDeadline",
+          "owner",
+          "exceptionStatus"
+        ],
+        "properties": {
+          "workspace": { "enum": ["backend", "frontend"] },
+          "package": { "type": "string", "minLength": 1 },
+          "currentVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" },
+          "targetChannel": { "enum": ["lts", "stable"] },
+          "targetVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" },
+          "lastReviewedAt": { "type": "string", "format": "date" },
+          "nextReviewDue": { "type": "string", "format": "date" },
+          "graceDeadline": { "type": "string", "format": "date" },
+          "owner": { "type": "string", "minLength": 1 },
+          "exceptionStatus": { "enum": ["none", "pending", "approved", "expired"] },
+          "exceptionNotes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -7,7 +7,7 @@
 - [x] T001 [P] Remove existing `frontend/index.html`.
 - [x] T002 [P] Set up React and Vite project structure in `frontend/`.
 - [x] T003 [P] Install dependencies: `react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `typescript`, `vitest`, `hono`.
-- [ ] T004 [P] Configure `frontend/vite.config.ts` and `frontend/tsconfig.json`.
+- [x] T004 [P] Configure `frontend/vite.config.ts` and `frontend/tsconfig.json`.
 
 ## Phase 3.2: Core Implementation
 - [ ] T005 Define frontend data models for `Log`, `Tag`, and `User` in `frontend/src/models.ts` based on `data-model.md`.

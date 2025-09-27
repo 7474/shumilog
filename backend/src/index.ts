@@ -195,6 +195,8 @@ export function createApp(env: RuntimeEnv = {}) {
   return app;
 }
 
+export type AppType = ReturnType<typeof createApp>;
+
 let cachedApp: Hono<AppBindings> | null = null;
 
 export default {

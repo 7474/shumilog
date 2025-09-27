@@ -26,7 +26,8 @@ resource "cloudflare_workers_script" "backend" {
 }
 
 resource "cloudflare_workers_secret" "backend" {
-  for_each    = toset(local.worker_secret_names)
+  for_each = toset(nonsensitive(local.worker_secret_names))
+
   account_id  = var.cloudflare_account_id
   script_name = cloudflare_workers_script.backend.name
   name        = each.value

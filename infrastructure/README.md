@@ -23,7 +23,7 @@ Terraform configuration for deploying the Shumilog backend Worker and frontend P
    ```bash
    cd infrastructure/terraform
    cp terraform.tfvars.example terraform.tfvars
-   # edit terraform.tfvars with account, zone, domains, and secrets
+      # edit terraform.tfvars with account ID, workers_dev subdomain, and secrets (overrides optional)
    ```
 4. Initialise and apply Terraform:
    ```bash
@@ -33,6 +33,13 @@ Terraform configuration for deploying the Shumilog backend Worker and frontend P
    ```
 
 > **State storage**: The module uses the default local backend, writing `terraform.tfstate` inside `infrastructure/terraform/`. Commit the state file to version control if required, but avoid placing production secrets directly in `terraform.tfvars`.
+
+### Default domains
+
+- **Backend API** → `https://<backend_worker_name>.<workers_dev_subdomain>.workers.dev`
+- **Frontend UI** → `https://<frontend_project_name>.pages.dev`
+
+Override variables are available in `terraform.tfvars` if you need to supply pre-existing custom hostnames later, but the default setup works without any DNS configuration.
 
 ## Cloudflare Permissions
 

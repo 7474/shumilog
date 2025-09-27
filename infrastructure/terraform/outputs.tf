@@ -3,11 +3,6 @@ output "backend_worker_name" {
   value       = cloudflare_workers_script.backend.name
 }
 
-output "backend_route_pattern" {
-  description = "Route pattern applied to the Worker within the production zone."
-  value       = cloudflare_workers_route.backend.pattern
-}
-
 output "d1_database_id" {
   description = "Identifier of the Cloudflare D1 database backing the backend API."
   value       = cloudflare_d1_database.primary.id
@@ -18,7 +13,17 @@ output "frontend_pages_project_name" {
   value       = cloudflare_pages_project.frontend.name
 }
 
-output "frontend_pages_domain" {
-  description = "Primary domain assigned to the Cloudflare Pages project."
-  value       = cloudflare_pages_domain.frontend.domain
+output "backend_workers_dev_url" {
+  description = "workers.dev URL serving the backend API."
+  value       = local.worker_public_base_url
+}
+
+output "frontend_pages_dev_url" {
+  description = "pages.dev URL serving the frontend."
+  value       = local.frontend_base_url
+}
+
+output "frontend_api_base_url" {
+  description = "API base URL injected into the frontend build."
+  value       = local.frontend_api_base_url
 }

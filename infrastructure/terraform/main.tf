@@ -33,12 +33,6 @@ resource "cloudflare_workers_secret" "backend" {
   secret_text = local.worker_secrets[each.value]
 }
 
-resource "cloudflare_workers_route" "backend" {
-  zone_id     = var.cloudflare_zone_id
-  pattern     = var.backend_route_pattern
-  script_name = cloudflare_workers_script.backend.name
-}
-
 resource "cloudflare_pages_project" "frontend" {
   account_id        = var.cloudflare_account_id
   name              = var.frontend_project_name
@@ -59,10 +53,4 @@ resource "cloudflare_pages_project" "frontend" {
       environment_variables = local.frontend_preview_env_vars
     }
   }
-}
-
-resource "cloudflare_pages_domain" "frontend" {
-  account_id   = var.cloudflare_account_id
-  project_name = cloudflare_pages_project.frontend.name
-  domain       = var.frontend_domain
 }

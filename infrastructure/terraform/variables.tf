@@ -3,11 +3,6 @@ variable "cloudflare_account_id" {
   type        = string
 }
 
-variable "cloudflare_zone_id" {
-  description = "Zone identifier that receives the Worker route (e.g. the production zone for shumilog.example.com)."
-  type        = string
-}
-
 variable "backend_worker_name" {
   description = "Name of the Worker service hosting the backend API."
   type        = string
@@ -18,11 +13,6 @@ variable "backend_worker_bundle_path" {
   description = "Relative path (from this module) to the bundled Worker script produced by Wrangler."
   type        = string
   default     = "artifacts/backend-worker.mjs"
-}
-
-variable "backend_route_pattern" {
-  description = "Worker route pattern that binds the API host (e.g. api.example.com/*)."
-  type        = string
 }
 
 variable "worker_compatibility_date" {
@@ -47,11 +37,6 @@ variable "frontend_project_name" {
   description = "Cloudflare Pages project name used for the frontend."
   type        = string
   default     = "shumilog-frontend"
-}
-
-variable "frontend_domain" {
-  description = "Production domain for the frontend (e.g. shumilog.example.com)."
-  type        = string
 }
 
 variable "frontend_production_branch" {
@@ -79,12 +64,33 @@ variable "frontend_root_dir" {
 }
 
 variable "frontend_api_base_url" {
-  description = "Production API base URL injected into the frontend build (e.g. https://api.example.com/api)."
+  description = "Optional override for the production API base URL injected into the frontend build. Defaults to the workers.dev API endpoint."
   type        = string
+  default     = null
+  nullable    = true
 }
 
 variable "frontend_preview_api_base_url" {
   description = "Optional preview API base URL for non-production deployments. Defaults to the production value when unset."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "workers_dev_subdomain" {
+  description = "workers.dev subdomain configured on the Cloudflare account (e.g. shumilog)."
+  type        = string
+}
+
+variable "worker_public_base_url_override" {
+  description = "Optional override for the public URL of the backend Worker. Defaults to workers.dev naming."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "frontend_base_url_override" {
+  description = "Optional override for the public URL of the frontend site. Defaults to <project>.pages.dev."
   type        = string
   default     = null
   nullable    = true

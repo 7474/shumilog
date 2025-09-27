@@ -8,7 +8,8 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview --host",
-    "test": "vitest",
+    "test": "vitest --run",
+    "test:watch": "vitest --watch",
     "test:smoke": "vitest run tests/smoke"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "jsdom": "^27.0.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
+    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   },
   "engines": {

@@ -20,11 +20,11 @@
 
 ## Phase 3.3: Integration & Routing
 - [x] T012 Set up client-side routing using a library like `react-router-dom`.
-- [ ] T013 Create a main `App.tsx` component to manage routing and application layout.
-- [ ] T014 Implement protected routes that require authentication to access `LogsPage` and `TagsPage`.
-- [ ] T015 Integrate the `LoginPage` with the auth service to handle user login and session management.
-- [ ] T016 Connect `LogsPage` and `LogForm` to the `logs` API service to perform CRUD operations.
-- [ ] T017 Connect `TagsPage` and `TagForm` to the `tags` API service to perform CRUD operations.
+- [x] T013 Create a main `App.tsx` component to manage routing and application layout.
+- [x] T014 Implement protected routes that require authentication to access `LogsPage` and `TagsPage`.
+- [x] T015 Integrate the `LoginPage` with the auth service to handle user login and session management.
+- [x] T016 Connect `LogsPage` and `LogForm` to the `logs` API service to perform CRUD operations.
+- [x] T017 Connect `TagsPage` and `TagForm` to the `tags` API service to perform CRUD operations.
 
 ## Phase 3.4: Testing
 - [ ] T018 [P] Write unit tests for `LogForm` and `TagForm` components.

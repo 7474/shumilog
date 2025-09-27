@@ -3,6 +3,7 @@ import { App } from './App';
 import { LoginPage } from './pages/LoginPage';
 import { LogsPage } from './pages/LogsPage';
 import { TagsPage } from './pages/TagsPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
   {
@@ -10,12 +11,17 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        index: true,
-        element: <LogsPage />,
-      },
-      {
-        path: 'tags',
-        element: <TagsPage />,
+        element: <ProtectedRoute />,
+        children: [
+          {
+            index: true,
+            element: <LogsPage />,
+          },
+          {
+            path: 'tags',
+            element: <TagsPage />,
+          },
+        ],
       },
       {
         path: 'login',

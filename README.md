@@ -9,68 +9,90 @@ Minimal Cloudflare Worker backend paired with a lightweight Vite-driven frontend
 - **Wrangler CLI 3+** for local Worker and D1 development (`npm install -g wrangler`)
 - *(Optional)* Twitter API credentials if you plan to exercise the share endpoint
 
-## Quick start
+## Quickstart
+
+### 1. Install dependencies
 
 ```bash
-# Clone and enter the repository
 git clone <repository-url>
 cd shumilog
-
-# Align Node/npm versions
 nvm use
 
-# Install backend and frontend dependencies
 npm install --prefix backend
 npm install --prefix frontend
-
-# Seed the local D1-compatible database (creates .wrangler/state on first run)
-cd backend
-mkdir -p .wrangler/state/d1
-DB_PATH=.wrangler/state/d1/shumilog-db.sqlite npm run db:seed
-
-# Start the Worker locally (runs on http://127.0.0.1:8787)
-npm run dev:worker
 ```
 
-Open a second terminal for the frontend:
+### 2. Prepare the local database (Cloudflare D1)
 
 ```bash
-cd frontend
-npm run dev
+cd backend
+NO_D1_WARNING=true npx wrangler d1 migrations apply shumilog-db-dev --local --env development
+NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql
 ```
 
-Access the application at:
+### 3. Run the stack locally
 
-- Frontend UI: http://localhost:5173
-- REST API: http://127.0.0.1:8787
-- Health check: http://127.0.0.1:8787/health
+- **Terminal A – Worker API**
+
+  ```bash
+  cd backend
+  npm run dev:worker
+  ```
+
+- **Terminal B – Frontend UI**
+
+  ```bash
+  cd frontend
+  npm run dev
+  ```
+
+The frontend proxies `/api` requests to `http://localhost:8787`, matching the Worker dev server.
+
+### 4. Validate the setup
+
+```bash
+# In backend/
+npm run test:contract
+
+# In frontend/
+npm run test:smoke
+```
+
+Manual checks:
+
+- Frontend UI → http://localhost:5173
+- Health check → http://localhost:8787/health
+- Public logs API → http://localhost:8787/api/logs
 
 ## Useful scripts
 
 | Location | Command | Purpose |
 |----------|---------|---------|
-| `backend/` | `npm run dev:worker` | Run the Worker via Wrangler with local persistence |
-| `backend/` | `npm run dev:server` | Node-based dev server powered by Nodemon |
-| `backend/` | `npm run test:contract` | Execute the contract test suite with Vitest |
-| `backend/` | `npm run db:migrate` | Apply schema changes without seed data |
+| `backend/` | `npm run dev:worker` | Run the Worker via Wrangler with local D1 persistence |
+| `backend/` | `npm run test:contract` | Execute the API contract suite with Vitest |
+| `backend/` | `npm run db:migrate` | Apply migrations without reseeding |
 | `backend/` | `npm run db:seed` | Recreate schema and load deterministic fixtures |
-| `frontend/` | `npm run dev` | Launch the Vite dev server with HMR |
+| `frontend/` | `npm run dev` | Launch the Vite dev server with HMR + API proxy |
 | `frontend/` | `npm run build` | Produce a production build into `frontend/dist/` |
+| `frontend/` | `npm run test:smoke` | Run the minimal UI smoke test harness |
 
 ## Testing & linting
 
 ```bash
-# Contract tests (from backend/)
+# API contract tests (backend/)
 npm run test:contract
 
-# Type checking (from backend/)
+# Frontend smoke tests (frontend/)
+npm run test:smoke
+
+# Type checking (backend/)
 npm run build
 
-# Lint backend sources (from backend/)
+# Lint backend sources (backend/)
 npm run lint
 ```
 
-Frontend linting is intentionally omitted while the UI is rebuilt; the Vite build and React typings keep the UI in check.
+Frontend linting will be introduced in Phase 3.7 (see `specs/003-specs-001-web/tasks.md`); for now, React typings and the smoke harness cover UI regression checks.
 
 ## Project structure
 
@@ -84,18 +106,13 @@ shumilog/
 │   │   └── db/             # Migration + seed helpers
 │   └── tests/              # Contract, integration, and unit suites
 ├── frontend/               # Minimal Vite surface for manual validation
-│   └── src/pages/          # Temporary HTML entry points (React shell coming later)
+│   ├── src/App.tsx         # React log list + share UI
+│   ├── src/main.tsx        # React entry point wired to Vite
+│   └── src/services/       # API client helpers for the Worker backend
 ├── specs/                  # Product plans, research, and task tracking
 ├── tests/                  # Repository-level integration smoke tests
 └── README.md               # You are here
 ```
-
-## Troubleshooting
-
-- **Database path errors** → ensure the directory exists before seeding: `mkdir -p backend/.wrangler/state/d1`.
-- **Wrangler complains about bindings** → delete `.wrangler/state` and rerun `npm run dev:worker` to recreate the local environment.
-- **Port already in use** → override via `API_PORT` (backend) or Vite’s `--port` flag.
-- **Type errors after dependency bumps** → rerun `npm install --prefix backend` / `npm install --prefix frontend` to refresh local packages.
 
 ## Contributing
 

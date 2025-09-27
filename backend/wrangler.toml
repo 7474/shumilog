@@ -1,41 +1,55 @@
 name = "shumilog-backend"
 main = "src/index.ts"
-compatibility_date = "2023-09-25"
+compatibility_date = "2024-09-26"
 compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+APP_BASE_URL = "http://localhost:5173"
+APP_LOGIN_URL = "http://localhost:5173/login"
+TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
+
+[dev]
+ip = "0.0.0.0"
+port = 8787
+local_protocol = "http"
+persist = ".wrangler/state"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shumilog-db-dev"
+database_id = "local-shumilog-db-dev"
+preview_database_id = "local-shumilog-db-dev"
+migrations_dir = "migrations"
 
 [env.development]
 name = "shumilog-backend-dev"
 
-[env.production]
-name = "shumilog-backend-prod"
-
-# Database bindings
 [[env.development.d1_databases]]
 binding = "DB"
 database_name = "shumilog-db-dev"
 database_id = "placeholder-dev-id"
+migrations_dir = "migrations"
+
+[env.development.vars]
+ENVIRONMENT = "development"
+APP_BASE_URL = "http://localhost:5173"
+APP_LOGIN_URL = "http://localhost:5173/login"
+TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
+
+[env.production]
+name = "shumilog-backend-prod"
 
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "shumilog-db-prod"
 database_id = "placeholder-prod-id"
-
-# KV bindings for sessions
-[[env.development.kv_namespaces]]
-binding = "SESSIONS"
-id = "placeholder-dev-sessions-id"
-
-[[env.production.kv_namespaces]]
-binding = "SESSIONS"
-id = "placeholder-prod-sessions-id"
-
-# Environment variables
-[env.development.vars]
-ENVIRONMENT = "development"
-TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
+migrations_dir = "migrations"
 
 [env.production.vars]
 ENVIRONMENT = "production"
+APP_BASE_URL = "https://shumilog.example.com"
+APP_LOGIN_URL = "https://shumilog.example.com/login"
 TWITTER_REDIRECT_URI = "https://shumilog.example.com/api/auth/callback"
 
 # Secrets (configured via wrangler secret put)

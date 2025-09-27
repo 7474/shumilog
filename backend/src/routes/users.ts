@@ -1,30 +1,38 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { authMiddleware, getAuthUser } from '../middleware/auth.js';
+import { SessionService } from '../services/SessionService.js';
+import { UserService } from '../services/UserService.js';
 
 const users = new Hono();
 
+const resolveSessionService = (c: any): SessionService => {
+  const sessionService = (c as any).get('sessionService') as SessionService | undefined;
+  if (!sessionService) {
+    throw new HTTPException(500, { message: 'Session service not available' });
+  }
+  return sessionService;
+};
+
+const resolveUserService = (c: any): UserService => {
+  const userService = (c as any).get('userService') as UserService | undefined;
+  if (!userService) {
+    throw new HTTPException(500, { message: 'User service not available' });
+  }
+  return userService;
+};
+
+// Require authentication for all /users routes
+users.use('*', async (c, next) => {
+  const sessionService = resolveSessionService(c);
+  const userService = resolveUserService(c);
+  return authMiddleware(sessionService, userService)(c, next);
+});
+
 // GET /users/me - Get current user profile
 users.get('/me', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
-  
-  if (!sessionToken) {
-    throw new HTTPException(401, { message: 'Not authenticated' });
-  }
+  const user = getAuthUser(c);
+  return c.json(user);
+});
 
-  // Simple session validation - only accept 'valid_session_token'
-  if (sessionToken !== 'valid_session_token') {
-    throw new HTTPException(401, { message: 'Invalid session' });
-  }
-
-  // TODO: Validate session and get actual user info
-  // For now, return mock user
-  const mockUser = {
-    id: 'user_123',
-    twitter_username: 'testuser',  
-    display_name: 'Test User',
-    avatar_url: 'https://example.com/avatar.jpg',
-    created_at: '2023-01-01T00:00:00Z'
-  };
-
-  return c.json(mockUser);
-});export default users;
+export default users;

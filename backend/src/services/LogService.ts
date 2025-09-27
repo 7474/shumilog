@@ -129,13 +129,13 @@ export class LogService {
     }
     
     // Get associated tags
-    const tagRows = await this.db.query(`
-      SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
-      FROM tags t
-      JOIN log_tag_associations lta ON t.id = lta.tag_id
-      WHERE lta.log_id = ?
-      ORDER BY t.name
-    `, [id]);
+      const tagRows = await this.db.query(`
+        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+        FROM tags t
+        JOIN log_tag_associations lta ON t.id = lta.tag_id
+        WHERE lta.log_id = ?
+        ORDER BY t.name
+      `, [id]);
     
     const user: User = {
       id: logRow.user_id,
@@ -154,7 +154,7 @@ export class LogService {
    * Search logs with full-text search
    */
   async searchLogs(options: LogSearchParams): Promise<LogSearchResult> {
-    const { tag_ids, user_id, limit = 20, offset = 0 } = options;
+    const { tag_ids, user_id, is_public, limit = 20, offset = 0 } = options;
     
     let sql = `
       SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
@@ -177,6 +177,11 @@ export class LogService {
       params.push(user_id);
     }
     
+    if (is_public !== undefined) {
+      conditions.push('l.is_public = ?');
+      params.push(is_public ? 1 : 0);
+    }
+
     if (conditions.length > 0) {
       sql += ` WHERE ${conditions.join(' AND ')}`;
     }
@@ -202,10 +207,15 @@ export class LogService {
       const placeholders = tag_ids.map(() => '?').join(',');
       countConditions.push(`lta.tag_id IN (${placeholders})`);
     }
-    
+
     if (user_id) {
       countConditions.push('l.user_id = ?');
       countParams.push(user_id);
+    }
+
+    if (is_public !== undefined) {
+      countConditions.push('l.is_public = ?');
+      countParams.push(is_public ? 1 : 0);
     }
     
     if (countConditions.length > 0) {
@@ -431,7 +441,11 @@ export class LogService {
       [logId, userId]
     );
     
-    return (result?.count || 0) > 0;
+    const owns = (result?.count || 0) > 0;
+    if (!owns) {
+      console.warn('validateLogOwnership check failed', { logId, userId, result });
+    }
+    return owns;
   }
 
   /**
@@ -459,7 +473,10 @@ export class LogService {
       if (!tagsByLogId.has(logId)) {
         tagsByLogId.set(logId, []);
       }
-      tagsByLogId.get(logId)!.push(TagModel.fromRow(tagRow));
+      tagsByLogId.get(logId)!.push(TagModel.fromRow({
+        ...tagRow,
+        metadata: typeof tagRow.metadata === 'string' ? tagRow.metadata : JSON.stringify(tagRow.metadata || {})
+      }));
     }
     
     // Build log objects
@@ -471,10 +488,17 @@ export class LogService {
         avatar_url: row.avatar_url,
         created_at: row.user_created_at
       };
-      
+
       const tags = tagsByLogId.get(row.id) || [];
-      
-      return LogModel.fromRow(row, user, tags);
+
+      return LogModel.fromRow(
+        {
+          ...row,
+          is_public: typeof row.is_public === 'number' ? row.is_public : row.is_public ? 1 : 0
+        },
+        user,
+        tags
+      );
     });
   }
 }

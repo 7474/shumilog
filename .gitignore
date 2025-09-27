@@ -2,7 +2,6 @@ node_modules/
 .wrangler/
 
 # Legacy directories intentionally pruned
-docs/
 backend/docs/
 specs/002-docker-compose-up/
 specs/003-web-cloudflare-cloudflare/

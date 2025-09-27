@@ -1,17 +1,23 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TagService, TagUsageStats } from '../../src/services/TagService.js';
 import { Database } from '../../src/db/database.js';
-import { mockDB } from '../helpers/app.js';
+import { clearTestData, getTestD1Database, createTestUser } from '../helpers/app.js';
 import { Tag, CreateTagData, UpdateTagData, TagSearchParams } from '../../src/models/Tag.js';
 
 describe('TagService', () => {
   let tagService: TagService;
   let mockDatabase: Database;
 
-  beforeEach(() => {
-    mockDB.clear(); // Clear data between tests
-    mockDatabase = new Database({ d1Database: mockDB });
+  beforeEach(async () => {
+    await clearTestData();
+    mockDatabase = new Database({ d1Database: getTestD1Database() });
     tagService = new TagService(mockDatabase);
+
+    await Promise.all([
+      createTestUser('user-123', 'tag-user-123'),
+      createTestUser('user-1', 'tag-user-1'),
+      createTestUser('user-2', 'tag-user-2')
+    ]);
   });
 
   describe('createTag', () => {
@@ -24,7 +30,7 @@ describe('TagService', () => {
       const result = await tagService.createTag(createData, createdBy);
 
       expect(result).toMatchObject({
-        id: expect.stringMatching(/^tag_\d+$/),
+        id: expect.stringMatching(/^tag_[\w-]+$/),
         name: 'Anime',
         description: undefined,
         metadata: {},
@@ -50,7 +56,7 @@ describe('TagService', () => {
       const result = await tagService.createTag(createData, createdBy);
 
       expect(result).toMatchObject({
-        id: expect.stringMatching(/^tag_\d+$/),
+        id: expect.stringMatching(/^tag_[\w-]+$/),
         name: 'Attack on Titan',
         description: 'Popular anime series',
         metadata: {
@@ -151,7 +157,7 @@ describe('TagService', () => {
       const updateData: UpdateTagData = { name: 'New Name' };
 
       await expect(tagService.updateTag('non-existent-id', updateData))
-        .rejects.toThrow('Tag not found after update');
+        .rejects.toThrow('Tag not found');
     });
   });
 
@@ -193,43 +199,43 @@ describe('TagService', () => {
     it('should return all tags when no search specified', async () => {
       const result = await tagService.searchTags();
 
-      expect(result).toHaveLength(4);
-      expect(result.map(t => t.name).sort()).toEqual(['Anime', 'Attack on Titan', 'Manga', 'Movies']);
+      expect(result.items).toHaveLength(4);
+      expect(result.items.map((t) => t.name).sort()).toEqual(['Anime', 'Attack on Titan', 'Manga', 'Movies']);
     });
 
     it('should filter tags by name search', async () => {
       const result = await tagService.searchTags({ search: 'anime' });
 
-      expect(result).toHaveLength(2);
-      expect(result.map(t => t.name).sort()).toEqual(['Anime', 'Attack on Titan']);
+      expect(result.items).toHaveLength(2);
+      expect(result.items.map((t) => t.name).sort()).toEqual(['Anime', 'Attack on Titan']);
     });
 
     it('should filter tags by description search', async () => {
       const result = await tagService.searchTags({ search: 'Japanese' });
 
-      expect(result).toHaveLength(2);
-      expect(result.map(t => t.name).sort()).toEqual(['Anime', 'Manga']);
+      expect(result.items).toHaveLength(2);
+      expect(result.items.map((t) => t.name).sort()).toEqual(['Anime', 'Manga']);
     });
 
     it('should respect limit parameter', async () => {
       const result = await tagService.searchTags({ limit: 2 });
 
-      expect(result).toHaveLength(2);
+      expect(result.items).toHaveLength(2);
     });
 
     it('should respect offset parameter', async () => {
       const allResults = await tagService.searchTags();
       const offsetResults = await tagService.searchTags({ offset: 2 });
 
-      expect(offsetResults).toHaveLength(2);
-      expect(offsetResults[0].id).not.toBe(allResults[0].id);
-      expect(offsetResults[0].id).not.toBe(allResults[1].id);
+      expect(offsetResults.items).toHaveLength(2);
+      expect(offsetResults.items[0].id).not.toBe(allResults.items[0].id);
+      expect(offsetResults.items[0].id).not.toBe(allResults.items[1].id);
     });
 
     it('should handle empty search results', async () => {
       const result = await tagService.searchTags({ search: 'nonexistent' });
 
-      expect(result).toHaveLength(0);
+      expect(result.items).toHaveLength(0);
     });
   });
 
@@ -242,7 +248,7 @@ describe('TagService', () => {
       expect(result).toMatchObject({
         tagId: tag.id,
         usageCount: 0, // No logs associated yet
-        lastUsed: expect.any(String)
+        lastUsed: null
       });
     });
 
@@ -252,7 +258,7 @@ describe('TagService', () => {
       expect(result).toMatchObject({
         tagId: 'non-existent-tag',
         usageCount: 0,
-        lastUsed: expect.any(String)
+        lastUsed: null
       });
     });
   });
@@ -281,7 +287,7 @@ describe('TagService', () => {
     it('should handle empty results', async () => {
       // Clear all data first
       const allTags = await tagService.searchTags();
-      for (const tag of allTags) {
+      for (const tag of allTags.items) {
         await tagService.deleteTag(tag.id);
       }
 

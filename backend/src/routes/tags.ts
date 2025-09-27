@@ -1,237 +1,286 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { getAuthUser, authMiddleware } from '../middleware/auth.js';
+import { getAuthUser } from '../middleware/auth.js';
 import { TagService } from '../services/TagService.js';
-import { UserService } from '../services/UserService.js';
-import { SessionService } from '../services/SessionService.js';
 
 const tags = new Hono();
 
-// Mock tag data for now
-const mockTags = [
-  {
-    id: 'tag_anime',
-    name: 'Anime',
-    description: 'Japanese animated series and films',
-    metadata: { supports_episodes: true },
-    created_by: 'system',
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
-  },
-  {
-    id: 'tag_manga',
-    name: 'Manga',
-    description: 'Japanese comics and graphic novels',
-    metadata: { supports_episodes: true },
-    created_by: 'system',
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
-  },
-  {
-    id: 'tag_game',
-    name: 'Game',
-    description: 'Video games and interactive entertainment',
-    metadata: { supports_episodes: false },
-    created_by: 'system',
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
+const resolveTagService = (c: any): TagService => {
+  const service = (c as any).get('tagService') as TagService | undefined;
+  if (!service) {
+    throw new HTTPException(500, { message: 'Tag service not available' });
   }
-];
+  return service;
+};
 
-// GET /tags - Search and list tags
+const sanitizeLimit = (value?: string): number => {
+  const parsed = Number.parseInt(value || '20', 10);
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    return 20;
+  }
+  return Math.min(parsed, 100);
+};
+
+const sanitizeOffset = (value?: string): number => {
+  const parsed = Number.parseInt(value || '0', 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return 0;
+  }
+  return parsed;
+};
+
+// GET /tags - Search and list tags (public)
 tags.get('/', async (c) => {
-  const search = c.req.query('search') || '';
-  const limit = parseInt(c.req.query('limit') || '20');
-  const offset = parseInt(c.req.query('offset') || '0');
+  const tagService = resolveTagService(c);
+  const search = c.req.query('search') || undefined;
+  const limit = sanitizeLimit(c.req.query('limit'));
+  const offset = sanitizeOffset(c.req.query('offset'));
 
-  // Apply search filter
-  let filteredTags = mockTags;
-  if (search) {
-    filteredTags = mockTags.filter(tag => 
-      tag.name.toLowerCase().includes(search.toLowerCase()) ||
-      (tag.description && tag.description.toLowerCase().includes(search.toLowerCase()))
-    );
-  }
-
-  // Apply pagination
-  const paginatedTags = filteredTags.slice(offset, offset + limit);
+  const result = await tagService.searchTags({ search, limit, offset });
 
   return c.json({
-    items: paginatedTags,
-    total: filteredTags.length,
-    limit: Math.min(limit, 100), // Enforce max limit
-    offset: offset
+    items: result.items,
+    total: result.total,
+    limit: result.limit,
+    offset: result.offset,
+    has_next: result.has_next,
+    has_prev: result.has_prev
   });
 });
 
-// POST /tags - Create new tag
+// POST /tags - Create new tag (requires auth via middleware)
 tags.post('/', async (c) => {
-  // Use auth helper to get authenticated user
   const user = getAuthUser(c);
+  const tagService = resolveTagService(c);
 
   const body = await c.req.json();
-  
-  if (!body.name) {
+
+  if (!body || typeof body !== 'object') {
+    throw new HTTPException(400, { message: 'Invalid request body' });
+  }
+
+  const { name, description, metadata } = body;
+
+  if (!name || typeof name !== 'string') {
     throw new HTTPException(400, { message: 'Tag name is required' });
   }
 
-  if (body.name.length > 200) {
-    throw new HTTPException(400, { message: 'Tag name too long' });
+  if (name.length > 100) {
+    throw new HTTPException(400, { message: 'Tag name must be 100 characters or fewer' });
   }
 
-  // Get TagService from context
-  const tagService = (c as any).get('tagService') as TagService;
-  
-  // Create tag using TagService
-  const newTag = await tagService.createTag({
-    name: body.name,
-    description: body.description || '',
-    metadata: body.metadata || {}
-  }, user.id);
+  if (metadata !== undefined && typeof metadata !== 'object') {
+    throw new HTTPException(400, { message: 'Metadata must be an object' });
+  }
 
-  return c.json(newTag, 201);
+  try {
+    const newTag = await tagService.createTag(
+      {
+        name,
+        description,
+        metadata: metadata || {}
+      },
+      user.id
+    );
+
+    return c.json(newTag, 201);
+  } catch (error: any) {
+    const message = typeof error?.message === 'string' ? error.message : 'Failed to create tag';
+    if (/unique/i.test(message)) {
+      throw new HTTPException(409, { message: 'Tag name already exists' });
+    }
+    console.error('Failed to create tag:', error);
+    throw new HTTPException(500, { message: 'Failed to create tag' });
+  }
 });
 
-// GET /tags/{tagId} - Get tag details
+// GET /tags/{tagId} - Get tag details (public)
 tags.get('/:tagId', async (c) => {
+  const tagService = resolveTagService(c);
   const tagId = c.req.param('tagId');
-  const tag = mockTags.find(t => t.id === tagId);
-  
-  if (!tag) {
+
+  const detail = await tagService.getTagDetail(tagId);
+  if (!detail) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
 
-  // Return tag with additional details
   return c.json({
-    ...tag,
-    log_count: 0, // TODO: Count from database
-    recent_logs: [], // TODO: Get from database
-    associated_tags: [] // TODO: Get from database
+    ...detail,
+    associations: detail.associations
   });
 });
 
-// PUT /tags/{tagId} - Update tag
+// PUT /tags/{tagId} - Update tag (requires auth)
 tags.put('/:tagId', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
-  
-  if (!sessionToken) {
-    throw new HTTPException(401, { message: 'Not authenticated' });
-  }
-
+  const user = getAuthUser(c);
+  const tagService = resolveTagService(c);
   const tagId = c.req.param('tagId');
-  const tag = mockTags.find(t => t.id === tagId);
-  
-  if (!tag) {
+
+  const existing = await tagService.getTagById(tagId);
+  if (!existing) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
 
-  // TODO: Check if user owns tag
-  if (tag.created_by !== 'user_123') {
+  if (existing.created_by !== user.id) {
     throw new HTTPException(403, { message: 'Not tag owner' });
   }
 
   const body = await c.req.json();
-  
-  // TODO: Update tag in database
-  const updatedTag = {
-    ...tag,
-    name: body.name || tag.name,
-    description: body.description !== undefined ? body.description : tag.description,
-    metadata: body.metadata || tag.metadata,
-    updated_at: new Date().toISOString()
-  };
-
-  return c.json(updatedTag);
-});
-
-// DELETE /tags/{tagId} - Delete tag
-tags.delete('/:tagId', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
-  
-  if (!sessionToken) {
-    throw new HTTPException(401, { message: 'Not authenticated' });
+  if (!body || typeof body !== 'object') {
+    throw new HTTPException(400, { message: 'Invalid request body' });
   }
 
+  const updates: any = {};
+
+  if (body.name !== undefined) {
+    if (typeof body.name !== 'string' || body.name.length === 0) {
+      throw new HTTPException(400, { message: 'Tag name must be a non-empty string' });
+    }
+    if (body.name.length > 100) {
+      throw new HTTPException(400, { message: 'Tag name must be 100 characters or fewer' });
+    }
+    updates.name = body.name;
+  }
+
+  if (body.description !== undefined) {
+    if (body.description !== null && typeof body.description !== 'string') {
+      throw new HTTPException(400, { message: 'Description must be a string or null' });
+    }
+    updates.description = body.description;
+  }
+
+  if (body.metadata !== undefined) {
+    if (body.metadata !== null && typeof body.metadata !== 'object') {
+      throw new HTTPException(400, { message: 'Metadata must be an object' });
+    }
+    updates.metadata = body.metadata || {};
+  }
+
+  if (Object.keys(updates).length === 0) {
+    throw new HTTPException(400, { message: 'No fields to update' });
+  }
+
+  try {
+    const updated = await tagService.updateTag(tagId, updates);
+    return c.json(updated);
+  } catch (error: any) {
+    const message = typeof error?.message === 'string' ? error.message : 'Failed to update tag';
+    if (/no fields/i.test(message)) {
+      throw new HTTPException(400, { message: 'No fields to update' });
+    }
+    if (/not found/i.test(message)) {
+      throw new HTTPException(404, { message: 'Tag not found' });
+    }
+    console.error('Failed to update tag:', error);
+    throw new HTTPException(500, { message: 'Failed to update tag' });
+  }
+});
+
+// DELETE /tags/{tagId} - Delete tag (requires auth)
+tags.delete('/:tagId', async (c) => {
+  const user = getAuthUser(c);
+  const tagService = resolveTagService(c);
   const tagId = c.req.param('tagId');
-  const tag = mockTags.find(t => t.id === tagId);
-  
-  if (!tag) {
+
+  const existing = await tagService.getTagById(tagId);
+  if (!existing) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
 
-  // TODO: Check if user owns tag
-  if (tag.created_by !== 'user_123') {
+  if (existing.created_by !== user.id) {
     throw new HTTPException(403, { message: 'Not tag owner' });
   }
 
-  // TODO: Delete tag from database
-  
+  await tagService.deleteTag(tagId);
   return c.body(null, 204);
 });
 
-// GET /tags/{tagId}/associations - Get associated tags
+// GET /tags/{tagId}/associations - List associated tags (public)
 tags.get('/:tagId/associations', async (c) => {
+  const tagService = resolveTagService(c);
   const tagId = c.req.param('tagId');
-  const tag = mockTags.find(t => t.id === tagId);
-  
+
+  const tag = await tagService.getTagById(tagId);
   if (!tag) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
 
-  // TODO: Get associated tags from database
-  return c.json([]);
+  const associations = await tagService.getTagAssociations(tagId);
+  return c.json(associations);
 });
 
-// POST /tags/{tagId}/associations - Create tag association
+// POST /tags/{tagId}/associations - Create association (requires auth)
 tags.post('/:tagId/associations', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
-  
-  if (!sessionToken) {
-    throw new HTTPException(401, { message: 'Not authenticated' });
-  }
-
+  const user = getAuthUser(c);
+  const tagService = resolveTagService(c);
   const tagId = c.req.param('tagId');
-  const tag = mockTags.find(t => t.id === tagId);
-  
+
+  const tag = await tagService.getTagById(tagId);
   if (!tag) {
     throw new HTTPException(404, { message: 'Tag not found' });
+  }
+
+  if (tag.created_by !== user.id) {
+    throw new HTTPException(403, { message: 'Not tag owner' });
   }
 
   const body = await c.req.json();
-  
-  if (!body.associated_tag_id) {
+  if (!body || typeof body !== 'object') {
+    throw new HTTPException(400, { message: 'Invalid request body' });
+  }
+
+  const associatedTagId = body.associated_tag_id as string;
+  if (!associatedTagId || typeof associatedTagId !== 'string') {
     throw new HTTPException(400, { message: 'Associated tag ID is required' });
   }
 
-  // TODO: Create association in database
-  
-  return c.body(null, 201);
-});
-
-// DELETE /tags/{tagId}/associations - Remove tag association
-tags.delete('/:tagId/associations', async (c) => {
-  const sessionToken = c.req.header('Cookie')?.match(/session=([^;]+)/)?.[1];
-  
-  if (!sessionToken) {
-    throw new HTTPException(401, { message: 'Not authenticated' });
+  if (associatedTagId === tagId) {
+    throw new HTTPException(400, { message: 'Cannot associate tag with itself' });
   }
 
+  try {
+    await tagService.createTagAssociation(tagId, associatedTagId);
+    return c.body(null, 201);
+  } catch (error: any) {
+    const message = typeof error?.message === 'string' ? error.message : 'Failed to create association';
+    if (/not found/i.test(message)) {
+      throw new HTTPException(404, { message });
+    }
+    if (/self-association/i.test(message)) {
+      throw new HTTPException(400, { message });
+    }
+    console.error('Failed to create tag association:', error);
+    throw new HTTPException(500, { message: 'Failed to create association' });
+  }
+});
+
+// DELETE /tags/{tagId}/associations - Remove association (requires auth)
+tags.delete('/:tagId/associations', async (c) => {
+  const user = getAuthUser(c);
+  const tagService = resolveTagService(c);
   const tagId = c.req.param('tagId');
   const associatedTagId = c.req.query('associated_tag_id');
-  
+
+  const tag = await tagService.getTagById(tagId);
+  if (!tag) {
+    throw new HTTPException(404, { message: 'Tag not found' });
+  }
+
+  if (tag.created_by !== user.id) {
+    throw new HTTPException(403, { message: 'Not tag owner' });
+  }
+
   if (!associatedTagId) {
     throw new HTTPException(400, { message: 'Associated tag ID is required' });
   }
 
-  const tag = mockTags.find(t => t.id === tagId);
-  
-  if (!tag) {
-    throw new HTTPException(404, { message: 'Tag not found' });
+  try {
+    await tagService.removeTagAssociation(tagId, associatedTagId);
+    return c.body(null, 204);
+  } catch (error) {
+    console.error('Failed to remove tag association:', error);
+    throw new HTTPException(500, { message: 'Failed to remove association' });
   }
-
-  // TODO: Remove association from database
-  
-  return c.body(null, 204);
 });
 
 export default tags;

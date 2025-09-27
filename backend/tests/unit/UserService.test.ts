@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { UserService } from '../../src/services/UserService.js';
 import { Database } from '../../src/db/database.js';
+import { clearTestData, getTestD1Database } from '../helpers/app.js';
 
 describe('UserService', () => {
   let userService: UserService;
   let mockDatabase: Database;
 
-  beforeEach(() => {
-    // Create a mock database instance
-    const mockDB = new MockD1Database();
-    mockDatabase = new Database({ d1Database: mockDB });
+  beforeEach(async () => {
+    await clearTestData();
+    mockDatabase = new Database({ d1Database: getTestD1Database() });
     userService = new UserService(mockDatabase);
   });
 
@@ -17,7 +17,6 @@ describe('UserService', () => {
     it('should create user with valid data', async () => {
       // Arrange
       const userData = {
-        twitter_id: 'twitter-123',
         twitter_username: 'testuser',
         display_name: 'Test User',
         avatar_url: 'https://example.com/avatar.jpg'
@@ -38,7 +37,6 @@ describe('UserService', () => {
     it('should create user without avatar_url', async () => {
       // Arrange
       const userData = {
-        twitter_id: 'twitter-456',
         twitter_username: 'minimal_user',
         display_name: 'Minimal User'
       };
@@ -98,41 +96,3 @@ describe('UserService', () => {
     });
   });
 });
-
-// Mock class for testing (this would normally be imported from the real file)
-class MockD1Database {
-  private users: Map<string, any> = new Map();
-
-  prepare(query: string) {
-    const database = this;
-    return {
-      bind(...params: any[]) {
-        return {
-          async first() {
-            if (query.includes('SELECT') && query.includes('FROM users') && query.includes('WHERE id = ?')) {
-              const userId = params[0];
-              return database.users.get(userId) || null;
-            }
-            return null;
-          },
-          async run() {
-            if (query.includes('INSERT INTO users')) {
-              const [id, twitter_id, twitter_username, display_name, avatar_url, created_at, updated_at] = params;
-              database.users.set(id, { id, twitter_id, twitter_username, display_name, avatar_url, created_at, updated_at, is_active: true });
-              return { success: true, meta: { last_row_id: id, changes: 1 } };
-            }
-            return { success: true, meta: { changes: 0 } };
-          }
-        };
-      }
-    };
-  }
-
-  seedUser(id: string, data: any) {
-    this.users.set(id, { id, ...data });
-  }
-
-  clear() {
-    this.users.clear();
-  }
-}

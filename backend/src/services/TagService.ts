@@ -1,21 +1,49 @@
 import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
-import { Database } from '../db/database.js';
+import { Database, PaginatedResult } from '../db/database.js';
 
 export interface TagUsageStats {
   tagId: string;
   usageCount: number;
-  lastUsed: string;
+  lastUsed: string | null;
 }
 
 export class TagService {
   constructor(private db: Database) {}
+
+  private generateTagId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `tag_${crypto.randomUUID()}`;
+    }
+
+    return `tag_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  private async getTagRow(tagId: string): Promise<any | null> {
+    return await this.db.queryFirst(
+      'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags WHERE id = ?',
+      [tagId]
+    );
+  }
+
+  async isTagOwnedBy(tagId: string, userId: string): Promise<boolean> {
+    const result = await this.db.queryFirst<{ created_by: string }>(
+      'SELECT created_by FROM tags WHERE id = ?',
+      [tagId]
+    );
+
+    if (!result) {
+      return false;
+    }
+
+    return result.created_by === userId;
+  }
 
   /**
    * Create a new tag
    */
   async createTag(data: CreateTagData, createdBy: string): Promise<Tag> {
     const now = new Date().toISOString();
-    const tagId = `tag_${Date.now()}`;
+    const tagId = this.generateTagId();
     
     const stmt = this.db.prepare(`
       INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
@@ -47,6 +75,12 @@ export class TagService {
    * Update a tag
    */
   async updateTag(tagId: string, data: UpdateTagData): Promise<Tag> {
+    const existingTag = await this.getTagById(tagId);
+
+    if (!existingTag) {
+      throw new Error('Tag not found');
+    }
+
     const updates: string[] = [];
     const params: any[] = [];
     
@@ -94,34 +128,54 @@ export class TagService {
    * Get tag by ID
    */
   async getTagById(id: string): Promise<Tag | null> {
-    const row = await this.db.queryFirst(
-      'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags WHERE id = ?',
-      [id]
-    );
-    
+    const row = await this.getTagRow(id);
     return row ? TagModel.fromRow(row) : null;
   }
 
   /**
    * Search tags
    */
-  async searchTags(options: TagSearchParams = {}): Promise<Tag[]> {
+  async searchTags(options: TagSearchParams = {}): Promise<PaginatedResult<Tag>> {
     const { search, limit = 20, offset = 0 } = options;
-    
-    let sql = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags';
+
+    const baseSelect = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags';
+    const baseCount = 'SELECT COUNT(*) as total FROM tags';
+    const clauses: string[] = [];
     const params: any[] = [];
-    
+
     if (search) {
-      sql += ' WHERE name LIKE ? OR description LIKE ?';
-      const searchPattern = `%${search}%`;
-      params.push(searchPattern, searchPattern);
+      clauses.push('(LOWER(name) LIKE ? OR LOWER(description) LIKE ?)');
+      const pattern = `%${search.toLowerCase()}%`;
+      params.push(pattern, pattern);
     }
-    
-    sql += ' ORDER BY name ASC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
-    
-    const rows = await this.db.query(sql, params);
-    return rows.map(row => TagModel.fromRow(row));
+
+    const whereClause = clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '';
+    const selectSql = `${baseSelect}${whereClause} ORDER BY name ASC`;
+    const countSql = `${baseCount}${whereClause}`;
+
+    const result = await this.db.queryWithPagination(selectSql, countSql, params, limit, offset);
+
+    return {
+      ...result,
+      items: result.items.map(row => TagModel.fromRow(row))
+    };
+  }
+
+  async getTagDetail(id: string): Promise<(Tag & { associations: Tag[]; usage_count: number }) | null> {
+    const tag = await this.getTagById(id);
+
+    if (!tag) {
+      return null;
+    }
+
+    const associations = await this.getTagAssociations(id);
+    const usageStats = await this.getTagUsageStats(id);
+
+    return {
+      ...tag,
+      associations,
+      usage_count: usageStats.usageCount
+    };
   }
 
   /**
@@ -146,7 +200,7 @@ export class TagService {
     return {
       tagId,
       usageCount: usageResult?.count || 0,
-      lastUsed: lastUsedResult?.last_used || new Date().toISOString()
+      lastUsed: lastUsedResult?.last_used || null
     };
   }
 
@@ -212,74 +266,71 @@ export class TagService {
    * Delete a tag
    */
   async deleteTag(tagId: string): Promise<void> {
-    // Start transaction - delete associations first, then tag
-    const deleteAssociationsStmt = this.db.prepare(
-      'DELETE FROM log_tag_associations WHERE tag_id = ?'
-    );
-    await deleteAssociationsStmt.run([tagId]);
-    
-    const deleteTagStmt = this.db.prepare(
-      'DELETE FROM tags WHERE id = ?'
-    );
-    await deleteTagStmt.run([tagId]);
+    // Remove log associations
+    await this.db.prepare('DELETE FROM log_tag_associations WHERE tag_id = ?').run([tagId]);
+
+    // Remove tag associations in both directions
+    await this.db
+      .prepare('DELETE FROM tag_associations WHERE tag_id = ? OR associated_tag_id = ?')
+      .run([tagId, tagId]);
+
+    // Finally remove the tag
+    await this.db.prepare('DELETE FROM tags WHERE id = ?').run([tagId]);
   }
 
   /**
    * Create tag-to-tag association (for tag hierarchies)
    */
-  async createTagAssociation(parentTagId: string, childTagId: string, associationType: string = 'parent'): Promise<void> {
-    // Prevent self-association
-    if (parentTagId === childTagId) {
+  async createTagAssociation(tagId: string, associatedTagId: string): Promise<void> {
+    if (tagId === associatedTagId) {
       throw new Error('Cannot create self-association');
     }
 
+    const tag = await this.getTagById(tagId);
+    if (!tag) {
+      throw new Error('Tag not found');
+    }
+
+    const associatedTag = await this.getTagById(associatedTagId);
+    if (!associatedTag) {
+      throw new Error('Associated tag not found');
+    }
+
     const stmt = this.db.prepare(`
-      INSERT OR IGNORE INTO tag_associations (parent_tag_id, child_tag_id, association_type, created_at)
-      VALUES (?, ?, ?, ?)
+      INSERT OR IGNORE INTO tag_associations (tag_id, associated_tag_id, created_at)
+      VALUES (?, ?, ?)
     `);
-    
-    await stmt.run([parentTagId, childTagId, associationType, new Date().toISOString()]);
+
+    await stmt.run([tagId, associatedTagId, new Date().toISOString()]);
   }
 
   /**
    * Get tag associations for a tag
    */
-  async getTagAssociations(tagId: string): Promise<{
-    parents: Tag[];
-    children: Tag[];
-  }> {
-    // Get parent tags
-    const parentRows = await this.db.query(
+  async getTagAssociations(tagId: string): Promise<Tag[]> {
+    const rows = await this.db.query(
       `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
        FROM tags t
-       JOIN tag_associations ta ON t.id = ta.parent_tag_id
-       WHERE ta.child_tag_id = ?`,
-      [tagId]
+       WHERE t.id IN (
+         SELECT associated_tag_id FROM tag_associations WHERE tag_id = ?
+         UNION
+         SELECT tag_id FROM tag_associations WHERE associated_tag_id = ?
+       )
+       ORDER BY t.name ASC`,
+      [tagId, tagId]
     );
 
-    // Get child tags
-    const childRows = await this.db.query(
-      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
-       FROM tags t
-       JOIN tag_associations ta ON t.id = ta.child_tag_id
-       WHERE ta.parent_tag_id = ?`,
-      [tagId]
-    );
-
-    return {
-      parents: parentRows.map(row => TagModel.fromRow(row)),
-      children: childRows.map(row => TagModel.fromRow(row))
-    };
+    return rows.map(row => TagModel.fromRow(row));
   }
 
   /**
    * Remove tag association
    */
-  async removeTagAssociation(parentTagId: string, childTagId: string): Promise<void> {
+  async removeTagAssociation(tagId: string, associatedTagId: string): Promise<void> {
     const stmt = this.db.prepare(
-      'DELETE FROM tag_associations WHERE parent_tag_id = ? AND child_tag_id = ?'
+      'DELETE FROM tag_associations WHERE tag_id = ? AND associated_tag_id = ?'
     );
-    
-    await stmt.run([parentTagId, childTagId]);
+
+    await stmt.run([tagId, associatedTagId]);
   }
 }

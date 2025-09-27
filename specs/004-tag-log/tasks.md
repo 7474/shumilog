@@ -11,15 +11,15 @@
 
 ## Phase 3.2: Core Implementation
 - [x] T005 Define frontend data models for `Log`, `Tag`, and `User` in `frontend/src/models.ts` based on `data-model.md`.
-- [ ] T006 Create API service clients for `logs`, `tags`, and `auth` in `frontend/src/services/` using Hono's RPC client.
-- [ ] T007 [P] Implement a `LoginPage` component in `frontend/src/pages/LoginPage.tsx` with a "Login with Twitter" button.
-- [ ] T008 [P] Implement a `LogsPage` component in `frontend/src/pages/LogsPage.tsx` to display a list of logs.
-- [ ] T009 [P] Implement a `TagsPage` component in `frontend/src/pages/TagsPage.tsx` to display a list of tags.
-- [ ] T010 [P] Implement a `LogForm` component in `frontend/src/components/LogForm.tsx` for creating and editing logs.
-- [ ] T011 [P] Implement a `TagForm` component in `frontend/src/components/TagForm.tsx` for creating and editing tags.
+- [x] T006 Create API service clients for `logs`, `tags`, and `auth` in `frontend/src/services/` using Hono's RPC client.
+- [x] T007 [P] Implement a `LoginPage` component in `frontend/src/pages/LoginPage.tsx` with a "Login with Twitter" button.
+- [x] T008 [P] Implement a `LogsPage` component in `frontend/src/pages/LogsPage.tsx` to display a list of logs.
+- [x] T009 [P] Implement a `TagsPage` component in `frontend/src/pages/TagsPage.tsx` to display a list of tags.
+- [x] T010 [P] Implement a `LogForm` component in `frontend/src/components/LogForm.tsx` for creating and editing logs.
+- [x] T011 [P] Implement a `TagForm` component in `frontend/src/components/TagForm.tsx` for creating and editing tags.
 
 ## Phase 3.3: Integration & Routing
-- [ ] T012 Set up client-side routing using a library like `react-router-dom`.
+- [x] T012 Set up client-side routing using a library like `react-router-dom`.
 - [ ] T013 Create a main `App.tsx` component to manage routing and application layout.
 - [ ] T014 Implement protected routes that require authentication to access `LogsPage` and `TagsPage`.
 - [ ] T015 Integrate the `LoginPage` with the auth service to handle user login and session management.

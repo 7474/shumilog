@@ -1,6 +1,6 @@
 # Contract Snapshot: Hobby Content Log API
 
-Source of truth: [`specs/001-web-x-twitter/contracts/api.yaml`](../001-web-x-twitter/contracts/api.yaml)
+Source of truth: [`/api/v1/openapi.yaml`](../../api/v1/openapi.yaml) (canonical API specification)
 
 ## Authentication
 | Endpoint | Method | Description | Success | Failure |

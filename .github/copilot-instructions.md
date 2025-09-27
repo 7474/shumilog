@@ -13,10 +13,17 @@ Auto-generated from all feature plans. Last updated: 2025-09-26
 
 ## Project Structure
 ```
+api/                    # Canonical API specifications (source of truth)
 backend/
 frontend/
 tests/
 ```
+
+## API Development Guidelines
+- The canonical API specification is at `/api/v1/openapi.yaml` - this MUST be kept current
+- Always update the API specification before implementing changes
+- Contract tests should reference the canonical specification
+- The specification is the source of truth for all API development
 
 ## Commands
 npm test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] npm run lint

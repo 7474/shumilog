@@ -13,7 +13,6 @@ TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
 ip = "0.0.0.0"
 port = 8787
 local_protocol = "http"
-persist = ".wrangler/state"
 
 [[d1_databases]]
 binding = "DB"

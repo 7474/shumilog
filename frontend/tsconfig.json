@@ -13,8 +13,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
-      "@backend/*": ["../backend/src/*"]
+      "@backend/*": ["../backend/src/*"],
+      "@/*": ["./src/*"]
     },
 
     /* Linting */

@@ -1,6 +1,6 @@
 # shumilog Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-09-26
+Auto-generated from all feature plans. Last updated: 2025-01-08
 
 ## Active Technologies
 - TypeScript (latest stable) + Cloudflare Workers, Hono (lightweight framework), Twitter OAuth API, Cloudflare D1 (SQLite), GitHub Flavored Markdown parser (001-web-x-twitter)
@@ -37,4 +37,19 @@ TypeScript (latest stable): Follow standard conventions
 - 002-docker-compose-up: Added TypeScript 5.2+ (latest stable), Node.js 18+ + Hono (backend), Vite (frontend), Wrangler (Cloudflare Workers), Vitest (testing)
 
 <!-- MANUAL ADDITIONS START -->
+## API Specification Maintenance
+
+The canonical API specification is located at `/api/v1/openapi.yaml` and serves as the **source of truth** for all API development. This specification MUST be continuously maintained and kept current with the actual implementation.
+
+### When making API changes:
+1. Update `/api/v1/openapi.yaml` first
+2. Update contract tests to match the specification
+3. Implement the API changes in the backend
+4. Verify implementation matches specification with `npm run test:contract`
+
+### Key points:
+- Always reference the canonical specification at `/api/v1/openapi.yaml`
+- The old location at `specs/001-web-x-twitter/contracts/api.yaml` is deprecated
+- Contract tests should validate against the canonical specification
+- The specification should be updated whenever API endpoints, schemas, or behaviors change
 <!-- MANUAL ADDITIONS END -->

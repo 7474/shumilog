@@ -8,3 +8,6 @@ specs/003-web-cloudflare-cloudflare/
 frontend/src/pages/legacy/
 tests/performance/
 tests/integration/legacy/
+
+# Frontend build output
+frontend/dist/

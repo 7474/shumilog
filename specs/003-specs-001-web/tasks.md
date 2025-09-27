@@ -44,7 +44,7 @@
 - [x] T030 Refresh Wrangler config in `backend/wrangler.toml` and associated environment declarations to bind local D1 database and set Worker entry point. *Updated local dev bindings, vars, and dev persistence 2025-09-27.*
 
 ## Phase 3.6: Frontend Minimal UI
-- [ ] T031 Build trimmed React entry (`frontend/src/main.tsx`, `frontend/src/App.tsx`, optional component files) that lists logs, filters by tag, and triggers share action with optimistic UI feedback.
+- [x] T031 Build trimmed React entry (`frontend/src/main.tsx`, `frontend/src/App.tsx`, optional component files) that lists logs, filters by tag, and triggers share action with optimistic UI feedback. *Implemented smoke-test-driven UI 2025-09-27.*
 - [ ] T032 Create `frontend/src/services/api.ts` (or equivalent hook) encapsulating Worker API calls and error handling aligned with contract responses.
 - [ ] T033 Update `frontend/vite.config.ts` and `frontend/.env.example` (if needed) to proxy API requests to `http://localhost:8787/api` during development.
 

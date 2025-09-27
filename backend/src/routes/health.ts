@@ -6,50 +6,38 @@ const health = new Hono();
 // GET /health - Service health check endpoint
 health.get('/', async (c) => {
   const timestamp = new Date().toISOString();
-  
-  try {
-    // Check database connectivity
-    let databaseStatus = 'disconnected';
+  const database = ((c as any).get('database') as Database | undefined) ?? null;
+  const runtimeConfig = ((c as any).get('config') as { nodeEnv: string } | undefined);
+
+  let databaseStatus: 'connected' | 'disconnected' | 'unknown' = 'unknown';
+  let backendStatus: 'running' | 'degraded' = 'running';
+  let healthy = true;
+
+  if (database && database.getDb()) {
     try {
-      const dbConfig = {
-        d1Database: (c.env as any)?.DB,
-        databasePath: process.env.DB_PATH || '/data/shumilog.db'
-      };
-      const db = new Database(dbConfig);
-      // Try a simple query to test connection
-      await db.query('SELECT 1');
-      databaseStatus = 'connected';
+      healthy = await database.healthCheck();
+      databaseStatus = healthy ? 'connected' : 'disconnected';
+      backendStatus = healthy ? 'running' : 'degraded';
     } catch (error) {
       console.warn('Database health check failed:', error);
+      healthy = false;
       databaseStatus = 'disconnected';
+      backendStatus = 'degraded';
     }
-
-    const healthData = {
-      status: 'healthy',
-      timestamp,
-      version: '1.0.0-dev-hotreload',
-      services: {
-        database: databaseStatus,
-        backend: 'running'
-      }
-    };
-
-    return c.json(healthData, 200);
-  } catch (error) {
-    console.error('Health check failed:', error);
-    
-    const healthData = {
-      status: 'unhealthy',
-      timestamp,
-      error: 'Health check failed',
-      services: {
-        database: 'disconnected',
-        backend: 'error'
-      }
-    };
-
-    return c.json(healthData, 503);
   }
+
+  const payload = {
+    status: healthy ? 'healthy' : 'unhealthy',
+    timestamp,
+    environment: runtimeConfig?.nodeEnv ?? 'development',
+    version: '1.0.0-dev',
+    services: {
+      database: databaseStatus,
+      backend: backendStatus,
+    },
+  };
+
+  return c.json(payload, healthy ? 200 : 503);
 });
 
 export default health;

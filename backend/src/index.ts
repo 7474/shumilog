@@ -1,9 +1,8 @@
+import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
 import { HTTPException } from 'hono/http-exception';
 
-// Import services
 import { Database } from './db/database.js';
 import { UserService } from './services/UserService.js';
 import { TagService } from './services/TagService.js';
@@ -11,35 +10,200 @@ import { LogService } from './services/LogService.js';
 import { SessionService } from './services/SessionService.js';
 import { TwitterService } from './services/TwitterService.js';
 
-// Import middleware
 import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
 import { securityHeaders, requestLogger, rateLimiter } from './middleware/security.js';
 
-// Import route handlers
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
 import healthRoutes from './routes/health.js';
-// import devRoutes from './routes/dev.js'; // Disabled for Cloudflare Workers compatibility
+import devRoutes from './routes/dev.js';
 
-/**
- * Initialize database with migrations
- */
+export interface RuntimeEnv {
+  DB?: D1Database;
+  SESSIONS?: KVNamespace;
+  DATABASE_URL?: string;
+  DB_PATH?: string;
+  NODE_ENV?: string;
+  ENVIRONMENT?: string;
+  TWITTER_CLIENT_ID?: string;
+  TWITTER_CLIENT_SECRET?: string;
+  TWITTER_REDIRECT_URI?: string;
+  APP_BASE_URL?: string;
+  APP_LOGIN_URL?: string;
+  database?: Database;
+}
+
+interface RuntimeConfig {
+  nodeEnv: string;
+  twitterClientId: string;
+  twitterClientSecret: string;
+  twitterRedirectUri: string;
+  appBaseUrl: string;
+  appLoginUrl: string;
+}
+
+type AppBindings = {
+  Bindings: RuntimeEnv;
+  Variables: {
+    database: Database;
+    sessionService: SessionService;
+    userService: UserService;
+    tagService: TagService;
+    logService: LogService;
+    twitterService: TwitterService;
+    config: RuntimeConfig;
+  };
+};
+
+const MAX_RATE_REQUESTS = 100;
+const RATE_WINDOW_MS = 15 * 60 * 1000;
+
+function resolveDatabase(env: RuntimeEnv, nodeEnv: string): Database {
+  if (env.database) {
+    return env.database;
+  }
+
+  const databasePath = env.DB
+    ? undefined
+    : env.DB_PATH
+      ?? (env.DATABASE_URL ? env.DATABASE_URL.replace(/^file:/, '') : undefined)
+      ?? (nodeEnv === 'test' ? ':memory:' : undefined)
+      ?? ':memory:';
+
+  return new Database({
+    d1Database: env.DB,
+    databasePath,
+    options: {
+      enableForeignKeys: true,
+    },
+  });
+}
+
+function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionService, userService: UserService) {
+  const requireAuth = authMiddleware(sessionService, userService);
+  const optionalAuth = optionalAuthMiddleware(sessionService, userService);
+
+  app.route('/auth', authRoutes);
+  app.route('/users', userRoutes);
+
+  app.use('/tags', async (c, next) => {
+    if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
+      return requireAuth(c, next);
+    }
+    return next();
+  });
+  app.route('/tags', tagRoutes);
+
+  app.use('/logs', async (c, next) => {
+    if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
+      return requireAuth(c, next);
+    }
+    return optionalAuth(c, next);
+  });
+  app.route('/logs', logRoutes);
+}
+
+export function createApp(env: RuntimeEnv = {}) {
+  const nodeEnv = env.NODE_ENV ?? env.ENVIRONMENT ?? 'development';
+  process.env.NODE_ENV = nodeEnv;
+
+  const database = resolveDatabase(env, nodeEnv);
+  const sessionService = new SessionService(database);
+  const userService = new UserService(database);
+  const tagService = new TagService(database);
+  const logService = new LogService(database);
+
+  const appBaseUrl = env.APP_BASE_URL ?? process.env.APP_BASE_URL ?? 'http://localhost:5173';
+  const runtimeConfig: RuntimeConfig = {
+    nodeEnv,
+    twitterClientId: env.TWITTER_CLIENT_ID ?? process.env.TWITTER_CLIENT_ID ?? '',
+    twitterClientSecret: env.TWITTER_CLIENT_SECRET ?? process.env.TWITTER_CLIENT_SECRET ?? '',
+    twitterRedirectUri:
+      env.TWITTER_REDIRECT_URI
+      ?? process.env.TWITTER_REDIRECT_URI
+      ?? 'http://localhost:8787/api/auth/callback',
+    appBaseUrl,
+    appLoginUrl: env.APP_LOGIN_URL ?? process.env.APP_LOGIN_URL ?? `${appBaseUrl.replace(/\/?$/, '')}/login`,
+  };
+
+  const twitterService = new TwitterService(runtimeConfig.twitterClientId, runtimeConfig.twitterClientSecret);
+
+  const app = new Hono<AppBindings>();
+
+  const allowedOrigins = new Set(
+    [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:8787',
+      runtimeConfig.appBaseUrl,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .map((origin) => origin.replace(/\/?$/, '')),
+  );
+
+  app.use('*', cors({
+    origin: (origin) => {
+      if (!origin) {
+        return runtimeConfig.nodeEnv === 'development' ? '*' : null;
+      }
+      const normalised = origin.replace(/\/?$/, '');
+      if (allowedOrigins.has(normalised)) {
+        return origin;
+      }
+      return runtimeConfig.nodeEnv === 'development' ? origin : null;
+    },
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+    credentials: true,
+  }));
+
+  app.use('*', securityHeaders());
+  app.use('*', requestLogger());
+  app.use('*', rateLimiter(RATE_WINDOW_MS, MAX_RATE_REQUESTS));
+
+  app.use('*', async (c, next) => {
+    c.set('database', database);
+    c.set('sessionService', sessionService);
+    c.set('userService', userService);
+    c.set('tagService', tagService);
+    c.set('logService', logService);
+    c.set('twitterService', twitterService);
+    c.set('config', runtimeConfig);
+    await next();
+  });
+
+  app.route('/health', healthRoutes);
+  app.route('/dev', devRoutes);
+
+  registerApiRoutes(app, sessionService, userService);
+  registerApiRoutes(app.basePath('/api'), sessionService, userService);
+
+  app.onError((err, c) => {
+    console.error('Unhandled error:', err);
+
+    if (err instanceof HTTPException) {
+      return c.json({ error: err.message }, err.status);
+    }
+
+    return c.json({ error: 'Internal server error' }, 500);
+  });
+
+  app.notFound((c) => c.json({ error: 'Not found' }, 404));
+
+  return app;
+}
+
 export async function initializeDatabase(database: Database): Promise<void> {
   try {
-    console.log('Connecting to database...');
     await database.connect();
-    
-    // Check if migrations have been run
-    const migrationCheck = await database.query('SELECT name FROM sqlite_master WHERE type="table" AND name="schema_migrations"');
-    
+    const migrationCheck = await database.query(
+      'SELECT name FROM sqlite_master WHERE type="table" AND name="schema_migrations"',
+    );
+
     if (migrationCheck.length === 0) {
-      console.log('Running database migrations...');
       await runDatabaseMigrations(database);
-      console.log('Database migrations completed');
-    } else {
-      console.log('Database already migrated');
     }
   } catch (error) {
     console.error('Database initialization failed:', error);
@@ -47,213 +211,27 @@ export async function initializeDatabase(database: Database): Promise<void> {
   }
 }
 
-/**
- * Run database migrations using TypeScript schemas
- */
 async function runDatabaseMigrations(database: Database): Promise<void> {
-  // Import migrations dynamically to avoid circular dependencies
   const { DATABASE_SCHEMAS } = await import('./db/schema.sql.js');
   const { seedDatabase, isDatabaseSeeded } = await import('./db/seeds.sql.js');
-  
-  // Execute schema creation
+
   for (const schema of DATABASE_SCHEMAS) {
     await database.exec(schema);
   }
-  
-  // Insert seed data if not already seeded
+
   if (!(await isDatabaseSeeded(database))) {
-    console.log('Inserting seed data...');
     await seedDatabase(database);
   }
 }
 
-/**
- * Insert seed data
- */
-async function insertSeedData(database: Database, seedTags: any[]): Promise<void> {
-  const insertTagStmt = database.prepare(`
-    INSERT OR IGNORE INTO tags (id, name, description, category, metadata, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
+let cachedApp: Hono<AppBindings> | null = null;
 
-  const now = new Date().toISOString();
-  
-  for (const tag of seedTags) {
-    const id = crypto.randomUUID();
-    const metadata = tag.metadata ? JSON.stringify(tag.metadata) : null;
-    const category = getCategoryFromTag(tag);
-    
-    await insertTagStmt.run([
-      id,
-      tag.name,
-      tag.description || null,
-      category,
-      metadata,
-      now,
-      now
-    ]);
-  }
-}
-
-/**
- * Determine category from tag data
- */
-function getCategoryFromTag(tag: any): string {
-  if (['anime', 'manga', 'game', 'novel', 'movie'].includes(tag.name)) {
-    return 'category';
-  }
-  
-  if (['action', 'adventure', 'comedy', 'drama', 'fantasy', 'romance', 'sci-fi', 'slice-of-life'].includes(tag.name)) {
-    return 'genre';
-  }
-  
-  if (['completed', 'watching', 'reading', 'on-hold', 'dropped', 'plan-to-watch', 'plan-to-read'].includes(tag.name)) {
-    return 'status';
-  }
-  
-  if (tag.metadata?.japanese_name || tag.metadata?.mal_id) {
-    return 'anime';
-  }
-  
-  return 'other';
-}
-
-export function createApp(env: any) {
-  // Initialize database with proper path for Docker environment
-  const databasePath = env.DATABASE_URL || env.DB_PATH || ':memory:';
-  const database = new Database({
-    d1Database: env.DB, // Cloudflare D1 binding (for production)
-    databasePath: env.NODE_ENV === 'test' ? ':memory:' : databasePath,
-    options: {
-      enableForeignKeys: true
-    }
-  });
-
-  // Initialize services
-  const sessionService = new SessionService(database);
-  const userService = new UserService(database);
-  const tagService = new TagService(database);
-  const logService = new LogService(database);
-  const twitterService = new TwitterService(
-    process.env.TWITTER_CLIENT_ID || env.TWITTER_CLIENT_ID || '',
-    process.env.TWITTER_CLIENT_SECRET || env.TWITTER_CLIENT_SECRET || ''
-  );
-
-  // Initialize Hono app
-  const app = new Hono();
-
-  // Global middleware
-  app.use('*', securityHeaders());
-  app.use('*', requestLogger());
-  app.use('*', rateLimiter(15 * 60 * 1000, 100)); // 100 requests per 15 minutes
-  app.use('*', cors({
-    origin: (origin) => {
-      // Allow requests from development and production domains
-      const allowedOrigins = [
-        'http://localhost:3000',
-        'http://localhost:8787',
-        'https://shumilog.example.com'
-      ];
-      return allowedOrigins.includes(origin) ? origin : null;
-    },
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  }));
-
-  // Add services to context for routes to access
-  app.use('*', async (c, next) => {
-    const runtimeConfig = {
-      nodeEnv: process.env.NODE_ENV || env.NODE_ENV || 'development',
-      twitterClientId: process.env.TWITTER_CLIENT_ID || env.TWITTER_CLIENT_ID || '',
-      twitterRedirectUri: process.env.TWITTER_REDIRECT_URI || env.TWITTER_REDIRECT_URI || 'http://localhost:8787/api/auth/callback',
-      oauthSuccessRedirect: process.env.APP_BASE_URL || env.APP_BASE_URL || '/',
-      oauthFailureRedirect: process.env.APP_LOGIN_URL || env.APP_LOGIN_URL || '/login?error=auth'
-    };
-
-    (c as any).set('database', database);
-    (c as any).set('userService', userService);
-    (c as any).set('tagService', tagService);
-    (c as any).set('logService', logService);
-    (c as any).set('sessionService', sessionService);
-    (c as any).set('twitterService', twitterService);
-    (c as any).set('config', runtimeConfig);
-    await next();
-  });
-
-  // Health check route (no auth required)
-  app.route('/health', healthRoutes);
-
-  // Development routes (no auth required, but restricted to development mode)
-  // app.route('/dev', devRoutes); // Disabled for Cloudflare Workers compatibility
-
-  // Auth routes (no auth required)
-  app.route('/auth', authRoutes);
-
-  // User routes - /users/me requires auth, but we'll handle that in the route
-  app.route('/users', userRoutes);
-
-  // Add auth middleware for protected tag operations
-  app.use('/tags', async (c, next) => {
-    // Only apply auth to POST, PUT, DELETE
-    if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
-      await authMiddleware(sessionService, userService)(c, next);
-    } else {
-      await next();
-    }
-  });
-
-  // Tag routes - public GET, but POST/PUT/DELETE require auth
-  app.route('/tags', tagRoutes);
-
-  // Add auth middleware for protected log operations
-  app.use('/logs', async (c, next) => {
-    // Only apply auth to POST, PUT, DELETE
-    if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
-      await authMiddleware(sessionService, userService)(c, next);
-    } else {
-      // Use optional auth for GET requests - allows anonymous and authenticated access
-      await optionalAuthMiddleware(sessionService, userService)(c, next);
-    }
-  });
-
-  // Log routes - public GET for shared logs, but most operations require auth
-  app.route('/logs', logRoutes);
-
-  // Health check endpoint
-  app.get('/health', (c) => {
-    return c.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
-
-  // Global error handler
-  app.onError((err, c) => {
-    console.error('Unhandled error:', err);
-    
-    if (err instanceof HTTPException) {
-      return c.json(
-        { error: err.message },
-        err.status
-      );
-    }
-    
-    return c.json(
-      { error: 'Internal server error' },
-      500
-    );
-  });
-
-  // 404 handler
-  app.notFound((c) => {
-    return c.json({ error: 'Not found' }, 404);
-  });
-
-  return app;
-}
-
-// Default export for Cloudflare Workers
 export default {
-  async fetch(request: Request, env: any, ctx: ExecutionContext): Promise<Response> {
-    const app = createApp(env);
-    return app.fetch(request, env, ctx);
-  }
+  async fetch(request: Request, env: RuntimeEnv, ctx: ExecutionContext): Promise<Response> {
+    if (!cachedApp) {
+      cachedApp = createApp(env);
+    }
+
+    return cachedApp.fetch(request, env, ctx);
+  },
 };

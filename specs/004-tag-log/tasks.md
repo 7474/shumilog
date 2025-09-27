@@ -27,7 +27,7 @@
 - [x] T017 Connect `TagsPage` and `TagForm` to the `tags` API service to perform CRUD operations.
 
 ## Phase 3.4: Testing
-- [ ] T018 [P] Write unit tests for `LogForm` and `TagForm` components.
+- [x] T018 [P] Write unit tests for `LogForm` and `TagForm` components.
 - [ ] T019 [P] Write integration tests for the login flow.
 - [ ] T020 [P] Write integration tests for the log management workflow (create, read, update, delete).
 - [ ] T021 [P] Write integration tests for the tag management workflow (create, read, update, delete).

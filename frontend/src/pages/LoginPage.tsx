@@ -7,7 +7,7 @@ export function LoginPage() {
 
   const handleLogin = () => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-    window.location.href = `${baseUrl}/api/auth/x`;
+    window.location.href = `${baseUrl}/api/auth/twitter`;
   };
 
   if (isLoading) {

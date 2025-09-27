@@ -37,21 +37,24 @@ APP_LOGIN_URL = "http://localhost:5173/login"
 TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
 
 [env.production]
-name = "shumilog-backend-prod"
+name = "shumilog-backend"
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "shumilog-db-prod"
-database_id = "placeholder-prod-id"
+database_name = "shumilog-db"
+database_id = "c97e1c8a-45cd-4748-8792-3faa6ceb5a41"
 migrations_dir = "migrations"
 
 [env.production.vars]
 ENVIRONMENT = "production"
-APP_BASE_URL = "https://shumilog.example.com"
-APP_LOGIN_URL = "https://shumilog.example.com/login"
-TWITTER_REDIRECT_URI = "https://shumilog.example.com/api/auth/callback"
+APP_BASE_URL = "https://shumilog.pages.dev"
+APP_LOGIN_URL = "https://shumilog.pages.dev/login"
+TWITTER_REDIRECT_URI = "https://shumilog-backend.koudenpa.workers.dev/api/auth/callback"
 
 # Secrets (configured via wrangler secret put)
 # TWITTER_CLIENT_ID
 # TWITTER_CLIENT_SECRET
 # SESSION_SECRET
+
+[observability.logs]
+enabled = true

@@ -5,8 +5,8 @@
 
 ## Phase 3.1: Setup
 - [x] T001 [P] Remove existing `frontend/index.html`.
-- [ ] T002 [P] Set up React and Vite project structure in `frontend/`.
-- [ ] T003 [P] Install dependencies: `react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `typescript`, `vitest`, `hono`.
+- [x] T002 [P] Set up React and Vite project structure in `frontend/`.
+- [x] T003 [P] Install dependencies: `react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `typescript`, `vitest`, `hono`.
 - [ ] T004 [P] Configure `frontend/vite.config.ts` and `frontend/tsconfig.json`.
 
 ## Phase 3.2: Core Implementation

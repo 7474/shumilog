@@ -1,0 +1,32 @@
+# Cloudflare authentication
+cloudflare_api_token    = "cf-XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+cloudflare_account_id   = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+cloudflare_zone_id      = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+
+# Backend Worker configuration
+backend_worker_name         = "shumilog-backend"
+backend_worker_bundle_path  = "artifacts/backend-worker.mjs"
+backend_route_pattern       = "api.shumilog.example.com/*"
+worker_compatibility_date   = "2024-09-26"
+worker_compatibility_flags  = ["nodejs_compat"]
+d1_database_name            = "shumilog-db"
+
+# Frontend Pages configuration
+frontend_project_name        = "shumilog-frontend"
+frontend_domain              = "shumilog.example.com"
+frontend_production_branch   = "master"
+frontend_build_command       = "npm install --prefix frontend && npm run build --prefix frontend"
+frontend_destination_dir     = "dist"
+frontend_root_dir            = "frontend"
+frontend_api_base_url        = "https://api.shumilog.example.com/api"
+frontend_preview_api_base_url = null
+
+# Optional environment variables
+frontend_additional_env_vars        = {}
+frontend_preview_additional_env_vars = {}
+worker_additional_plain_text_bindings = {}
+
+# Secrets (provide via CLI or populate carefully before committing state)
+twitter_client_id     = null
+twitter_client_secret = null
+session_secret        = null

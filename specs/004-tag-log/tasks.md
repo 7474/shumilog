@@ -4,7 +4,7 @@
 **Prerequisites**: plan.md, research.md, data-model.md, quickstart.md
 
 ## Phase 3.1: Setup
-- [ ] T001 [P] Remove existing `frontend/index.html`.
+- [x] T001 [P] Remove existing `frontend/index.html`.
 - [ ] T002 [P] Set up React and Vite project structure in `frontend/`.
 - [ ] T003 [P] Install dependencies: `react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `typescript`, `vitest`, `hono`.
 - [ ] T004 [P] Configure `frontend/vite.config.ts` and `frontend/tsconfig.json`.

@@ -14,6 +14,7 @@ type RuntimeConfig = {
   nodeEnv: string;
   twitterClientId: string;
   twitterRedirectUri: string;
+  appBaseUrl: string;
 };
 
 const resolveSessionService = (c: any): SessionService => {

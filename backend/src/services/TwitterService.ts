@@ -56,7 +56,7 @@ export class TwitterService {
       code_challenge_method: 'S256'
     });
 
-    const authUrl = `https://twitter.com/i/oauth2/authorize?${params.toString()}`;
+    const authUrl = `https://x.com/i/oauth2/authorize?${params.toString()}`;
 
     return { authUrl, state };
   }
@@ -89,7 +89,7 @@ export class TwitterService {
       throw new Error('Invalid state parameter');
     }
 
-    const tokenUrl = 'https://api.twitter.com/2/oauth2/token';
+    const tokenUrl = 'https://api.x.com/2/oauth2/token';
     
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -129,7 +129,7 @@ export class TwitterService {
    * Get user profile from Twitter API
    */
   async getUserProfile(accessToken: string): Promise<TwitterUserProfile> {
-    const response = await fetch('https://api.twitter.com/2/users/me?user.fields=profile_image_url,verified,public_metrics', {
+    const response = await fetch('https://api.x.com/2/users/me?user.fields=profile_image_url,verified,public_metrics', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -159,7 +159,7 @@ export class TwitterService {
    * Refresh access token using refresh token
    */
   async refreshAccessToken(refreshToken: string): Promise<TwitterOAuthTokens> {
-    const tokenUrl = 'https://api.twitter.com/2/oauth2/token';
+    const tokenUrl = 'https://api.x.com/2/oauth2/token';
     
     const params = new URLSearchParams({
       grant_type: 'refresh_token',

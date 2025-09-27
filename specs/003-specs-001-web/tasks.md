@@ -53,7 +53,7 @@
 - [x] T035 [P] Document Worker/D1 operations in `docs/docker-development.md` or new `docs/local-worker.md`, focusing on offline migration + seed process. *Added docs/local-worker.md detailing migrations, seeding, and troubleshooting 2025-09-27.*
 - [x] T036 [P] Add npm scripts or task runner entries to simplify `wrangler d1 migrations apply` and `wrangler d1 execute` in `backend/package.json`. *Added `npm run d1:migrate`/`npm run d1:seed` wrappers and synced docs + SQL seed file 2025-09-27.*
 - [x] T037 [P] Implement lint configuration or formatting adjustments (ESLint/Prettier) consistent with reduced stack and ensure `npm run lint` succeeds. *Relaxed ESLint config to drop Prettier enforcement and unused-var checks, npm run lint exits cleanly 2025-09-27.*
-- [ ] T038 Execute quickstart validation (install, migrate, seed, run dev servers, run contract tests) and record results in `docs/local-testing-report.md`.
+- [x] T038 Execute quickstart validation (install, migrate, seed, run dev servers, run contract tests) and record results in `docs/local-testing-report.md`. *Quickstart run captured in docs/local-testing-report.md; contract suite failing due to auth config, health payload, and tag test harness 2025-09-27.*
 
 ## Dependencies
 - T001 → T002 → T004 (repository must be pruned before docs/scripts updates).

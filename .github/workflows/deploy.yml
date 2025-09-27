@@ -27,5 +27,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 migrations apply shumilog-db --env production
+          command: d1 migrations apply shumilog-db --env production --remote
           workingDirectory: backend

@@ -195,35 +195,6 @@ export function createApp(env: RuntimeEnv = {}) {
   return app;
 }
 
-export async function initializeDatabase(database: Database): Promise<void> {
-  try {
-    await database.connect();
-    const migrationCheck = await database.query(
-      'SELECT name FROM sqlite_master WHERE type="table" AND name="schema_migrations"',
-    );
-
-    if (migrationCheck.length === 0) {
-      await runDatabaseMigrations(database);
-    }
-  } catch (error) {
-    console.error('Database initialization failed:', error);
-    throw error;
-  }
-}
-
-async function runDatabaseMigrations(database: Database): Promise<void> {
-  const { DATABASE_SCHEMAS } = await import('./db/schema.sql.js');
-  const { seedDatabase, isDatabaseSeeded } = await import('./db/seeds.sql.js');
-
-  for (const schema of DATABASE_SCHEMAS) {
-    await database.exec(schema);
-  }
-
-  if (!(await isDatabaseSeeded(database))) {
-    await seedDatabase(database);
-  }
-}
-
 let cachedApp: Hono<AppBindings> | null = null;
 
 export default {

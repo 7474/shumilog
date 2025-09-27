@@ -24,7 +24,7 @@ cd ../backend
 # Reset + apply migrations
 NO_D1_WARNING=true npx wrangler d1 migrations apply shumilog-db-dev --local --env development
 # Seed deterministic fixtures (users, tags, logs)
-NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql.ts
+NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql
 ```
 
 ## 3. Launch Services

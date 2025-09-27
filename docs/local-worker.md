@@ -38,11 +38,11 @@ npm install --prefix frontend
 ```bash
 cd backend
 NO_D1_WARNING=true npx wrangler d1 migrations apply shumilog-db-dev --local --env development
-NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql.ts
+NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql
 ```
 
 - `migrations apply`: ensures schema matches `src/db/schema.sql.ts`
-- `execute ... seeds.sql.ts`: loads deterministic fixtures for tests/UI smoke checks
+- `execute ... seeds.sql`: loads deterministic fixtures for tests/UI smoke checks
 
 > **Tip:** After updating migrations or seed data, rerun both commands to keep the local D1 in sync.
 
@@ -93,7 +93,7 @@ Use any SQL supported by SQLite; omit `--command` and pass `--file` to execute a
 cd backend
 rm -rf .wrangler/state
 NO_D1_WARNING=true npx wrangler d1 migrations apply shumilog-db-dev --local --env development
-NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql.ts
+NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql
 ```
 
 Deleting `.wrangler/state` clears all persisted data and forces Wrangler to recreate the local environment.
@@ -109,5 +109,5 @@ Deleting `.wrangler/state` clears all persisted data and forces Wrangler to recr
 
 ## Next Steps
 
-- After modifying schema or seeds, update `backend/src/db/schema.sql.ts` and `backend/src/db/seeds.sql.ts`, then run the commands above.
+- After modifying schema or seeds, update `backend/src/db/schema.sql.ts`, `backend/src/db/seeds.sql`, and the TypeScript helpers in `backend/src/db/seeds.sql.ts`, then run the commands above.
 - Keep `docs/local-worker.md` aligned with `specs/003-specs-001-web/tasks.md` as Phase 3.7 progresses.

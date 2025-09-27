@@ -51,7 +51,7 @@
 ## Phase 3.7: Validation & Polish
 - [x] T034 Update `README.md` quickstart section with the final Node 22 workflow, D1 commands, frontend steps, and test verification checklist. *README quickstart revised with D1 migration + validation steps 2025-09-27.*
 - [x] T035 [P] Document Worker/D1 operations in `docs/docker-development.md` or new `docs/local-worker.md`, focusing on offline migration + seed process. *Added docs/local-worker.md detailing migrations, seeding, and troubleshooting 2025-09-27.*
-- [ ] T036 [P] Add npm scripts or task runner entries to simplify `wrangler d1 migrations apply` and `wrangler d1 execute` in `backend/package.json`.
+- [x] T036 [P] Add npm scripts or task runner entries to simplify `wrangler d1 migrations apply` and `wrangler d1 execute` in `backend/package.json`. *Added `npm run d1:migrate`/`npm run d1:seed` wrappers and synced docs + SQL seed file 2025-09-27.*
 - [ ] T037 [P] Implement lint configuration or formatting adjustments (ESLint/Prettier) consistent with reduced stack and ensure `npm run lint` succeeds.
 - [ ] T038 Execute quickstart validation (install, migrate, seed, run dev servers, run contract tests) and record results in `docs/local-testing-report.md`.
 

@@ -27,7 +27,7 @@ npm install --prefix frontend
 ```bash
 cd backend
 NO_D1_WARNING=true npx wrangler d1 migrations apply shumilog-db-dev --local --env development
-NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql.ts
+NO_D1_WARNING=true npx wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql
 ```
 
 ### 3. Run the stack locally

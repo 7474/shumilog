@@ -1,4 +1,4 @@
-import { Session, SessionModel, CreateSessionData } from '../models/Session.js';
+import { Session, SessionModel } from '../models/Session.js';
 import { Database } from '../db/database.js';
 
 export class SessionService {
@@ -77,7 +77,7 @@ export class SessionService {
     const now = new Date().toISOString();
     const stmt = this.db.prepare('DELETE FROM sessions WHERE expires_at < ?');
     const result = await stmt.run([now]);
-    return result.changes || 0;
+    return result.meta.changes || 0;
   }
 
   /**

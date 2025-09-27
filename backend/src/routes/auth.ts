@@ -14,8 +14,6 @@ type RuntimeConfig = {
   nodeEnv: string;
   twitterClientId: string;
   twitterRedirectUri: string;
-  oauthSuccessRedirect: string;
-  oauthFailureRedirect: string;
 };
 
 const resolveSessionService = (c: any): SessionService => {
@@ -167,7 +165,7 @@ auth.get('/callback', async (c) => {
     clearOAuthStateCookie(c);
     setSessionCookie(c, sessionToken);
 
-    return c.redirect(config.oauthSuccessRedirect || '/', 302);
+    return c.redirect(config.appBaseUrl || '/', 302);
   } catch (error) {
     clearOAuthStateCookie(c);
 

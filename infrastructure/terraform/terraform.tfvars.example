@@ -1,5 +1,4 @@
 # Cloudflare authentication
-cloudflare_api_token    = "cf-XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 cloudflare_account_id   = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 cloudflare_zone_id      = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
 

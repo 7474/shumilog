@@ -10,7 +10,7 @@
 - [x] T004 [P] Configure `frontend/vite.config.ts` and `frontend/tsconfig.json`.
 
 ## Phase 3.2: Core Implementation
-- [ ] T005 Define frontend data models for `Log`, `Tag`, and `User` in `frontend/src/models.ts` based on `data-model.md`.
+- [x] T005 Define frontend data models for `Log`, `Tag`, and `User` in `frontend/src/models.ts` based on `data-model.md`.
 - [ ] T006 Create API service clients for `logs`, `tags`, and `auth` in `frontend/src/services/` using Hono's RPC client.
 - [ ] T007 [P] Implement a `LoginPage` component in `frontend/src/pages/LoginPage.tsx` with a "Login with Twitter" button.
 - [ ] T008 [P] Implement a `LogsPage` component in `frontend/src/pages/LogsPage.tsx` to display a list of logs.

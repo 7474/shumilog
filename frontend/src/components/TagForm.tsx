@@ -12,7 +12,6 @@ import { Tag } from '@/models';
 const formSchema = z.object({
   name: z.string().min(1, 'Tag name is required').max(200, 'Tag name must be 200 characters or fewer'),
   description: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
 });
 
 type TagFormValues = z.infer<typeof formSchema>;
@@ -29,7 +28,6 @@ export function TagForm({ tag, onSuccess }: TagFormProps) {
     defaultValues: {
       name: tag?.name ?? '',
       description: tag?.description ?? '',
-      metadata: tag?.metadata ?? {},
     },
   });
 
@@ -42,10 +40,6 @@ export function TagForm({ tag, onSuccess }: TagFormProps) {
       
       if (values.description && values.description.trim()) {
         payload.description = values.description.trim();
-      }
-      
-      if (values.metadata && Object.keys(values.metadata).length > 0) {
-        payload.metadata = values.metadata;
       }
 
       const response = tag

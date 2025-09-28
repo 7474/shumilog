@@ -9,6 +9,7 @@ Auto-generated from all feature plans. Last updated: 2025-01-08
 1. **日本語での応答**: 全ての応答・説明・コメントは日本語で行う
 2. **npmパッケージ管理**: パッケージの追加・変更・削除は必ずnpmコマンドで行う。パッケージ操作目的でpackage.jsonを直接編集することは禁止
 3. **ランタイム・ライブラリ版本選択**: LTS版を最優先とし、LTSが存在しない場合のみ最新版を使用する
+4. **日本語ドキュメント作成**: 人間が確認する全てのドキュメント（仕様書、計画書、README、コメント等）は日本語で記述する。特に`.specify/templates`配下のテンプレートやspec kitの出力は必ず日本語とする
 
 ## Active Technologies
 - Node.js 22 LTS + npm 10+ (ランタイム)

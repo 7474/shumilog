@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/models';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function LogDetailPage() {
@@ -46,30 +48,28 @@ export function LogDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Log Detail</CardTitle>
+    <div className="container mx-auto p-4 md:p-6 lg:p-8">
+      <div className="mb-8">
+        <Link to="/logs">
+          <Button variant="outline" className="flex items-center space-x-2">
+            <ArrowLeft size={16} />
+            <span>Back to Logs</span>
+          </Button>
+        </Link>
+      </div>
+
+      <Card className="shadow-md">
+        <CardHeader className="border-b">
+          <CardTitle className="text-3xl font-bold text-gray-800">
+            Log from {new Date(log.created_at).toLocaleDateString()}
+          </CardTitle>
+          <p className="text-sm text-gray-500">
+            Last updated: {new Date(log.updated_at).toLocaleString()}
+          </p>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <p>
-              <strong>ID:</strong> {log.id}
-            </p>
-            <p>
-              <strong>Content:</strong>
-            </p>
-            <div className="p-4 border rounded bg-gray-50">
-              <p>{log.content_md}</p>
-            </div>
-            <p>
-              <strong>Created At:</strong>{' '}
-              {new Date(log.created_at).toLocaleString()}
-            </p>
-            <p>
-              <strong>Updated At:</strong>{' '}
-              {new Date(log.updated_at).toLocaleString()}
-            </p>
+        <CardContent className="p-6">
+          <div className="prose prose-lg max-w-none">
+            <p>{log.content_md}</p>
           </div>
         </CardContent>
       </Card>

@@ -76,23 +76,27 @@ export function TagsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Tags</h1>
-        <Button onClick={handleAddNew}>Create Tag</Button>
+    <div className="container mx-auto p-4 md:p-6 lg:p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-800">Tags</h1>
+        <Button onClick={handleAddNew} size="lg">
+          Create Tag
+        </Button>
       </div>
 
       {showForm && (
-        <Card className="mb-8">
+        <Card className="mb-8 shadow-md">
           <CardHeader>
-            <CardTitle>{selectedTag ? 'Edit Tag' : 'Create Tag'}</CardTitle>
+            <CardTitle className="text-2xl">
+              {selectedTag ? 'Edit Tag' : 'Create New Tag'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <TagForm tag={selectedTag} onSuccess={handleSuccess} />
             <Button
               variant="ghost"
               onClick={() => setShowForm(false)}
-              className="mt-4"
+              className="mt-4 text-gray-600"
             >
               Cancel
             </Button>
@@ -101,13 +105,18 @@ export function TagsPage() {
       )}
 
       {tags.length === 0 && !showForm ? (
-        <div className="text-center text-gray-500">No tags found.</div>
+        <div className="text-center text-gray-500 py-16">
+          <p className="text-xl">No tags found.</p>
+          <p>Add one to get started!</p>
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {tags.map((tag) => (
-            <Card key={tag.id}>
+            <Card key={tag.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-4 flex justify-between items-center">
-                <span className="font-medium">{tag.name}</span>
+                <span className="font-semibold text-lg text-gray-800">
+                  {tag.name}
+                </span>
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"

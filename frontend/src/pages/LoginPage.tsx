@@ -26,14 +26,16 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Shumilog</CardTitle>
-          <CardDescription>Please log in to continue.</CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-extrabold">Shumilog</CardTitle>
+          <CardDescription>
+            Your personal hobby content logger.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button onClick={handleLogin} className="w-full">
+        <CardContent className="p-6">
+          <Button onClick={handleLogin} className="w-full text-lg py-6">
             Login with X
           </Button>
         </CardContent>

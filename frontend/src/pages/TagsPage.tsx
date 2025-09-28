@@ -68,40 +68,65 @@ export function TagsPage() {
   };
 
   if (loading) {
-    return <div className="container mx-auto p-4">Loading...</div>;
+    return (
+      <div className="p-4 sm:p-6 min-h-[400px] flex items-center justify-center">
+        <div className="text-center animate-pulse">
+          <div className="w-12 h-12 bg-primary-200 rounded-full mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading your tags...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="container mx-auto p-4">Error: {error}</div>;
+    return (
+      <div className="p-4 sm:p-6">
+        <Card className="border-red-200 bg-red-50/80">
+          <CardContent className="p-6">
+            <p className="text-red-600">Error: {error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-6xl">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 space-y-4 md:space-y-0">
-        <div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary-700 to-secondary-600 bg-clip-text text-transparent mb-2">
-            Tags
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* Header Section */}
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:justify-between sm:items-start">
+        <div className="space-y-2">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+            Your Tags
           </h1>
-          <p className="text-gray-600 text-lg">Organize your hobbies with custom tags</p>
+          <p className="text-neutral-600 text-base sm:text-lg leading-relaxed">
+            Organize your hobbies with custom tags
+          </p>
         </div>
-        <Button onClick={handleAddNew} size="lg" className="shrink-0">
+        <Button 
+          onClick={handleAddNew} 
+          size="lg" 
+          className="shrink-0 shadow-gentle hover:shadow-medium self-start"
+        >
+          <span className="mr-2">🏷️</span>
           Create Tag
         </Button>
       </div>
 
+      {/* Form Section */}
       {showForm && (
-        <Card className="mb-8 shadow-soft border-primary-100">
-          <CardHeader className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-t-xl">
-            <CardTitle className="text-2xl text-primary-800">
+        <Card className="mb-8 shadow-gentle border-primary-100/60 animate-slide-up">
+          <CardHeader className="bg-gradient-to-r from-primary-50/80 to-secondary-50/80 rounded-t-2xl">
+            <CardTitle className="text-xl sm:text-2xl text-primary-800 flex items-center">
+              <span className="mr-2">{selectedTag ? '✏️' : '🏷️'}</span>
               {selectedTag ? 'Edit Tag' : 'Create New Tag'}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-6 sm:p-8">
             <TagForm tag={selectedTag} onSuccess={handleSuccess} />
             <Button
               variant="ghost"
               onClick={() => setShowForm(false)}
-              className="mt-6 text-gray-600 hover:bg-gray-50"
+              className="mt-6 text-neutral-600 hover:bg-neutral-50"
             >
               Cancel
             </Button>
@@ -109,40 +134,62 @@ export function TagsPage() {
         </Card>
       )}
 
+      {/* Content Section */}
       {tags.length === 0 && !showForm ? (
-        <div className="text-center text-gray-500 py-20">
-          <div className="mb-6">
-            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-secondary-100 to-accent-100 rounded-full flex items-center justify-center mb-6">
-              <span className="text-4xl">🏷️</span>
+        <div className="text-center py-16 sm:py-20 animate-fade-in">
+          <div className="mb-8">
+            <div className="mx-auto w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-primary-100 to-secondary-100 rounded-3xl flex items-center justify-center mb-6 shadow-soft">
+              <span className="text-4xl sm:text-5xl">🏷️</span>
             </div>
           </div>
-          <p className="text-2xl font-semibold mb-2 text-gray-700">No tags found</p>
-          <p className="text-lg">Add your first tag to get started!</p>
+          <div className="space-y-3 max-w-md mx-auto">
+            <h2 className="text-xl sm:text-2xl font-bold text-neutral-800">No tags yet</h2>
+            <p className="text-base text-neutral-600 leading-relaxed">
+              Create tags to organize and categorize your hobbies
+            </p>
+            <div className="pt-4">
+              <Button onClick={handleAddNew} size="lg" className="shadow-gentle hover:shadow-medium">
+                <span className="mr-2">🏷️</span>
+                Create Your First Tag
+              </Button>
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {tags.map((tag) => (
-            <Card key={tag.id} className="hover:shadow-lg transition-all duration-300 group hover:scale-[1.02]">
-              <CardContent className="p-6 flex flex-col justify-between min-h-[120px]">
-                <div className="mb-4">
-                  <span className="font-semibold text-xl text-gray-800 group-hover:text-primary-600 transition-colors duration-200">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 animate-fade-in">
+          {tags.map((tag, index) => (
+            <Card 
+              key={tag.id} 
+              className="hover:shadow-medium transition-all duration-300 group hover:-translate-y-1 animate-scale-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <CardContent className="p-6 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
+                <div className="mb-4 flex-grow">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-2xl">🏷️</span>
+                    <div className="w-3 h-3 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full shadow-soft group-hover:shadow-medium transition-all duration-200"></div>
+                  </div>
+                  <h3 className="font-bold text-lg text-neutral-900 group-hover:text-primary-600 transition-colors duration-200 leading-tight">
                     {tag.name}
-                  </span>
+                  </h3>
                 </div>
-                <div className="flex items-center space-x-2 justify-end">
+                <div className="flex items-center space-x-2 mt-auto">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(tag)}
-                    className="hover:bg-primary-50 hover:border-primary-300"
+                    className="hover:bg-primary-50 hover:border-primary-300 flex-1 text-xs"
                   >
+                    <span className="mr-1">✏️</span>
                     Edit
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(tag.id)}
+                    className="flex-1 text-xs"
                   >
+                    <span className="mr-1">🗑️</span>
                     Delete
                   </Button>
                 </div>

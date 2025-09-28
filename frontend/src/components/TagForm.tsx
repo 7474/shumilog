@@ -86,7 +86,7 @@ export function TagForm({ tag, onSuccess }: TagFormProps) {
                 />
               </FormControl>
               <div className="text-sm text-gray-600 mt-1">
-                <p>💡 <strong>Tip:</strong> Use hashtag patterns like <code className="bg-gray-100 px-1 rounded">#{anime}</code>, <code className="bg-gray-100 px-1 rounded">#gaming</code>, or <code className="bg-gray-100 px-1 rounded">#{ゲーム}</code> to automatically create associations with related tags.</p>
+                <p>💡 <strong>Tip:</strong> Use hashtag patterns like <code className="bg-gray-100 px-1 rounded">#anime</code>, <code className="bg-gray-100 px-1 rounded">#gaming</code>, or <code className="bg-gray-100 px-1 rounded">#ゲーム</code> to automatically create associations with related tags.</p>
               </div>
               <FormMessage />
             </FormItem>

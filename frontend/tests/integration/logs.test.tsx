@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
-import App from '../../src/App';
 import { LogsPage } from '../../src/pages/LogsPage';
 import { LogDetailPage } from '../../src/pages/LogDetailPage';
 
@@ -17,10 +16,8 @@ const renderWithRouter = (initialEntries: string[]) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
-        <Route path="/" element={<App />}>
-          <Route index element={<LogsPage />} />
-          <Route path="/logs/:id" element={<LogDetailPage />} />
-        </Route>
+        <Route path="/" element={<LogsPage />} />
+        <Route path="/logs/:id" element={<LogDetailPage />} />
       </Routes>
     </MemoryRouter>
   );
@@ -61,12 +58,11 @@ describe('Log Management Integration Test', () => {
       },
     ];
 
-    mockApi.logs.$get.mockResolvedValue(
-      new Response(JSON.stringify({ items: logs }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    );
+    const mockResponse = {
+      ok: true,
+      json: () => Promise.resolve({ items: logs }),
+    };
+    mockApi.logs.$get.mockResolvedValue(mockResponse);
 
     renderWithRouter(['/']);
 

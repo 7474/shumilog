@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
-import App from '@/App';
 import { LoginPage } from '@/pages/LoginPage';
 import { LogsPage } from '@/pages/LogsPage';
 
@@ -14,10 +13,8 @@ const renderWithRouter = (initialEntries: string[]) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
-        <Route path="/" element={<App />}>
-          <Route index element={mockUseAuth.isAuthenticated ? <LogsPage /> : <LoginPage />} />
-          <Route path="login" element={<LoginPage />} />
-        </Route>
+        <Route path="/" element={mockUseAuth.isAuthenticated ? <LogsPage /> : <LoginPage />} />
+        <Route path="login" element={<LoginPage />} />
       </Routes>
     </MemoryRouter>
   );
@@ -44,7 +41,7 @@ describe('Login Flow Integration Test', () => {
     mockUseAuth.isAuthenticated = false;
     renderWithRouter(['/']);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Login with Twitter/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Login with X/i })).toBeInTheDocument();
     });
   });
 
@@ -66,7 +63,7 @@ describe('Login Flow Integration Test', () => {
 
     // 4. Assert
     await waitFor(() => {
-      expect(screen.getByText(/No logs found/i)).toBeInTheDocument();
+      expect(screen.getByText('No logs yet')).toBeInTheDocument();
     });
     expect(mockApi.logs.$get).toHaveBeenCalledTimes(1);
   });
@@ -74,13 +71,22 @@ describe('Login Flow Integration Test', () => {
   it('should call login function on button click', async () => {
     const user = userEvent.setup();
     mockUseAuth.isAuthenticated = false;
+    
+    // Mock window.location.href
+    const originalLocation = window.location;
+    delete (window as any).location;
+    window.location = { ...originalLocation, href: '' };
+    
     renderWithRouter(['/login']);
 
-    const loginButton = await screen.findByRole('button', { name: /Login with Twitter/i });
+    const loginButton = await screen.findByRole('button', { name: /Login with X/i });
     await user.click(loginButton);
 
     await waitFor(() => {
-      expect(mockUseAuth.login).toHaveBeenCalled();
+      expect(window.location.href).toContain('/api/auth/twitter');
     });
+    
+    // Restore original location
+    window.location = originalLocation;
   });
 });

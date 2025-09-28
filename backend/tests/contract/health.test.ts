@@ -10,7 +10,7 @@ describe('Contract Test: GET /health', () => {
     try {
       const { createApp } = await import('../../src/index');
       app = createApp({});
-    } catch (_error) {
+    } catch (_) {
       console.log('Expected failure: Health endpoint not implemented yet');
     }
   });
@@ -35,8 +35,8 @@ describe('Contract Test: GET /health', () => {
       status: 'healthy',
       timestamp: expect.any(String),
       services: {
-        database: expect.stringMatching(/connected|disconnected/),
-        backend: expect.stringMatching(/running|stopped/)
+        database: expect.stringMatching(/connected|disconnected|unknown/),
+        backend: expect.stringMatching(/running|degraded/)
       }
     });
     

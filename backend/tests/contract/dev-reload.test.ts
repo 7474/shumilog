@@ -9,7 +9,7 @@ describe('Contract Test: POST /dev/reload', () => {
     try {
       const { createApp } = await import('../../src/index');
       app = createApp({});
-    } catch (_error) {
+    } catch (_) {
       console.log('Expected failure: Dev reload endpoint not implemented yet');
     }
   });

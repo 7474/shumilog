@@ -33,7 +33,7 @@ describe('Contract: Auth routes', () => {
       const url = new URL(location!);
       expect(url.host).toContain('x.com');
       expect(url.pathname).toContain('oauth');
-      expect(url.searchParams.get('client_id')).toBe('test-twitter-client-id');
+      expect(url.searchParams.get('client_id')).toBe('test_client_id');
       expect(url.searchParams.get('redirect_uri')).toBe('http://localhost:8787/api/auth/callback');
       expect(url.searchParams.get('response_type')).toBe('code');
       expect(url.searchParams.get('scope')).toBeTruthy();

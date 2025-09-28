@@ -14,7 +14,7 @@ describe('Integration: Mobile Workflows', () => {
       }
     });
     expect(authResponse.status).toBe(302);
-    expect(authResponse.headers.get('Location')).toContain('twitter.com');
+    expect(authResponse.headers.get('Location')).toContain('x.com');
 
     // Handle OAuth callback (mobile)
     const callbackResponse = await app.request('/auth/callback?code=mobile_code&state=mobile_state', {

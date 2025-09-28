@@ -253,9 +253,8 @@ logs.post('/', async (c) => {
     tagNames = sanitizeTagNames(body.tag_names);
   } else if (body.tag_ids) {
     tagIds = sanitizeTagIds(body.tag_ids);
-  } else {
-    throw new HTTPException(400, { message: 'Either tag_names or tag_ids must be provided' });
   }
+  // Note: We no longer require explicit tags since hashtags can be auto-extracted from content
 
   try {
     const isPublic = parsePrivacyInput(body.is_public ?? body.privacy, false) as boolean;

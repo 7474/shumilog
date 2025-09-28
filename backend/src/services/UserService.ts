@@ -85,8 +85,6 @@ export class UserService {
       throw new Error('No fields to update');
     }
     
-    updates.push('updated_at = ?');
-    params.push(new Date().toISOString());
     params.push(userId);
     
     const stmt = this.db.prepare(`

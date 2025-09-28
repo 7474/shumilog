@@ -1,6 +1,6 @@
 import { Log, LogDetail, LogModel, CreateLogData, UpdateLogData, LogSearchParams } from '../models/Log.js';
 import { Tag, TagModel } from '../models/Tag.js';
-import { User, UserModel } from '../models/User.js';
+import { User } from '../models/User.js';
 import { Database } from '../db/database.js';
 
 export interface LogSearchResult {
@@ -156,7 +156,7 @@ export class LogService {
   /**
    * Get log by ID
    */
-  async getLogById(id: string, userId?: string): Promise<LogDetail | null> {
+  async getLogById(id: string, _userId?: string): Promise<LogDetail | null> {
     // Get log with user info
     const logRow = await this.db.queryFirst(`
       SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
@@ -238,7 +238,7 @@ export class LogService {
     const countParams: any[] = [];
     
     if (tag_ids && tag_ids.length > 0) {
-      const placeholders = tag_ids.map(() => '?').join(',');
+      const _placeholders = tag_ids.map(() => '?').join(',');
       countSql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
       countParams.push(...tag_ids);
     }

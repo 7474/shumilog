@@ -228,7 +228,7 @@ logs.post('/', async (c) => {
   let body;
   try {
     body = await c.req.json();
-  } catch (error) {
+  } catch (_error) {
     throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
   
@@ -323,7 +323,7 @@ logs.put('/:logId', async (c) => {
   let body;
   try {
     body = await c.req.json();
-  } catch (error) {
+  } catch (_error) {
     throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
   
@@ -434,7 +434,7 @@ logs.post('/:logId/share', async (c) => {
     let body;
     try {
       body = await c.req.json();
-    } catch (error) {
+    } catch (_error) {
       body = {};
     }
     

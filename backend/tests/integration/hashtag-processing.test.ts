@@ -11,9 +11,7 @@ describe('Hashtag Processing Integration', () => {
   let sessionToken: string;
   
   beforeEach(async () => {
-    await clearTestData();
-    await createTestUser('test_user', 'testuser', 'Test User');
-    sessionToken = await createTestSession('test_user');
+    sessionToken = await setupTestEnvironment();
   });
   
   afterEach(async () => {
@@ -21,7 +19,7 @@ describe('Hashtag Processing Integration', () => {
   });
   
   it('should extract hashtags and create tag associations when creating a tag', async () => {
-    const response = await app.request('/api/tags', {
+    const response = await app.request('/tags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +36,7 @@ describe('Hashtag Processing Integration', () => {
     expect(createdTag.name).toBe('Main Tag');
     
     // Get the tag detail to check associations
-    const detailResponse = await app.request(`/api/tags/${createdTag.id}`);
+    const detailResponse = await app.request(`/tags/${createdTag.id}`);
     expect(detailResponse.status).toBe(200);
     const tagDetail = await detailResponse.json();
     
@@ -50,7 +48,7 @@ describe('Hashtag Processing Integration', () => {
   
   it('should link to existing tags when hashtags match existing tag names', async () => {
     // Create an existing tag first
-    const existingResponse = await app.request('/api/tags', {
+    const existingResponse = await app.request('/tags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +64,7 @@ describe('Hashtag Processing Integration', () => {
     const existingTag = await existingResponse.json();
     
     // Create new tag referencing the existing one
-    const response = await app.request('/api/tags', {
+    const response = await app.request('/tags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +80,7 @@ describe('Hashtag Processing Integration', () => {
     const createdTag = await response.json();
     
     // Check associations
-    const detailResponse = await app.request(`/api/tags/${createdTag.id}`);
+    const detailResponse = await app.request(`/tags/${createdTag.id}`);
     const tagDetail = await detailResponse.json();
     
     expect(tagDetail.associations).toHaveLength(2);
@@ -97,7 +95,7 @@ describe('Hashtag Processing Integration', () => {
   
   it('should process hashtags when updating a tag', async () => {
     // Create initial tag
-    const createResponse = await app.request('/api/tags', {
+    const createResponse = await app.request('/tags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +110,7 @@ describe('Hashtag Processing Integration', () => {
     const createdTag = await createResponse.json();
     
     // Update with hashtags
-    const updateResponse = await app.request(`/api/tags/${createdTag.id}`, {
+    const updateResponse = await app.request(`/tags/${createdTag.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -126,7 +124,7 @@ describe('Hashtag Processing Integration', () => {
     expect(updateResponse.status).toBe(200);
     
     // Check associations
-    const detailResponse = await app.request(`/api/tags/${createdTag.id}`);
+    const detailResponse = await app.request(`/tags/${createdTag.id}`);
     const tagDetail = await detailResponse.json();
     
     expect(tagDetail.associations).toHaveLength(1);
@@ -134,7 +132,7 @@ describe('Hashtag Processing Integration', () => {
   });
   
   it('should handle Japanese characters in hashtags', async () => {
-    const response = await app.request('/api/tags', {
+    const response = await app.request('/tags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -150,7 +148,7 @@ describe('Hashtag Processing Integration', () => {
     const createdTag = await response.json();
     
     // Check associations
-    const detailResponse = await app.request(`/api/tags/${createdTag.id}`);
+    const detailResponse = await app.request(`/tags/${createdTag.id}`);
     const tagDetail = await detailResponse.json();
     
     expect(tagDetail.associations).toHaveLength(2);
@@ -159,7 +157,7 @@ describe('Hashtag Processing Integration', () => {
   });
   
   it('should not create self-associations', async () => {
-    const response = await app.request('/api/tags', {
+    const response = await app.request('/tags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -175,7 +173,7 @@ describe('Hashtag Processing Integration', () => {
     const createdTag = await response.json();
     
     // Check that no self-association was created
-    const detailResponse = await app.request(`/api/tags/${createdTag.id}`);
+    const detailResponse = await app.request(`/tags/${createdTag.id}`);
     const tagDetail = await detailResponse.json();
     
     expect(tagDetail.associations).toHaveLength(0);

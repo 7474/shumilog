@@ -5,11 +5,14 @@ import { z } from 'zod';
 import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tag } from '@/models';
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Tag name is required'),
+  name: z.string().min(1, 'Tag name is required').max(200, 'Tag name must be 200 characters or fewer'),
+  description: z.string().optional(),
+  metadata: z.record(z.any()).optional(),
 });
 
 type TagFormValues = z.infer<typeof formSchema>;
@@ -25,14 +28,29 @@ export function TagForm({ tag, onSuccess }: TagFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: tag?.name ?? '',
+      description: tag?.description ?? '',
+      metadata: tag?.metadata ?? {},
     },
   });
 
   const onSubmit = async (values: TagFormValues) => {
     try {
+      // Clean up the payload - remove empty optional fields
+      const payload: any = {
+        name: values.name,
+      };
+      
+      if (values.description && values.description.trim()) {
+        payload.description = values.description.trim();
+      }
+      
+      if (values.metadata && Object.keys(values.metadata).length > 0) {
+        payload.metadata = values.metadata;
+      }
+
       const response = tag
-        ? await api.tags[":id"].$put({ param: { id: tag.id }, json: values })
-        : await api.tags.$post({ json: values });
+        ? await api.tags[":id"].$put({ param: { id: tag.id }, json: payload })
+        : await api.tags.$post({ json: payload });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -55,6 +73,23 @@ export function TagForm({ tag, onSuccess }: TagFormProps) {
               <FormLabel className="text-primary-700 font-semibold">Tag Name</FormLabel>
               <FormControl>
                 <Input placeholder="Enter a descriptive tag name..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-primary-700 font-semibold">Description</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Optional description for this tag..."
+                  className="min-h-[100px]"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

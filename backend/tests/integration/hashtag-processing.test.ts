@@ -178,4 +178,29 @@ describe('Hashtag Processing Integration', () => {
     
     expect(tagDetail.associations).toHaveLength(0);
   });
+  
+  it('should support both #{tagName} and #tagName hashtag formats', async () => {
+    const response = await app.request('/tags', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': `session=${sessionToken}`
+      },
+      body: JSON.stringify({
+        name: 'Mixed Format Test',
+        description: 'This supports both #{extended format} and #simple formats like #anime and #gaming'
+      })
+    });
+    
+    expect(response.status).toBe(201);
+    const createdTag = await response.json();
+    
+    // Check associations
+    const detailResponse = await app.request(`/tags/${createdTag.id}`);
+    const tagDetail = await detailResponse.json();
+    
+    expect(tagDetail.associations).toHaveLength(3);
+    const associationNames = tagDetail.associations.map((t: any) => t.name).sort();
+    expect(associationNames).toEqual(['anime', 'extended format', 'gaming']);
+  });
 });

@@ -347,15 +347,26 @@ export class TagService {
   }
 
   /**
-   * Extract hashtag patterns from content (#{tagName} format)
+   * Extract hashtag patterns from content (#{tagName} and #tagName formats)
    */
   private extractHashtagsFromContent(content: string): string[] {
-    // Look for #{tagName} patterns in content
-    const hashtagPattern = /#\{([^}]+)\}/g;
     const matches: string[] = [];
+    
+    // Pattern 1: #{tagName} - extended format (for tags with whitespace)
+    const extendedPattern = /#\{([^}]+)\}/g;
     let match;
     
-    while ((match = hashtagPattern.exec(content)) !== null) {
+    while ((match = extendedPattern.exec(content)) !== null) {
+      const tagName = match[1].trim();
+      if (tagName && !matches.includes(tagName)) {
+        matches.push(tagName);
+      }
+    }
+    
+    // Pattern 2: #tagName - simple format (no whitespace)
+    const simplePattern = /#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_-]+)/g;
+    
+    while ((match = simplePattern.exec(content)) !== null) {
       const tagName = match[1].trim();
       if (tagName && !matches.includes(tagName)) {
         matches.push(tagName);

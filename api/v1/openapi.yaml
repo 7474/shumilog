@@ -127,7 +127,7 @@ paths:
       description: |
         Create a new tag with automatic hashtag processing.
         
-        **Hashtag Processing**: If the description contains hashtag patterns in the format `#{tagName}`, 
+        **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`), 
         the system will automatically create associations with existing tags or create new tags if they don't exist.
       security:
         - sessionAuth: []
@@ -173,7 +173,7 @@ paths:
       description: |
         Update an existing tag with automatic hashtag processing.
         
-        **Hashtag Processing**: If the description contains hashtag patterns in the format `#{tagName}`, 
+        **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`), 
         the system will automatically create associations with existing tags or create new tags if they don't exist.
       security:
         - sessionAuth: []
@@ -514,7 +514,10 @@ components:
         description:
           type: string
           description: |
-            Optional description for the tag. Supports hashtag patterns in the format #{tagName}.
+            Optional description for the tag. Supports hashtag patterns in two formats:
+            - #{tagName} - Extended format (supports spaces and special characters)
+            - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+            
             When hashtag patterns are found, the system will automatically:
             1. Look for existing tags with matching names
             2. Create new tags if they don't exist (with empty description and metadata)
@@ -531,7 +534,10 @@ components:
         description:
           type: string
           description: |
-            Optional description for the tag. Supports hashtag patterns in the format #{tagName}.
+            Optional description for the tag. Supports hashtag patterns in two formats:
+            - #{tagName} - Extended format (supports spaces and special characters)
+            - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+            
             When hashtag patterns are found, the system will automatically:
             1. Look for existing tags with matching names
             2. Create new tags if they don't exist (with empty description and metadata)

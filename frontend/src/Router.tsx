@@ -1,14 +1,15 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { App } from './App';
 import { LoginPage } from './pages/LoginPage';
 import { LogsPage } from './pages/LogsPage';
 import { TagsPage } from './pages/TagsPage';
+import { LogDetailPage } from './pages/LogDetailPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AppLayout } from './components/AppLayout';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <AppLayout />,
     children: [
       {
         element: <ProtectedRoute />,
@@ -16,6 +17,14 @@ const router = createBrowserRouter([
           {
             index: true,
             element: <LogsPage />,
+          },
+          {
+            path: 'logs',
+            element: <LogsPage />,
+          },
+          {
+            path: 'logs/:id',
+            element: <LogDetailPage />,
           },
           {
             path: 'tags',

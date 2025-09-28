@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
-import App from '../../src/App';
 import { TagsPage } from '../../src/pages/TagsPage';
 
 import { mockApi, mockUseAuth } from '../mocks/setup';
@@ -16,9 +15,7 @@ const renderWithRouter = (initialEntries: string[]) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
-        <Route path="/" element={<App />}>
-          <Route path="/tags" element={<TagsPage />} />
-        </Route>
+        <Route path="/tags" element={<TagsPage />} />
       </Routes>
     </MemoryRouter>
   );
@@ -39,12 +36,11 @@ describe('Tag Management Integration Test', () => {
       { id: '2', name: 'TypeScript' },
     ];
 
-    mockApi.tags.$get.mockResolvedValue(
-      new Response(JSON.stringify({ items: tags }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    );
+    const mockResponse = {
+      ok: true,
+      json: () => Promise.resolve({ items: tags }),
+    };
+    mockApi.tags.$get.mockResolvedValue(mockResponse);
 
     renderWithRouter(['/tags']);
 

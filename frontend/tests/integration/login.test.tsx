@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
-import App from '@/App';
 import { LoginPage } from '@/pages/LoginPage';
 import { LogsPage } from '@/pages/LogsPage';
 
@@ -14,10 +13,8 @@ const renderWithRouter = (initialEntries: string[]) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <Routes>
-        <Route path="/" element={<App />}>
-          <Route index element={mockUseAuth.isAuthenticated ? <LogsPage /> : <LoginPage />} />
-          <Route path="login" element={<LoginPage />} />
-        </Route>
+        <Route path="/" element={mockUseAuth.isAuthenticated ? <LogsPage /> : <LoginPage />} />
+        <Route path="login" element={<LoginPage />} />
       </Routes>
     </MemoryRouter>
   );
@@ -76,7 +73,7 @@ describe('Login Flow Integration Test', () => {
     mockUseAuth.isAuthenticated = false;
     renderWithRouter(['/login']);
 
-    const loginButton = await screen.findByRole('button', { name: /Login with Twitter/i });
+    const loginButton = await screen.findByRole('button', { name: /Login with X/i });
     await user.click(loginButton);
 
     await waitFor(() => {

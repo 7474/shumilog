@@ -251,9 +251,9 @@ class DatabaseStatement {
       // For non-D1 databases, create a mock prepared statement
       this.prepared = {
         sql: sql,
-        all: (...params: any[]) => [],
-        get: (...params: any[]) => null,
-        run: (...params: any[]) => ({ changes: 0, lastInsertRowid: 0 })
+        all: (..._params: any[]) => [],
+        get: (..._params: any[]) => null,
+        run: (..._params: any[]) => ({ changes: 0, lastInsertRowid: 0 })
       };
     }
   }

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { TagService, TagUsageStats } from '../../src/services/TagService.js';
+import { TagService } from '../../src/services/TagService.js';
 import { Database } from '../../src/db/database.js';
 import { clearTestData, getTestD1Database, createTestUser } from '../helpers/app.js';
-import { Tag, CreateTagData, UpdateTagData, TagSearchParams } from '../../src/models/Tag.js';
+import { CreateTagData, UpdateTagData } from '../../src/models/Tag.js';
 
 describe('TagService', () => {
   let tagService: TagService;

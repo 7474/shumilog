@@ -10,7 +10,7 @@ describe('Contract Test: GET /health', () => {
     try {
       const { createApp } = await import('../../src/index');
       app = createApp({});
-    } catch (error) {
+    } catch (_error) {
       console.log('Expected failure: Health endpoint not implemented yet');
     }
   });

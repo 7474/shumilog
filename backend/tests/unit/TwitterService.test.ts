@@ -45,7 +45,7 @@ describe('TwitterService', () => {
   describe('exchangeCodeForTokens', () => {
     it('should successfully exchange authorization code for tokens', async () => {
       const mockCode = 'auth-code-123';
-      const mockState = 'test-state-123';
+      const _mockState = 'test-state-123';
       const mockTokenResponse = {
         access_token: 'access-token-123',
         refresh_token: 'refresh-token-123',
@@ -70,7 +70,7 @@ describe('TwitterService', () => {
       });
       
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.twitter.com/2/oauth2/token',
+        'https://api.x.com/2/oauth2/token',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -138,7 +138,7 @@ describe('TwitterService', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.twitter.com/2/users/me?user.fields=profile_image_url,verified,public_metrics',
+        'https://api.x.com/2/users/me?user.fields=profile_image_url,verified,public_metrics',
         expect.objectContaining({
           headers: expect.objectContaining({
             'Authorization': `Bearer ${mockAccessToken}`
@@ -200,7 +200,7 @@ describe('TwitterService', () => {
       });
       
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.twitter.com/2/oauth2/token',
+        'https://api.x.com/2/oauth2/token',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({

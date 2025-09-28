@@ -9,7 +9,7 @@ describe('Contract Test: GET /dev/config', () => {
     try {
       const { createApp } = await import('../../src/index');
       app = createApp({});
-    } catch (error) {
+    } catch (_error) {
       console.log('Expected failure: Dev config endpoint not implemented yet');
     }
   });

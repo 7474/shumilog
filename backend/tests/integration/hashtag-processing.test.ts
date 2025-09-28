@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   app,
   clearTestData,
-  createTestSession,
-  createTestUser,
   setupTestEnvironment
 } from '../helpers/app';
 

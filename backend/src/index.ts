@@ -178,6 +178,9 @@ export function createApp(env: RuntimeEnv = {}) {
   app.route('/dev', devRoutes);
 
   registerApiRoutes(app.basePath('/api'), sessionService, userService);
+  
+  // Also register API routes at root level for backward compatibility with tests
+  registerApiRoutes(app, sessionService, userService);
 
   app.onError((err, c) => {
     console.error('Unhandled error:', err);

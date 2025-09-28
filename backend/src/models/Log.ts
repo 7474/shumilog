@@ -35,7 +35,8 @@ export interface Log {
 export interface LogDetail extends Log {}
 
 export interface CreateLogData {
-  tag_ids: string[];
+  tag_ids?: string[];
+  tag_names?: string[];
   title?: string;
   content_md: string;
   is_public?: boolean;
@@ -43,6 +44,7 @@ export interface CreateLogData {
 
 export interface UpdateLogData {
   tag_ids?: string[];
+  tag_names?: string[];
   title?: string;
   content_md?: string;
   is_public?: boolean;

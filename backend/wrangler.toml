@@ -26,15 +26,15 @@ name = "shumilog-backend-dev"
 
 [[env.development.d1_databases]]
 binding = "DB"
-database_name = "shumilog-db-dev"
-database_id = "placeholder-dev-id"
+database_name = "shumilog-db-devel"
+database_id = "617b5001-c479-48d0-b9a6-202e2b3d51f2"
 migrations_dir = "migrations"
 
 [env.development.vars]
 ENVIRONMENT = "development"
-APP_BASE_URL = "http://localhost:5173"
-APP_LOGIN_URL = "http://localhost:5173/login"
-TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
+APP_BASE_URL = "https://master.shumilog.pages.dev"
+APP_LOGIN_URL = "https://master.shumilog.pages.dev/login"
+TWITTER_REDIRECT_URI = "https://master-shumilog-backend.koudenpa.workers.dev/api/auth/callback"
 
 [env.production]
 name = "shumilog-backend"

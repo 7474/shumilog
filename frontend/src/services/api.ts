@@ -8,4 +8,5 @@ export const client = hc<AppType>(baseUrl, {
   },
 });
 
-export const api = client.api;
+// The backend already mounts routes at /api, so we use the root client directly
+export const api = client;

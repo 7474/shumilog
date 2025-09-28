@@ -177,7 +177,6 @@ export function createApp(env: RuntimeEnv = {}) {
   app.route('/health', healthRoutes);
   app.route('/dev', devRoutes);
 
-  registerApiRoutes(app, sessionService, userService);
   registerApiRoutes(app.basePath('/api'), sessionService, userService);
 
   app.onError((err, c) => {

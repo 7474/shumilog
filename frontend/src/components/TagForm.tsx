@@ -46,23 +46,27 @@ export function TagForm({ tag, onSuccess }: TagFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel className="text-primary-700 font-semibold">Tag Name</FormLabel>
               <FormControl>
-                <Input placeholder="Tag name" {...field} />
+                <Input placeholder="Enter a descriptive tag name..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {error && <p className="text-red-500">{error}</p>}
-        <Button type="submit">
-          {tag ? 'Update' : 'Create'}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm font-medium">{error}</p>
+          </div>
+        )}
+        <Button type="submit" className="w-full md:w-auto">
+          {tag ? 'Update Tag' : 'Create Tag'}
         </Button>
       </form>
     </Form>

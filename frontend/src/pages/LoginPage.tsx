@@ -1,5 +1,12 @@
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 
 export function LoginPage() {
@@ -19,12 +26,20 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Welcome to Shumilog</h1>
-        <p className="mb-6">Please log in to continue.</p>
-        <Button onClick={handleLogin}>Login with X</Button>
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-extrabold">Shumilog</CardTitle>
+          <CardDescription>
+            Your personal hobby content logger.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <Button onClick={handleLogin} className="w-full text-lg py-6">
+            Login with X
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,11 +1,17 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Log } from '@/models';
 
 const formSchema = z.object({
@@ -21,7 +27,6 @@ interface LogFormProps {
 }
 
 export function LogForm({ log, onSuccess }: LogFormProps) {
-  const [error, setError] = useState<string | null>(null);
   const form = useForm<LogFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,7 +38,7 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
   const onSubmit = async (values: LogFormValues) => {
     try {
       const response = log
-        ? await api.logs[":id"].$put({ param: { id: log.id }, json: values })
+        ? await api.logs[':id'].$put({ param: { id: log.id }, json: values })
         : await api.logs.$post({ json: values });
 
       if (!response.ok) {
@@ -41,8 +46,9 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
         throw new Error(errorData.error || 'Failed to save log');
       }
       onSuccess();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } catch (error) {
+      console.error(error);
+      // Optionally, you can set an error state here to display in the UI
     }
   };
 
@@ -75,10 +81,7 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
             </FormItem>
           )}
         />
-        {error && <p className="text-red-500">{error}</p>}
-        <Button type="submit">
-          {log ? 'Update' : 'Create'}
-        </Button>
+        <Button type="submit">{log ? 'Update' : 'Create'}</Button>
       </form>
     </Form>
   );

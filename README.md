@@ -1,17 +1,17 @@
-# Shumilog - Hobby Content Log Service
+# Shumilog - 趣味コンテンツログサービス
 
-Minimal Cloudflare Worker backend paired with a lightweight Vite-driven frontend for logging hobby content.
+趣味コンテンツのログ記録のための最小構成のCloudflare Workerバックエンドと軽量なViteベースのフロントエンドです。
 
-## Requirements
+## 必要な環境
 
-- **Node.js 22 LTS** – `nvm use` picks up the version defined in [`.nvmrc`](./.nvmrc)
-- **npm 10+** (bundled with Node 22)
-- **Wrangler CLI 3+** for local Worker and D1 development (`npm install -g wrangler`)
-- *(Optional)* Twitter API credentials if you plan to exercise the share endpoint
+- **Node.js 22 LTS** – [`.nvmrc`](./.nvmrc)で定義されたバージョンを`nvm use`で使用
+- **npm 10+** (Node 22にバンドル済み)
+- **Wrangler CLI 3+** ローカルWorkerとD1開発用 (`npm install -g wrangler`)
+- *(オプション)* 共有エンドポイントを使用する場合はTwitter API認証情報
 
-## Quickstart
+## クイックスタート
 
-### 1. Install dependencies
+### 1. 依存関係のインストール
 
 ```bash
 git clone <repository-url>
@@ -22,7 +22,7 @@ npm install --prefix backend
 npm install --prefix frontend
 ```
 
-### 2. Prepare the local database (Cloudflare D1)
+### 2. ローカルデータベースの準備 (Cloudflare D1)
 
 ```bash
 cd backend
@@ -30,113 +30,113 @@ npm run db:migrate
 npm run db:seed
 ```
 
-### 3. Run the stack locally
+### 3. ローカル環境でのスタック実行
 
-- **Terminal A – Worker API**
+- **ターミナル A – Worker API**
 
   ```bash
   cd backend
   npm run dev:worker
   ```
 
-- **Terminal B – Frontend UI**
+- **ターミナル B – フロントエンド UI**
 
   ```bash
   cd frontend
   npm run dev
   ```
 
-The frontend proxies `/api` requests to `http://localhost:8787`, matching the Worker dev server.
+フロントエンドは`/api`リクエストを`http://localhost:8787`にプロキシし、Worker開発サーバーと連携します。
 
-### 4. Validate the setup
+### 4. セットアップの検証
 
 ```bash
-# In backend/
+# backend/ で実行
 npm run test:contract
 
-# In frontend/
+# frontend/ で実行
 npm run test:smoke
 ```
 
-Manual checks:
+手動確認:
 
-- Frontend UI → http://localhost:5173
-- Health check → http://localhost:8787/health
-- Public logs API → http://localhost:8787/api/logs
+- フロントエンドUI → http://localhost:5173
+- ヘルスチェック → http://localhost:8787/health
+- パブリックログAPI → http://localhost:8787/api/logs
 
-## Useful scripts
+## 有用なスクリプト
 
-| Location | Command | Purpose |
-|----------|---------|---------|
-| `backend/` | `npm run dev:worker` | Run the Worker via Wrangler with local D1 persistence |
-| `backend/` | `npm run test:contract` | Execute the API contract suite with Vitest |
-| `backend/` | `npm run db:migrate` | Apply migrations without reseeding |
-| `backend/` | `npm run db:seed` | Recreate schema and load deterministic fixtures |
-| `frontend/` | `npm run dev` | Launch the Vite dev server with HMR + API proxy |
-| `frontend/` | `npm run build` | Produce a production build into `frontend/dist/` |
-| `frontend/` | `npm run test:smoke` | Run the minimal UI smoke test harness |
+| 場所 | コマンド | 目的 |
+|------|----------|------|
+| `backend/` | `npm run dev:worker` | ローカルD1永続化を使用してWranglerでWorkerを実行 |
+| `backend/` | `npm run test:contract` | VitestでAPIコントラクトスイートを実行 |
+| `backend/` | `npm run db:migrate` | 再シードなしでマイグレーションを適用 |
+| `backend/` | `npm run db:seed` | スキーマを再作成し、決定論的フィクスチャを読み込み |
+| `frontend/` | `npm run dev` | HMR + APIプロキシでVite開発サーバーを起動 |
+| `frontend/` | `npm run build` | `frontend/dist/`への本番ビルドを生成 |
+| `frontend/` | `npm run test:smoke` | 最小UIスモークテストハーネスを実行 |
 
-## Testing & linting
+## テストとリンティング
 
 ```bash
-# API contract tests (backend/)
+# APIコントラクトテスト (backend/)
 npm run test:contract
 
-# Frontend smoke tests (frontend/)
+# フロントエンドスモークテスト (frontend/)
 npm run test:smoke
 
-# Type checking (backend/)
+# 型チェック (backend/)
 npm run build
 
-# Lint backend sources (backend/)
+# バックエンドソースのリント (backend/)
 npm run lint
 ```
 
-Frontend linting will be introduced in Phase 3.7 (see `specs/003-specs-001-web/tasks.md`); for now, React typings and the smoke harness cover UI regression checks.
+フロントエンドのリンティングはフェーズ3.7で導入予定（`specs/003-specs-001-web/tasks.md`を参照）。現在は、Reactの型定義とスモークハーネスがUIの回帰チェックをカバーしています。
 
-## API Development
+## API開発
 
-The canonical API specification is located at `/api/v1/openapi.yaml`. This file is the **source of truth** for all API development and must be continuously maintained.
+正規のAPI仕様書は`/api/v1/openapi.yaml`にあります。このファイルはすべてのAPI開発の**信頼できる情報源**であり、継続的に保守する必要があります。
 
-### API Development Workflow
+### API開発ワークフロー
 
-1. **Update the specification first** - Modify `/api/v1/openapi.yaml` to reflect planned changes
-2. **Update contract tests** - Ensure tests in `backend/tests/contract/` match the specification
-3. **Implement changes** - Update the backend implementation to match the specification
-4. **Verify conformance** - Run `npm run test:contract` to ensure implementation matches specification
+1. **最初に仕様書を更新** - 計画した変更を反映するため`/api/v1/openapi.yaml`を修正
+2. **コントラクトテストを更新** - `backend/tests/contract/`のテストが仕様書と一致することを確認
+3. **変更を実装** - 仕様書に合わせてバックエンド実装を更新
+4. **適合性を検証** - `npm run test:contract`を実行して実装が仕様書と一致することを確認
 
-The specification should always be kept current with the actual API implementation.
+仕様書は常に実際のAPI実装と最新の状態に保つ必要があります。
 
-## Project structure
+## プロジェクト構造
 
 ```
 shumilog/
-├── api/                     # Canonical API specifications (source of truth)
-│   └── v1/openapi.yaml      # OpenAPI 3.0 specification - MUST be kept current
-├── backend/                 # Cloudflare Worker + D1 logic
+├── api/                     # 正規API仕様書（信頼できる情報源）
+│   └── v1/openapi.yaml      # OpenAPI 3.0仕様書 - 常に最新に保つ必要あり
+├── backend/                 # Cloudflare Worker + D1ロジック
 │   ├── src/
-│   │   ├── routes/          # Hono route handlers
-│   │   ├── services/        # Domain services
-│   │   ├── models/          # Data models
-│   │   └── db/              # Migration + seed helpers
-│   └── tests/               # Contract, integration, and unit suites
-├── frontend/                # Minimal Vite surface for manual validation
-│   ├── src/App.tsx          # React log list + share UI
-│   ├── src/main.tsx         # React entry point wired to Vite
-│   └── src/services/        # API client helpers for the Worker backend
-├── specs/                   # Product plans, research, and task tracking
-├── tests/                   # Repository-level integration smoke tests
-└── README.md                # You are here
+│   │   ├── routes/          # Honoルートハンドラー
+│   │   ├── services/        # ドメインサービス
+│   │   ├── models/          # データモデル
+│   │   └── db/              # マイグレーション + シードヘルパー
+│   └── tests/               # コントラクト、統合、ユニットテストスイート
+├── frontend/                # 手動検証用の最小Viteサーフェス
+│   ├── src/App.tsx          # Reactログリスト + 共有UI
+│   ├── src/main.tsx         # ViteにワイヤードされたReactエントリーポイント
+│   └── src/services/        # Workerバックエンド用APIクライアントヘルパー
+├── specs/                   # 製品計画、リサーチ、タスク管理
+├── tests/                   # リポジトリレベルの統合スモークテスト
+└── README.md                # このファイル
 ```
 
-## Contributing
+## コントリビュート
 
-1. Fork the repository
-2. Create a branch: `git checkout -b feature/my-update`
-3. Install dependencies and run the Worker locally
-4. Make changes and ensure `npm run test:contract` passes
-5. Commit with a descriptive message and open a pull request
+1. リポジトリをフォーク
+2. ブランチを作成: `git checkout -b feature/my-update`
+3. 依存関係をインストールしてWorkerをローカルで実行
+4. 変更を行い、`npm run test:contract`が通ることを確認
+5. 説明的なメッセージでコミットし、プルリクエストを開く
 
-## License
+## ライセンス
 
-Licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+MIT Licenseの下でライセンスされています。詳細は[LICENSE](./LICENSE)をご覧ください。

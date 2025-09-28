@@ -77,27 +77,32 @@ export function LogsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800">Logs</h1>
-        <Button onClick={handleAddNew} size="lg">
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-6xl">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 space-y-4 md:space-y-0">
+        <div>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary-700 to-secondary-600 bg-clip-text text-transparent mb-2">
+            Logs
+          </h1>
+          <p className="text-gray-600 text-lg">Capture and organize your hobby experiences</p>
+        </div>
+        <Button onClick={handleAddNew} size="lg" className="shrink-0">
           Create Log
         </Button>
       </div>
 
       {showForm && (
-        <Card className="mb-8 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-2xl">
+        <Card className="mb-8 shadow-soft border-primary-100">
+          <CardHeader className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-t-xl">
+            <CardTitle className="text-2xl text-primary-800">
               {selectedLog ? 'Edit Log' : 'Create New Log'}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8">
             <LogForm log={selectedLog} onSuccess={handleSuccess} />
             <Button
               variant="ghost"
               onClick={() => setShowForm(false)}
-              className="mt-4 text-gray-600"
+              className="mt-6 text-gray-600 hover:bg-gray-50"
             >
               Cancel
             </Button>
@@ -106,28 +111,34 @@ export function LogsPage() {
       )}
 
       {logs.length === 0 && !showForm ? (
-        <div className="text-center text-gray-500 py-16">
-          <p className="text-xl">No logs found.</p>
-          <p>Ready to add your first one?</p>
+        <div className="text-center text-gray-500 py-20">
+          <div className="mb-6">
+            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-primary-100 to-secondary-100 rounded-full flex items-center justify-center mb-6">
+              <span className="text-4xl">📝</span>
+            </div>
+          </div>
+          <p className="text-2xl font-semibold mb-2 text-gray-700">No logs found</p>
+          <p className="text-lg">Ready to add your first hobby experience?</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {logs.map((log) => (
-            <Card key={log.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 flex justify-between items-center">
+            <Card key={log.id} className="hover:shadow-lg transition-all duration-300 group">
+              <CardContent className="p-6 flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
                 <Link to={`/logs/${log.id}`} className="flex-grow">
-                  <p className="font-semibold text-lg text-gray-800 hover:text-blue-600">
+                  <p className="font-semibold text-xl text-gray-800 hover:text-primary-600 transition-colors duration-200 mb-2 group-hover:text-primary-600">
                     {log.title}
                   </p>
-                  <p className="text-sm text-gray-600 truncate">
+                  <p className="text-gray-600 line-clamp-2 text-base">
                     {log.content_md}
                   </p>
                 </Link>
-                <div className="flex items-center space-x-2 ml-4">
+                <div className="flex items-center space-x-3 shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(log)}
+                    className="hover:bg-primary-50 hover:border-primary-300"
                   >
                     Edit
                   </Button>

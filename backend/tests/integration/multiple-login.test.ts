@@ -6,6 +6,15 @@ import { app, clearTestData } from '../helpers/app.js';
  * 
  * Issue: When the same X account tries to login multiple times,
  * authentication fails from the second time onwards.
+ * 
+ * Root cause: UserService.updateUser was trying to update a non-existent 
+ * 'updated_at' column in the users table. When an existing user tried to 
+ * login again, the system would find the user and attempt to update their 
+ * profile, but this would fail due to the missing column, causing the 
+ * entire authentication flow to fail with 401.
+ * 
+ * Fix: Removed the non-existent 'updated_at' column update from UserService.updateUser,
+ * allowing the profile update to succeed and enabling multiple logins from the same user.
  */
 describe('Multiple Login Issue', () => {
   beforeEach(async () => {

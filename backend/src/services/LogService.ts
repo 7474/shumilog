@@ -35,12 +35,23 @@ export class LogService {
       now
     ]);
 
-    // Associate tags with log
+    // Extract hashtags from content and merge with explicit tag names
+    const contentHashtags = this.extractHashtagsFromContent(data.content_md);
+    const allTagNames = new Set<string>();
+    
+    // Add explicitly provided tag names
     if (data.tag_names && data.tag_names.length > 0) {
-      // Use tag names, create tags if they don't exist
-      await this.associateTagsByNamesWithLog(logId, data.tag_names, userId);
+      data.tag_names.forEach(name => allTagNames.add(name));
+    }
+    
+    // Add hashtags extracted from content
+    contentHashtags.forEach(name => allTagNames.add(name));
+    
+    // Associate all tags with log
+    if (allTagNames.size > 0) {
+      await this.associateTagsByNamesWithLog(logId, Array.from(allTagNames), userId);
     } else if (data.tag_ids && data.tag_ids.length > 0) {
-      // Use existing tag IDs
+      // Use existing tag IDs if no tag names were provided
       await this.associateTagsWithLog(logId, data.tag_ids);
     }
 
@@ -95,24 +106,41 @@ export class LogService {
       await stmt.run(params);
     }
     
-    // Update tag associations if provided
-    if (data.tag_names !== undefined) {
+    // Update tag associations if provided or if content was updated
+    let shouldUpdateTags = data.tag_names !== undefined || data.tag_ids !== undefined;
+    let extractedHashtags: string[] = [];
+    
+    // Extract hashtags from updated content
+    if (data.content_md !== undefined) {
+      extractedHashtags = this.extractHashtagsFromContent(data.content_md);
+      shouldUpdateTags = true;
+    }
+    
+    if (shouldUpdateTags) {
       // Remove all existing associations
       const deleteStmt = this.db.prepare('DELETE FROM log_tag_associations WHERE log_id = ?');
       await deleteStmt.run([logId]);
       
-      // Add new associations using tag names
-      if (data.tag_names.length > 0) {
-        await this.associateTagsByNamesWithLog(logId, data.tag_names, userId);
-      }
-    } else if (data.tag_ids !== undefined) {
-      // Remove all existing associations
-      const deleteStmt = this.db.prepare('DELETE FROM log_tag_associations WHERE log_id = ?');
-      await deleteStmt.run([logId]);
-      
-      // Add new associations using tag IDs
-      if (data.tag_ids.length > 0) {
-        await this.associateTagsWithLog(logId, data.tag_ids);
+      if (data.tag_names !== undefined) {
+        // Merge explicit tag names with extracted hashtags
+        const allTagNames = new Set<string>();
+        data.tag_names.forEach(name => allTagNames.add(name));
+        extractedHashtags.forEach(name => allTagNames.add(name));
+        
+        if (allTagNames.size > 0) {
+          await this.associateTagsByNamesWithLog(logId, Array.from(allTagNames), userId);
+        }
+      } else if (data.tag_ids !== undefined) {
+        // Use existing tag IDs plus extracted hashtags
+        if (data.tag_ids.length > 0) {
+          await this.associateTagsWithLog(logId, data.tag_ids);
+        }
+        if (extractedHashtags.length > 0) {
+          await this.associateTagsByNamesWithLog(logId, extractedHashtags, userId);
+        }
+      } else if (extractedHashtags.length > 0) {
+        // Only extracted hashtags (no explicit tags provided)
+        await this.associateTagsByNamesWithLog(logId, extractedHashtags, userId);
       }
     }
     
@@ -457,6 +485,37 @@ export class LogService {
     
     // Remove # from hashtags
     return hashtags.map(tag => tag.substring(1));
+  }
+
+  /**
+   * Extract hashtag patterns from content (#{tagName} and #tagName formats)
+   * This uses the same logic as TagService for consistency
+   */
+  private extractHashtagsFromContent(content: string): string[] {
+    const matches: string[] = [];
+    
+    // Pattern 1: #{tagName} - extended format (for tags with whitespace)
+    const extendedPattern = /#\{([^}]+)\}/g;
+    let match;
+    
+    while ((match = extendedPattern.exec(content)) !== null) {
+      const tagName = match[1].trim();
+      if (tagName && !matches.includes(tagName)) {
+        matches.push(tagName);
+      }
+    }
+    
+    // Pattern 2: #tagName - simple format (no whitespace)
+    const simplePattern = /#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_-]+)/g;
+    
+    while ((match = simplePattern.exec(content)) !== null) {
+      const tagName = match[1].trim();
+      if (tagName && !matches.includes(tagName)) {
+        matches.push(tagName);
+      }
+    }
+    
+    return matches;
   }
 
   /**

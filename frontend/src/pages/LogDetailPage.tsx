@@ -36,40 +36,80 @@ export function LogDetailPage() {
   }, [id]);
 
   if (loading) {
-    return <div className="container mx-auto p-4">Loading...</div>;
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="container mx-auto p-4">Error: {error}</div>;
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-red-600">⚠️</span>
+          </div>
+          <p className="text-red-600 font-semibold">Error: {error}</p>
+        </div>
+      </div>
+    );
   }
 
   if (!log) {
-    return <div className="container mx-auto p-4">Log not found.</div>;
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-gray-600">📝</span>
+          </div>
+          <p className="text-gray-600 font-semibold">Log not found.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8">
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-4xl">
       <div className="mb-8">
         <Link to="/logs">
-          <Button variant="outline" className="flex items-center space-x-2">
+          <Button variant="outline" className="flex items-center space-x-2 hover:bg-primary-50 hover:border-primary-300">
             <ArrowLeft size={16} />
             <span>Back to Logs</span>
           </Button>
         </Link>
       </div>
 
-      <Card className="shadow-md">
-        <CardHeader className="border-b">
-          <CardTitle className="text-3xl font-bold text-gray-800">
-            Log from {new Date(log.created_at).toLocaleDateString()}
+      <Card className="shadow-soft border-primary-100">
+        <CardHeader className="border-b border-primary-100 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-t-xl">
+          <CardTitle className="text-4xl font-bold text-primary-800 mb-2">
+            {log.title}
           </CardTitle>
-          <p className="text-sm text-gray-500">
-            Last updated: {new Date(log.updated_at).toLocaleString()}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 space-y-2 sm:space-y-0">
+            <p>
+              Created: {new Date(log.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </p>
+            <p>
+              Last updated: {new Date(log.updated_at).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          </div>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="prose prose-lg max-w-none">
-            <p>{log.content_md}</p>
+        <CardContent className="p-8">
+          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+            <div className="whitespace-pre-wrap">{log.content_md}</div>
           </div>
         </CardContent>
       </Card>

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Form,
   FormControl,
@@ -54,15 +55,15 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel className="text-primary-700 font-semibold">Title</FormLabel>
               <FormControl>
-                <Input placeholder="Log title" {...field} />
+                <Input placeholder="Enter a descriptive title for your log..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -73,15 +74,21 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
           name="content_md"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Content</FormLabel>
+              <FormLabel className="text-primary-700 font-semibold">Content</FormLabel>
               <FormControl>
-                <Input placeholder="Log content" {...field} />
+                <Textarea 
+                  placeholder="Share your hobby experience in detail..." 
+                  className="min-h-[160px]"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">{log ? 'Update' : 'Create'}</Button>
+        <Button type="submit" className="w-full md:w-auto">
+          {log ? 'Update Log' : 'Create Log'}
+        </Button>
       </form>
     </Form>
   );

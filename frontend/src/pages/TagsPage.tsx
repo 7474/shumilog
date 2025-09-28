@@ -76,27 +76,32 @@ export function TagsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800">Tags</h1>
-        <Button onClick={handleAddNew} size="lg">
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-6xl">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 space-y-4 md:space-y-0">
+        <div>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary-700 to-secondary-600 bg-clip-text text-transparent mb-2">
+            Tags
+          </h1>
+          <p className="text-gray-600 text-lg">Organize your hobbies with custom tags</p>
+        </div>
+        <Button onClick={handleAddNew} size="lg" className="shrink-0">
           Create Tag
         </Button>
       </div>
 
       {showForm && (
-        <Card className="mb-8 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-2xl">
+        <Card className="mb-8 shadow-soft border-primary-100">
+          <CardHeader className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-t-xl">
+            <CardTitle className="text-2xl text-primary-800">
               {selectedTag ? 'Edit Tag' : 'Create New Tag'}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8">
             <TagForm tag={selectedTag} onSuccess={handleSuccess} />
             <Button
               variant="ghost"
               onClick={() => setShowForm(false)}
-              className="mt-4 text-gray-600"
+              className="mt-6 text-gray-600 hover:bg-gray-50"
             >
               Cancel
             </Button>
@@ -105,23 +110,31 @@ export function TagsPage() {
       )}
 
       {tags.length === 0 && !showForm ? (
-        <div className="text-center text-gray-500 py-16">
-          <p className="text-xl">No tags found.</p>
-          <p>Add one to get started!</p>
+        <div className="text-center text-gray-500 py-20">
+          <div className="mb-6">
+            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-secondary-100 to-accent-100 rounded-full flex items-center justify-center mb-6">
+              <span className="text-4xl">🏷️</span>
+            </div>
+          </div>
+          <p className="text-2xl font-semibold mb-2 text-gray-700">No tags found</p>
+          <p className="text-lg">Add your first tag to get started!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {tags.map((tag) => (
-            <Card key={tag.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4 flex justify-between items-center">
-                <span className="font-semibold text-lg text-gray-800">
-                  {tag.name}
-                </span>
-                <div className="flex items-center space-x-2">
+            <Card key={tag.id} className="hover:shadow-lg transition-all duration-300 group hover:scale-[1.02]">
+              <CardContent className="p-6 flex flex-col justify-between min-h-[120px]">
+                <div className="mb-4">
+                  <span className="font-semibold text-xl text-gray-800 group-hover:text-primary-600 transition-colors duration-200">
+                    {tag.name}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2 justify-end">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(tag)}
+                    className="hover:bg-primary-50 hover:border-primary-300"
                   >
                     Edit
                   </Button>

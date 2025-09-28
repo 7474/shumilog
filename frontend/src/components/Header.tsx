@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/services/api';
 
 export function Header() {
-  const { clearAuth } = useAuth();
+  const { isAuthenticated, clearAuth } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -12,7 +12,7 @@ export function Header() {
       const res = await api.auth.logout.$post();
       if (res.ok) {
         clearAuth();
-        navigate('/login');
+        navigate('/');
       } else {
         console.error('Logout failed');
       }
@@ -57,15 +57,29 @@ export function Header() {
               <span className="sm:hidden">🏷️</span>
             </Button>
           </Link>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-            className="border-primary-200 text-primary-700 hover:bg-primary-50 hover:border-primary-300 transition-all duration-200 min-w-[44px] h-[44px] px-3 sm:px-4 ml-2"
-          >
-            <span className="hidden sm:inline">Logout</span>
-            <span className="sm:hidden">🚪</span>
-          </Button>
+          
+          {isAuthenticated ? (
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="border-primary-200 text-primary-700 hover:bg-primary-50 hover:border-primary-300 transition-all duration-200 min-w-[44px] h-[44px] px-3 sm:px-4 ml-2"
+            >
+              <span className="hidden sm:inline">Logout</span>
+              <span className="sm:hidden">🚪</span>
+            </Button>
+          ) : (
+            <Link to="/login">
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-primary-600 hover:bg-primary-700 text-white transition-all duration-200 min-w-[44px] h-[44px] px-3 sm:px-4 ml-2 shadow-gentle hover:shadow-medium"
+              >
+                <span className="hidden sm:inline">Login</span>
+                <span className="sm:hidden">🔑</span>
+              </Button>
+            </Link>
+          )}
         </nav>
       </div>
     </header>

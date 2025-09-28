@@ -12,25 +12,20 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       {
-        element: <ProtectedRoute />,
-        children: [
-          {
-            index: true,
-            element: <LogsPage />,
-          },
-          {
-            path: 'logs',
-            element: <LogsPage />,
-          },
-          {
-            path: 'logs/:id',
-            element: <LogDetailPage />,
-          },
-          {
-            path: 'tags',
-            element: <TagsPage />,
-          },
-        ],
+        index: true,
+        element: <LogsPage />,
+      },
+      {
+        path: 'logs',
+        element: <LogsPage />,
+      },
+      {
+        path: 'logs/:id',
+        element: <LogDetailPage />,
+      },
+      {
+        path: 'tags',
+        element: <TagsPage />,
       },
       {
         path: 'login',

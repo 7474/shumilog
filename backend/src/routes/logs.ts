@@ -21,10 +21,9 @@ const sanitizeTagIds = (value: unknown): string[] => {
 
   return value
     .map((id) => {
-      if (typeof id !== 'string') {
-        throw new HTTPException(400, { message: 'tag_ids must contain only strings' });
-      }
-      const trimmed = id.trim();
+      // Accept both strings and numbers, convert to string
+      const stringId = typeof id === 'string' ? id : String(id);
+      const trimmed = stringId.trim();
       if (!trimmed) {
         throw new HTTPException(400, { message: 'tag_ids cannot contain empty values' });
       }
@@ -232,12 +231,13 @@ logs.post('/', async (c) => {
     throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
   
-  // Validation
-  if (!body.content_md || typeof body.content_md !== 'string') {
-    throw new HTTPException(400, { message: 'content_md is required and must be a string' });
+  // Validation - support both content_md (preferred) and content (backward compatibility)
+  const contentMd = body.content_md || body.content;
+  if (!contentMd || typeof contentMd !== 'string') {
+    throw new HTTPException(400, { message: 'content_md (or content) is required and must be a string' });
   }
 
-  if (body.content_md.length > 10000) {
+  if (contentMd.length > 10000) {
     throw new HTTPException(400, { message: 'Content too long (maximum 10000 characters)' });
   }
 
@@ -261,7 +261,7 @@ logs.post('/', async (c) => {
 
     const newLog = await logService.createLog({
       title: body.title,
-      content_md: body.content_md,
+      content_md: contentMd,
       is_public: isPublic,
       tag_ids: tagIds,
       tag_names: tagNames
@@ -327,12 +327,13 @@ logs.put('/:logId', async (c) => {
     throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
   
-  // Validate required fields
-  if (!body.content_md || typeof body.content_md !== 'string') {
-    throw new HTTPException(400, { message: 'content_md is required and must be a string' });
+  // Validate required fields - support both content_md (preferred) and content (backward compatibility)
+  const contentMd = body.content_md || body.content;
+  if (!contentMd || typeof contentMd !== 'string') {
+    throw new HTTPException(400, { message: 'content_md (or content) is required and must be a string' });
   }
 
-  if (body.content_md.length > 10000) {
+  if (contentMd.length > 10000) {
     throw new HTTPException(400, { message: 'Content too long (maximum 10000 characters)' });
   }
 
@@ -359,7 +360,7 @@ logs.put('/:logId', async (c) => {
     // Update the log
     const updatedLog = await logService.updateLog(logId, {
       title: body.title,
-      content_md: body.content_md,
+      content_md: contentMd,
       is_public: visibility,
       tag_ids: tagIds,
       tag_names: tagNames

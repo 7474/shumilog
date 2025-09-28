@@ -19,7 +19,7 @@ describe('Integration: New User Registration and First Log', () => {
       method: 'GET',
     });
     expect(authResponse.status).toBe(302);
-    expect(authResponse.headers.get('Location')).toContain('twitter.com');
+    expect(authResponse.headers.get('Location')).toContain('x.com');
     
     // Step 3: OAuth callback simulation
     const callbackResponse = await app.request('/auth/callback?code=test_code&state=test_state', {

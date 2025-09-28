@@ -22,7 +22,7 @@ describe('TwitterService', () => {
       expect(result).toHaveProperty('authUrl');
       expect(result).toHaveProperty('state');
       
-      expect(result.authUrl).toContain('https://twitter.com/i/oauth2/authorize');
+      expect(result.authUrl).toContain('https://x.com/i/oauth2/authorize');
       expect(result.authUrl).toContain(`client_id=${mockClientId}`);
       expect(result.authUrl).toContain(`redirect_uri=${encodeURIComponent(mockRedirectUri)}`);
       expect(result.authUrl).toContain(`state=${result.state}`);

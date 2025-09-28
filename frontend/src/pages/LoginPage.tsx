@@ -37,14 +37,14 @@ export function LoginPage() {
       <div className="w-full max-w-md animate-slide-up">
         <Card className="shadow-large border-0 bg-white/95">
           <CardHeader className="text-center space-y-6 pb-8">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mb-2 shadow-medium">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-2 shadow-medium">
               <span className="text-3xl font-bold text-white">S</span>
             </div>
             <div className="space-y-2">
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
                 Welcome to Shumilog
               </CardTitle>
-              <CardDescription className="text-lg text-neutral-600 leading-relaxed">
+              <CardDescription className="text-lg text-secondary-600 leading-relaxed">
                 Your personal hobby content logger
               </CardDescription>
             </div>
@@ -53,17 +53,17 @@ export function LoginPage() {
             <div className="space-y-6">
               <Button 
                 onClick={handleLogin} 
-                className="w-full text-base py-6 shadow-gentle hover:shadow-medium"
+                className="w-full sm:w-auto text-base py-6 shadow-gentle hover:shadow-medium px-8 sm:px-12"
                 size="lg"
               >
                 <span className="mr-2">🐦</span>
                 Login with X
               </Button>
               <div className="text-center space-y-2">
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-secondary-500">
                   Connect with your X account to start logging your hobbies
                 </p>
-                <div className="flex items-center justify-center space-x-2 text-xs text-neutral-400">
+                <div className="flex items-center justify-center space-x-2 text-xs text-secondary-400">
                   <span>📝 Log experiences</span>
                   <span>•</span>
                   <span>🏷️ Organize with tags</span>

@@ -9,12 +9,12 @@ const mockUpdateTag = vi.fn();
 vi.mock('../../src/services/api', () => ({
   api: {
     tags: {
-      $post: (args: { json: { name: string } }) => {
-        return Promise.resolve(new Response(JSON.stringify(mockCreateTag(args.json.name)), { status: 200 }));
+      $post: (args: { json: any }) => {
+        return Promise.resolve(new Response(JSON.stringify(mockCreateTag(args.json)), { status: 200 }));
       },
       ':id': {
-        $put: (args: { param: { id: string }, json: { name: string } }) => {
-          return Promise.resolve(new Response(JSON.stringify(mockUpdateTag(args.param.id, args.json.name)), { status: 200 }));
+        $put: (args: { param: { id: string }, json: any }) => {
+          return Promise.resolve(new Response(JSON.stringify(mockUpdateTag(args.param.id, args.json)), { status: 200 }));
         }
       }
     }
@@ -31,14 +31,23 @@ describe('TagForm', () => {
 
   it('should render create form correctly', () => {
     render(<TagForm onSuccess={mockOnSuccess} />);
-    expect(screen.getByLabelText(/Name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Tag Name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create/i })).toBeInTheDocument();
   });
 
   it('should render edit form correctly', () => {
-    const tag: Tag = { id: '1', name: 'Test Tag' };
+    const tag: Tag = { 
+      id: '1', 
+      name: 'Test Tag', 
+      description: 'Test description',
+      created_by: 'user1',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
+    };
     render(<TagForm tag={tag} onSuccess={mockOnSuccess} />);
-    expect(screen.getByLabelText(/Name/i)).toHaveValue('Test Tag');
+    expect(screen.getByLabelText(/Tag Name/i)).toHaveValue('Test Tag');
+    expect(screen.getByLabelText(/Description/i)).toHaveValue('Test description');
     expect(screen.getByRole('button', { name: /Update/i })).toBeInTheDocument();
   });
 
@@ -46,25 +55,31 @@ describe('TagForm', () => {
     mockCreateTag.mockResolvedValue({ id: '1', name: 'New Tag' });
     render(<TagForm onSuccess={mockOnSuccess} />);
     
-    fireEvent.change(screen.getByLabelText(/Name/i), { target: { value: 'New Tag' } });
+    fireEvent.change(screen.getByLabelText(/Tag Name/i), { target: { value: 'New Tag' } });
     fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
     await waitFor(() => {
-      expect(mockCreateTag).toHaveBeenCalledWith('New Tag');
+      expect(mockCreateTag).toHaveBeenCalledWith({ name: 'New Tag' });
       expect(mockOnSuccess).toHaveBeenCalled();
     });
   });
 
   it('should call updateTag on form submission for existing tag', async () => {
-    const tag: Tag = { id: '1', name: 'Old Tag' };
+    const tag: Tag = { 
+      id: '1', 
+      name: 'Old Tag',
+      created_by: 'user1',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
+    };
     mockUpdateTag.mockResolvedValue({ id: '1', name: 'Updated Tag' });
     render(<TagForm tag={tag} onSuccess={mockOnSuccess} />);
     
-    fireEvent.change(screen.getByLabelText(/Name/i), { target: { value: 'Updated Tag' } });
+    fireEvent.change(screen.getByLabelText(/Tag Name/i), { target: { value: 'Updated Tag' } });
     fireEvent.click(screen.getByRole('button', { name: /Update/i }));
 
     await waitFor(() => {
-      expect(mockUpdateTag).toHaveBeenCalledWith('1', 'Updated Tag');
+      expect(mockUpdateTag).toHaveBeenCalledWith('1', { name: 'Updated Tag' });
       expect(mockOnSuccess).toHaveBeenCalled();
     });
   });

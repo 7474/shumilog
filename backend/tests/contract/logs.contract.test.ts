@@ -149,6 +149,57 @@ describe('Contract: Logs routes', () => {
       expect(log.tags.map((tag: any) => tag.id)).toEqual(expect.arrayContaining(['tag_anime', 'tag_manga']));
     });
 
+    it('creates a new log using tag_names and auto-creates missing tags', async () => {
+      const userId = 'user_writer_tags';
+      await createTestUser(userId, 'writer_tags');
+      await seedTestTags(); // This creates 'Anime', 'Attack on Titan', 'Manga' tags
+      const sessionToken = await createTestSession(userId);
+
+      const response = await app.request('/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({
+          title: 'Adventure with tag names',
+          content_md: '# Log\nTesting tag_names functionality',
+          is_public: true,
+          tag_names: ['Anime', 'New Auto-Created Tag', 'Another New Tag'] // Mix of existing and new tags
+        })
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.headers.get('Content-Type')).toContain('application/json');
+
+      const log = await response.json();
+      expect(log).toMatchObject({
+        title: 'Adventure with tag names',
+        content_md: '# Log\nTesting tag_names functionality',
+        is_public: true,
+        author: {
+          id: userId,
+          twitter_username: 'writer_tags'
+        }
+      });
+      expect(typeof log.id).toBe('string');
+      expect(typeof log.created_at).toBe('string');
+      expect(Array.isArray(log.tags)).toBe(true);
+      expect(log.tags).toHaveLength(3);
+      
+      // Check that we have the existing 'Anime' tag and the two new auto-created tags
+      const tagNames = log.tags.map((tag: any) => tag.name).sort();
+      expect(tagNames).toEqual(['Anime', 'Another New Tag', 'New Auto-Created Tag']);
+      
+      // Check that new tags have empty description and metadata
+      const newTags = log.tags.filter((tag: any) => tag.name !== 'Anime');
+      newTags.forEach((tag: any) => {
+        expect(tag.description).toBe('');
+        expect(tag.metadata).toEqual({});
+        expect(tag.created_by).toBe(userId);
+      });
+    });
+
     it('returns 400 when payload is invalid', async () => {
       const userId = 'user_writer';
       await createTestUser(userId, 'writer');

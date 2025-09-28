@@ -36,7 +36,11 @@ export class LogService {
     ]);
 
     // Associate tags with log
-    if (data.tag_ids && data.tag_ids.length > 0) {
+    if (data.tag_names && data.tag_names.length > 0) {
+      // Use tag names, create tags if they don't exist
+      await this.associateTagsByNamesWithLog(logId, data.tag_names, userId);
+    } else if (data.tag_ids && data.tag_ids.length > 0) {
+      // Use existing tag IDs
       await this.associateTagsWithLog(logId, data.tag_ids);
     }
 
@@ -92,12 +96,21 @@ export class LogService {
     }
     
     // Update tag associations if provided
-    if (data.tag_ids !== undefined) {
+    if (data.tag_names !== undefined) {
       // Remove all existing associations
       const deleteStmt = this.db.prepare('DELETE FROM log_tag_associations WHERE log_id = ?');
       await deleteStmt.run([logId]);
       
-      // Add new associations
+      // Add new associations using tag names
+      if (data.tag_names.length > 0) {
+        await this.associateTagsByNamesWithLog(logId, data.tag_names, userId);
+      }
+    } else if (data.tag_ids !== undefined) {
+      // Remove all existing associations
+      const deleteStmt = this.db.prepare('DELETE FROM log_tag_associations WHERE log_id = ?');
+      await deleteStmt.run([logId]);
+      
+      // Add new associations using tag IDs
       if (data.tag_ids.length > 0) {
         await this.associateTagsWithLog(logId, data.tag_ids);
       }
@@ -272,6 +285,52 @@ export class LogService {
    */
   async getLogsByTag(tagId: string, limit = 20, offset = 0): Promise<LogSearchResult> {
     return this.searchLogs({ tag_ids: [tagId], limit, offset });
+  }
+
+  /**
+   * Associate tags with log using tag names, creating tags if they don't exist
+   */
+  async associateTagsByNamesWithLog(logId: string, tagNames: string[], userId: string): Promise<void> {
+    if (tagNames.length === 0) return;
+    
+    const tagIds: string[] = [];
+    
+    for (const tagName of tagNames) {
+      // Try to find existing tag by name
+      const existingTag = await this.db.queryFirst(
+        'SELECT id FROM tags WHERE name = ?',
+        [tagName]
+      );
+      
+      if (existingTag) {
+        // Tag exists, use its ID
+        tagIds.push(existingTag.id);
+      } else {
+        // Tag doesn't exist, create it
+        const now = new Date().toISOString();
+        const tagId = `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const createTagStmt = this.db.prepare(`
+          INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        await createTagStmt.run([
+          tagId,
+          tagName,
+          '', // empty description as specified
+          '{}', // empty metadata as specified
+          userId,
+          now,
+          now
+        ]);
+        
+        tagIds.push(tagId);
+      }
+    }
+    
+    // Now associate all tag IDs with the log
+    await this.associateTagsWithLog(logId, tagIds);
   }
 
   /**

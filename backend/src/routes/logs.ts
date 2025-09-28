@@ -33,6 +33,28 @@ const sanitizeTagIds = (value: unknown): string[] => {
     .filter((id, index, self) => self.indexOf(id) === index);
 };
 
+const sanitizeTagNames = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    throw new HTTPException(400, { message: 'tag_names must be an array of strings' });
+  }
+
+  return value
+    .map((name) => {
+      if (typeof name !== 'string') {
+        throw new HTTPException(400, { message: 'tag_names must contain only strings' });
+      }
+      const trimmed = name.trim();
+      if (!trimmed) {
+        throw new HTTPException(400, { message: 'tag_names cannot contain empty values' });
+      }
+      if (trimmed.length > 200) {
+        throw new HTTPException(400, { message: 'tag_names cannot be longer than 200 characters' });
+      }
+      return trimmed;
+    })
+    .filter((name, index, self) => self.indexOf(name) === index);
+};
+
 const optionalTagIds = (value: unknown): string[] | undefined => {
   if (value === undefined) {
     return undefined;
@@ -54,6 +76,32 @@ const optionalTagIds = (value: unknown): string[] | undefined => {
       return trimmed;
     })
     .filter((id, index, self) => self.indexOf(id) === index);
+};
+
+const optionalTagNames = (value: unknown): string[] | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new HTTPException(400, { message: 'tag_names must be an array when provided' });
+  }
+
+  return value
+    .map((name) => {
+      if (typeof name !== 'string') {
+        throw new HTTPException(400, { message: 'tag_names must contain only strings' });
+      }
+      const trimmed = name.trim();
+      if (!trimmed) {
+        throw new HTTPException(400, { message: 'tag_names cannot contain empty values' });
+      }
+      if (trimmed.length > 200) {
+        throw new HTTPException(400, { message: 'tag_names cannot be longer than 200 characters' });
+      }
+      return trimmed;
+    })
+    .filter((name, index, self) => self.indexOf(name) === index);
 };
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
@@ -197,7 +245,17 @@ logs.post('/', async (c) => {
     throw new HTTPException(400, { message: 'Title must be a string with maximum 200 characters' });
   }
 
-  const tagIds = sanitizeTagIds(body.tag_ids);
+  // Handle tag_names (priority) or tag_ids
+  let tagIds: string[] | undefined;
+  let tagNames: string[] | undefined;
+  
+  if (body.tag_names) {
+    tagNames = sanitizeTagNames(body.tag_names);
+  } else if (body.tag_ids) {
+    tagIds = sanitizeTagIds(body.tag_ids);
+  } else {
+    throw new HTTPException(400, { message: 'Either tag_names or tag_ids must be provided' });
+  }
 
   try {
     const isPublic = parsePrivacyInput(body.is_public ?? body.privacy, false) as boolean;
@@ -206,7 +264,8 @@ logs.post('/', async (c) => {
       title: body.title,
       content_md: body.content_md,
       is_public: isPublic,
-      tag_ids: tagIds
+      tag_ids: tagIds,
+      tag_names: tagNames
     }, user.id);
 
     return c.json(toLogResponse(newLog), 201);
@@ -283,6 +342,7 @@ logs.put('/:logId', async (c) => {
   }
 
   const tagIds = optionalTagIds(body.tag_ids);
+  const tagNames = optionalTagNames(body.tag_names);
   const visibility = parsePrivacyInput(body.is_public ?? body.privacy, true);
   
   try {
@@ -302,7 +362,8 @@ logs.put('/:logId', async (c) => {
       title: body.title,
       content_md: body.content_md,
       is_public: visibility,
-      tag_ids: tagIds
+      tag_ids: tagIds,
+      tag_names: tagNames
     }, user.id);
 
     return c.json(toLogResponse(updatedLog));

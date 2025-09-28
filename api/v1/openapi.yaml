@@ -341,6 +341,10 @@ paths:
 
     post:
       summary: Create new log
+      description: |
+        Create a new log entry. Hashtags in the content (#{tagName} or #tagName format) 
+        will be automatically extracted and associated with the log as tags.
+        Supports both explicit tag specification and automatic hashtag extraction.
       security:
         - sessionAuth: []
       requestBody:
@@ -382,6 +386,9 @@ paths:
 
     put:
       summary: Update log
+      description: |
+        Update an existing log entry. When content_md is updated, hashtags in the content 
+        (#{tagName} or #tagName format) will be automatically extracted and associated with the log as tags.
       security:
         - sessionAuth: []
       parameters:
@@ -589,21 +596,27 @@ components:
     LogCreate:
       type: object
       required:
-        - tag_ids
         - content_md
       properties:
         tag_ids:
           type: array
           items:
             type: string
-          description: IDs of tags to associate with this log
-          minItems: 1
+          description: IDs of existing tags to associate with this log
+        tag_names:
+          type: array
+          items:
+            type: string
+          description: Names of tags to associate with this log (will create new tags if they don't exist)
         title:
           type: string
           maxLength: 200
         content_md:
           type: string
           maxLength: 10000
+          description: |
+            Markdown content of the log. Hashtags in the format #{tagName} or #tagName 
+            will be automatically extracted and associated with the log as tags.
         is_public:
           type: boolean
           default: false
@@ -615,13 +628,21 @@ components:
           type: array
           items:
             type: string
-          description: Update the tags associated with this log
+          description: Update the tags associated with this log using existing tag IDs
+        tag_names:
+          type: array
+          items:
+            type: string
+          description: Update the tags associated with this log using tag names (will create new tags if they don't exist)
         title:
           type: string
           maxLength: 200
         content_md:
           type: string
           maxLength: 10000
+          description: |
+            Markdown content of the log. Hashtags in the format #{tagName} or #tagName 
+            will be automatically extracted and associated with the log as tags when content is updated.
         is_public:
           type: boolean
 

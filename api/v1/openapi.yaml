@@ -124,6 +124,11 @@ paths:
 
     post:
       summary: Create new tag
+      description: |
+        Create a new tag with automatic hashtag processing.
+        
+        **Hashtag Processing**: If the description contains hashtag patterns in the format `#{tagName}`, 
+        the system will automatically create associations with existing tags or create new tags if they don't exist.
       security:
         - sessionAuth: []
       requestBody:
@@ -165,6 +170,11 @@ paths:
 
     put:
       summary: Update tag
+      description: |
+        Update an existing tag with automatic hashtag processing.
+        
+        **Hashtag Processing**: If the description contains hashtag patterns in the format `#{tagName}`, 
+        the system will automatically create associations with existing tags or create new tags if they don't exist.
       security:
         - sessionAuth: []
       parameters:
@@ -503,6 +513,12 @@ components:
           maxLength: 200
         description:
           type: string
+          description: |
+            Optional description for the tag. Supports hashtag patterns in the format #{tagName}.
+            When hashtag patterns are found, the system will automatically:
+            1. Look for existing tags with matching names
+            2. Create new tags if they don't exist (with empty description and metadata)
+            3. Create associations between this tag and the referenced tags
         metadata:
           type: object
 
@@ -514,6 +530,12 @@ components:
           maxLength: 200
         description:
           type: string
+          description: |
+            Optional description for the tag. Supports hashtag patterns in the format #{tagName}.
+            When hashtag patterns are found, the system will automatically:
+            1. Look for existing tags with matching names
+            2. Create new tags if they don't exist (with empty description and metadata)
+            3. Create associations between this tag and the referenced tags
         metadata:
           type: object
 

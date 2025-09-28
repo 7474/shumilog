@@ -60,7 +60,7 @@ export class TagService {
       now
     ]);
 
-    return {
+    const tag = {
       id: tagId,
       name: data.name,
       description: data.description,
@@ -69,6 +69,13 @@ export class TagService {
       created_at: now,
       updated_at: now
     };
+
+    // Process hashtag associations in description
+    if (data.description) {
+      await this.processTagAssociations(tagId, data.description, createdBy);
+    }
+
+    return tag;
   }
 
   /**
@@ -119,6 +126,11 @@ export class TagService {
     const updatedTag = await this.getTagById(tagId);
     if (!updatedTag) {
       throw new Error('Tag not found after update');
+    }
+    
+    // Process hashtag associations if description was updated
+    if (data.description !== undefined) {
+      await this.processTagAssociations(tagId, data.description || '', updatedTag.created_by);
     }
     
     return updatedTag;
@@ -332,5 +344,89 @@ export class TagService {
     );
 
     await stmt.run([tagId, associatedTagId]);
+  }
+
+  /**
+   * Extract hashtag patterns from content (#{tagName} and #tagName formats)
+   */
+  private extractHashtagsFromContent(content: string): string[] {
+    const matches: string[] = [];
+    
+    // Pattern 1: #{tagName} - extended format (for tags with whitespace)
+    const extendedPattern = /#\{([^}]+)\}/g;
+    let match;
+    
+    while ((match = extendedPattern.exec(content)) !== null) {
+      const tagName = match[1].trim();
+      if (tagName && !matches.includes(tagName)) {
+        matches.push(tagName);
+      }
+    }
+    
+    // Pattern 2: #tagName - simple format (no whitespace)
+    const simplePattern = /#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_-]+)/g;
+    
+    while ((match = simplePattern.exec(content)) !== null) {
+      const tagName = match[1].trim();
+      if (tagName && !matches.includes(tagName)) {
+        matches.push(tagName);
+      }
+    }
+    
+    return matches;
+  }
+
+  /**
+   * Process hashtag patterns in tag description and create associations
+   */
+  async processTagAssociations(tagId: string, description: string, userId: string): Promise<void> {
+    if (!description) return;
+    
+    const hashtagNames = this.extractHashtagsFromContent(description);
+    if (hashtagNames.length === 0) return;
+
+    for (const tagName of hashtagNames) {
+      // Try to find existing tag by name
+      const existingTag = await this.db.queryFirst(
+        'SELECT id FROM tags WHERE name = ?',
+        [tagName]
+      );
+
+      let associatedTagId: string;
+
+      if (existingTag) {
+        // Tag exists, use its ID
+        associatedTagId = existingTag.id;
+      } else {
+        // Tag doesn't exist, create it with empty description and metadata
+        const now = new Date().toISOString();
+        associatedTagId = `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const createTagStmt = this.db.prepare(`
+          INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        await createTagStmt.run([
+          associatedTagId,
+          tagName,
+          '', // empty description as specified
+          '{}', // empty metadata as specified
+          userId,
+          now,
+          now
+        ]);
+      }
+
+      // Create association if it doesn't already exist and avoid self-association
+      if (associatedTagId !== tagId) {
+        try {
+          await this.createTagAssociation(tagId, associatedTagId);
+        } catch (error) {
+          // Ignore errors from duplicate associations or other minor issues
+          console.warn('Failed to create tag association:', { tagId, associatedTagId, error });
+        }
+      }
+    }
   }
 }

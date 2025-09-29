@@ -3,12 +3,10 @@ import { Header } from '@/components/Header';
 
 export function AppLayout() {
   return (
-    <div>
+    <div className="app-container">
       <Header />
-      <main>
-        <div>
-          <Outlet />
-        </div>
+      <main className="container-mobile py-6 space-y-8">
+        <Outlet />
       </main>
     </div>
   );

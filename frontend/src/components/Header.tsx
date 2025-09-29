@@ -22,37 +22,54 @@ export function Header() {
   };
 
   return (
-    <header>
-      <div>
-        <Link to="/">
-          <div>
-            <span>S</span>
-          </div>
-          <div>
-            <h1>Shumilog</h1>
-            <p>Your hobby logger</p>
-          </div>
-        </Link>
-        
-        <nav>
-          {isAuthenticated ? (
-            <div>
-              <Link to="/logs">
-                <Button>Logs</Button>
-              </Link>
-              <Link to="/tags">
-                <Button>Tags</Button>
-              </Link>
-              <Button onClick={handleLogout}>
-                Logout
-              </Button>
+    <header className="mobile-header">
+      <div className="container-mobile py-4">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-3 text-decoration-none">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-fresh-400 to-sky-500 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">S</span>
             </div>
-          ) : (
-            <Link to="/login">
-              <Button>Login</Button>
-            </Link>
-          )}
-        </nav>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-gray-900">Shumilog</h1>
+              <p className="text-sm text-gray-600">Your hobby logger</p>
+            </div>
+          </Link>
+          
+          <nav className="flex items-center space-x-2">
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-2">
+                <Link to="/logs">
+                  <Button variant="ghost" size="sm" className="text-gray-700 hover:text-fresh-600">
+                    <span className="hidden sm:inline">Logs</span>
+                    <span className="sm:hidden">📝</span>
+                  </Button>
+                </Link>
+                <Link to="/tags">
+                  <Button variant="ghost" size="sm" className="text-gray-700 hover:text-sky-600">
+                    <span className="hidden sm:inline">Tags</span>
+                    <span className="sm:hidden">🏷️</span>
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={handleLogout}
+                  variant="outline" 
+                  size="sm"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <span className="hidden sm:inline">Logout</span>
+                  <span className="sm:hidden">🚪</span>
+                </Button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button className="btn-fresh">
+                  <span className="hidden sm:inline">Login</span>
+                  <span className="sm:hidden">🔑</span>
+                </Button>
+              </Link>
+            )}
+          </nav>
+        </div>
       </div>
     </header>
   );

@@ -70,18 +70,7 @@ export function LogsPage() {
     setSelectedLog(undefined);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <div className="text-6xl">🔒</div>
-        <h2 className="text-2xl font-bold text-gray-900">ログインが必要です</h2>
-        <p className="text-gray-600">ログを閲覧するにはログインしてください。</p>
-        <Link to="/login">
-          <Button className="btn-fresh">ログイン</Button>
-        </Link>
-      </div>
-    );
-  }
+  // 未ログインでも閲覧は可能、編集操作のみログインが必要
 
   if (loading) {
     return (
@@ -116,8 +105,9 @@ export function LogsPage() {
         <Button 
           onClick={() => setShowForm(!showForm)}
           className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+          disabled={!isAuthenticated}
         >
-          {showForm ? '✕ キャンセル' : '✏️ 新しいログを作成'}
+          {!isAuthenticated ? '🔒 ログインして作成' : showForm ? '✕ キャンセル' : '✏️ 新しいログを作成'}
         </Button>
       </div>
 
@@ -148,9 +138,17 @@ export function LogsPage() {
               <div className="text-6xl">📝</div>
               <h3 className="text-xl font-semibold text-gray-900">まだログがありません</h3>
               <p className="text-gray-600">最初の趣味ログを作成してみましょう！</p>
-              <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
-                ✨ 最初のログを作成
-              </Button>
+              {isAuthenticated ? (
+                <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
+                  ✨ 最初のログを作成
+                </Button>
+              ) : (
+                <Link to="/login">
+                  <Button className="btn-fresh mt-4">
+                    🔒 ログインしてログを作成
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -173,6 +171,7 @@ export function LogsPage() {
                         size="sm"
                         variant="outline"
                         className="text-fresh-600 border-fresh-200 hover:bg-fresh-50"
+                        disabled={!isAuthenticated}
                       >
                         ✏️ 編集
                       </Button>
@@ -181,6 +180,7 @@ export function LogsPage() {
                         size="sm"
                         variant="outline"
                         className="text-red-600 border-red-200 hover:bg-red-50"
+                        disabled={!isAuthenticated}
                       >
                         🗑️ 削除
                       </Button>

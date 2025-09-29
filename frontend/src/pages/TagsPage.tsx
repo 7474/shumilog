@@ -70,18 +70,7 @@ export function TagsPage() {
     setSelectedTag(undefined);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <div className="text-6xl">🔒</div>
-        <h2 className="text-2xl font-bold text-gray-900">ログインが必要です</h2>
-        <p className="text-gray-600">タグを閲覧するにはログインしてください。</p>
-        <Link to="/login">
-          <Button className="btn-fresh">ログイン</Button>
-        </Link>
-      </div>
-    );
-  }
+  // 未ログインでも閲覧は可能、編集操作のみログインが必要
 
   if (loading) {
     return (
@@ -116,8 +105,9 @@ export function TagsPage() {
         <Button 
           onClick={() => setShowForm(!showForm)}
           className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+          disabled={!isAuthenticated}
         >
-          {showForm ? '✕ キャンセル' : '✨ 新しいタグを作成'}
+          {!isAuthenticated ? '🔒 ログインして作成' : showForm ? '✕ キャンセル' : '✨ 新しいタグを作成'}
         </Button>
       </div>
 
@@ -148,9 +138,17 @@ export function TagsPage() {
               <div className="text-6xl">🏷️</div>
               <h3 className="text-xl font-semibold text-gray-900">まだタグがありません</h3>
               <p className="text-gray-600">最初のタグを作成してログを整理しましょう！</p>
-              <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
-                ✨ 最初のタグを作成
-              </Button>
+              {isAuthenticated ? (
+                <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
+                  ✨ 最初のタグを作成
+                </Button>
+              ) : (
+                <Link to="/login">
+                  <Button className="btn-fresh mt-4">
+                    🔒 ログインしてタグを作成
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -169,6 +167,7 @@ export function TagsPage() {
                         size="sm"
                         variant="outline"
                         className="text-sky-600 border-sky-200 hover:bg-sky-50"
+                        disabled={!isAuthenticated}
                       >
                         ✏️ 編集
                       </Button>
@@ -177,6 +176,7 @@ export function TagsPage() {
                         size="sm"
                         variant="outline"
                         className="text-red-600 border-red-200 hover:bg-red-50"
+                        disabled={!isAuthenticated}
                       >
                         🗑️ 削除
                       </Button>

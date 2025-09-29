@@ -69,29 +69,18 @@
 - [ ] T017 リクエスト/レスポンスログ
 - [ ] T018 CORSとセキュリティヘッダー
 
-## フェーズ3.4: フロントエンド（webプロジェクトの場合）
-- [ ] T019 [P] `frontend/src/components/ui/`でshadcn/ui基本コンポーネント
-- [ ] T020 [P] `frontend/src/components/Layout.tsx`でアプリレイアウト
-- [ ] T021 [P] `frontend/src/pages/`でページコンポーネント作成
-- [ ] T022 [P] `frontend/src/hooks/`でカスタムフック
-- [ ] T023 `frontend/src/Router.tsx`でクライアントサイドルーティング
-- [ ] T024 [P] `frontend/src/services/api.ts`でAPIクライアント
-- [ ] T025 レスポンシブデザインとTailwind CSSスタイリング調整
-
 ## フェーズ3.5: 仕上げ
-- [ ] T026 [P] tests/unit/test_validation.pyで検証のユニットテスト
-- [ ] T027 パフォーマンステスト（<200ms）
-- [ ] T028 [P] docs/api.mdの更新
-- [ ] T029 重複の削除
-- [ ] T030 manual-testing.mdの実行
+- [ ] T019 [P] tests/unit/test_validation.pyで検証のユニットテスト
+- [ ] T020 パフォーマンステスト（<200ms）
+- [ ] T021 [P] docs/api.mdの更新
+- [ ] T022 重複の削除
+- [ ] T023 manual-testing.mdの実行
 
 ## 依存関係
 - テスト（T004-T007）は実装（T008-T014）より前
-- バックエンド実装（T008-T018）はフロントエンド（T019-T025）より前
 - T008はT009、T015をブロック
 - T016はT018をブロック
-- T019-T025はT008-T018の完了後
-- 仕上げ（T026-T030）より前に実装
+- 仕上げ（T019-T023）より前に実装
 
 ## 並列実行例
 ```
@@ -100,12 +89,6 @@
 タスク: "tests/contract/test_users_get.pyでGET /api/users/{id}のコントラクトテスト"
 タスク: "tests/integration/test_registration.pyで登録の統合テスト"
 タスク: "tests/integration/test_auth.pyで認証の統合テスト"
-
-# T019-T022 (フロントエンドコンポーネント) を一緒に起動:
-タスク: "frontend/src/components/ui/でshadcn/ui基本コンポーネント"
-タスク: "frontend/src/components/Layout.tsxでアプリレイアウト"
-タスク: "frontend/src/pages/でページコンポーネント作成"
-タスク: "frontend/src/hooks/でカスタムフック"
 ```
 
 ## 注意事項

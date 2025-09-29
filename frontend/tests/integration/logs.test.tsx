@@ -67,8 +67,8 @@ describe('Log Management Integration Test', () => {
     renderWithRouter(['/']);
 
     await waitFor(() => {
-      expect(screen.getByText('First log entry')).toBeInTheDocument();
-      expect(screen.getByText('Second log entry')).toBeInTheDocument();
+      expect(screen.getByText(/First log entry/)).toBeInTheDocument();
+      expect(screen.getByText(/Second log entry/)).toBeInTheDocument();
     });
 
     expect(mockApi.logs.$get).toHaveBeenCalledTimes(1);

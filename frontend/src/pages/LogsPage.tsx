@@ -71,100 +71,129 @@ export function LogsPage() {
   };
 
   if (!isAuthenticated) {
-    return <div>Please log in to view logs.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        <div className="text-6xl">🔒</div>
+        <h2 className="text-2xl font-bold text-gray-900">ログインが必要です</h2>
+        <p className="text-gray-600">ログを閲覧するにはログインしてください。</p>
+        <Link to="/login">
+          <Button className="btn-fresh">ログイン</Button>
+        </Link>
+      </div>
+    );
   }
 
   if (loading) {
     return (
-      <div>
-        <div>Loading...</div>
+      <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fresh-500"></div>
+        <p className="text-gray-600">ログを読み込み中...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div>
-        <div>Error: {error}</div>
-        <Button onClick={fetchLogs}>Retry</Button>
+      <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 text-center">
+        <div className="text-4xl">❌</div>
+        <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
+        <p className="text-gray-600">{error}</p>
+        <Button onClick={fetchLogs} variant="outline">
+          再試行
+        </Button>
       </div>
     );
   }
 
   return (
-    <div>
-      <div>
-        <h1>Hobby Logs</h1>
-        <Button onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Create New Log'}
+    <div className="space-y-6">
+      {/* ページヘッダー */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">📝 趣味ログ</h1>
+          <p className="text-gray-600 mt-1">あなたの趣味活動を記録しましょう</p>
+        </div>
+        <Button 
+          onClick={() => setShowForm(!showForm)}
+          className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+        >
+          {showForm ? '✕ キャンセル' : '✏️ 新しいログを作成'}
         </Button>
       </div>
 
+      {/* ログ作成フォーム */}
       {showForm && (
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedLog ? 'Edit Log' : 'Create New Log'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <LogForm
-                log={selectedLog}
-                onSuccess={handleSuccess}
-                onCancel={handleCancel}
-              />
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="card-fresh">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span>{selectedLog ? '✏️' : '✨'}</span>
+              <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LogForm
+              log={selectedLog}
+              onSuccess={handleSuccess}
+              onCancel={handleCancel}
+            />
+          </CardContent>
+        </Card>
       )}
 
-      <div>
+      {/* ログリスト */}
+      <div className="space-y-4">
         {logs.length === 0 ? (
-          <Card>
-            <CardContent>
-              <div>
-                <div>
-                  <span>📝</span>
-                </div>
-                <h3>No logs yet</h3>
-                <p>Create your first hobby log to get started!</p>
-                <Button onClick={() => setShowForm(true)}>
-                  Create First Log
-                </Button>
-              </div>
+          <Card className="card-fresh text-center py-12">
+            <CardContent className="space-y-4">
+              <div className="text-6xl">📝</div>
+              <h3 className="text-xl font-semibold text-gray-900">まだログがありません</h3>
+              <p className="text-gray-600">最初の趣味ログを作成してみましょう！</p>
+              <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
+                ✨ 最初のログを作成
+              </Button>
             </CardContent>
           </Card>
         ) : (
-          <div>
+          <div className="grid-responsive">
             {logs.map((log) => (
-              <Card key={log.id}>
+              <Card key={log.id} className="card-fresh">
                 <CardHeader>
-                  <div>
-                    <CardTitle>
-                      <Link to={`/logs/${log.id}`}>
+                  <div className="flex flex-col space-y-3">
+                    <CardTitle className="line-clamp-2">
+                      <Link 
+                        to={`/logs/${log.id}`}
+                        className="text-gray-900 hover:text-fresh-600 transition-colors"
+                      >
                         {log.title}
                       </Link>
                     </CardTitle>
-                    <div>
-                      <Button onClick={() => handleEdit(log)}>
-                        Edit
+                    <div className="flex flex-wrap gap-2">
+                      <Button 
+                        onClick={() => handleEdit(log)}
+                        size="sm"
+                        variant="outline"
+                        className="text-fresh-600 border-fresh-200 hover:bg-fresh-50"
+                      >
+                        ✏️ 編集
                       </Button>
-                      <Button onClick={() => handleDelete(log.id.toString())}>
-                        Delete
+                      <Button 
+                        onClick={() => handleDelete(log.id.toString())}
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        🗑️ 削除
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p>{log.content_md.substring(0, 150)}...</p>
-                  <div>
-                    <small>
-                      Created: {new Date(log.created_at).toLocaleDateString()}
-                    </small>
-                    <small>
-                      Updated: {new Date(log.updated_at).toLocaleDateString()}
-                    </small>
+                <CardContent className="space-y-3">
+                  <p className="text-gray-700 line-clamp-3">
+                    {log.content_md.substring(0, 150)}...
+                  </p>
+                  <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-gray-500 space-y-1 sm:space-y-0">
+                    <span>📅 作成: {new Date(log.created_at).toLocaleDateString('ja-JP')}</span>
+                    <span>🔄 更新: {new Date(log.updated_at).toLocaleDateString('ja-JP')}</span>
                   </div>
                 </CardContent>
               </Card>

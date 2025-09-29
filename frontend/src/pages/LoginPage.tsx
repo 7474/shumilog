@@ -19,11 +19,9 @@ export function LoginPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <div>
-          <div></div>
-          <p>Loading...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fresh-500"></div>
+        <p className="text-gray-600">認証情報を確認中...</p>
       </div>
     );
   }
@@ -33,38 +31,49 @@ export function LoginPage() {
   }
 
   return (
-    <div>
-      <div>
-        <Card>
-          <CardHeader>
-            <div>
-              <span>S</span>
+    <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="w-full max-w-md px-4">
+        <Card className="card-fresh">
+          <CardHeader className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-fresh-400 to-sky-500 flex items-center justify-center shadow-lg mx-auto">
+              <span className="text-white font-bold text-2xl">S</span>
             </div>
-            <div>
-              <CardTitle>
-                Welcome to Shumilog
+            <div className="space-y-2">
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Shumilogへようこそ
               </CardTitle>
-              <CardDescription>
-                Your personal hobby content logger
+              <CardDescription className="text-gray-600">
+                あなた専用の趣味ログサービス
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent>
-            <div>
-              <Button onClick={handleLogin}>
-                <span>🐦</span>
-                Login with X
+          <CardContent className="space-y-6">
+            <div className="text-center space-y-4">
+              <Button 
+                onClick={handleLogin}
+                className="btn-fresh w-full py-3 text-base font-medium"
+              >
+                <span className="mr-2">🐦</span>
+                X (Twitter) でログイン
               </Button>
-              <div>
-                <p>
-                  Connect with your X account to start logging your hobbies
+              
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  Xアカウントで簡単ログイン、趣味活動を記録しましょう
                 </p>
-                <div>
-                  <span>📝 Log experiences</span>
-                  <span>•</span>
-                  <span>🏷️ Organize with tags</span>
-                  <span>•</span>
-                  <span>📱 Mobile-friendly</span>
+                <div className="flex flex-col space-y-2 text-xs text-gray-500">
+                  <span className="flex items-center justify-center space-x-2">
+                    <span>📝</span>
+                    <span>体験を記録</span>
+                  </span>
+                  <span className="flex items-center justify-center space-x-2">
+                    <span>🏷️</span>
+                    <span>タグで整理</span>
+                  </span>
+                  <span className="flex items-center justify-center space-x-2">
+                    <span>📱</span>
+                    <span>モバイル対応</span>
+                  </span>
                 </div>
               </div>
             </div>

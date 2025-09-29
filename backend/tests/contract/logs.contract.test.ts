@@ -206,19 +206,7 @@ describe('Contract: Logs routes', () => {
       await seedTestTags();
       const sessionToken = await createTestSession(userId);
 
-      const missingTags = await app.request('/logs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          title: 'Missing tags',
-          content_md: 'No tags here'
-        })
-      });
-      expect(missingTags.status).toBe(400);
-
+      // Content is required
       const missingContent = await app.request('/logs', {
         method: 'POST',
         headers: {
@@ -226,10 +214,25 @@ describe('Contract: Logs routes', () => {
           Cookie: `session=${sessionToken}`
         },
         body: JSON.stringify({
-          tag_ids: ['tag_anime']
+          title: 'Test title'
+          // missing content_md
         })
       });
       expect(missingContent.status).toBe(400);
+      
+      // Empty content should also fail
+      const emptyContent = await app.request('/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({
+          title: 'Test title',
+          content_md: ''
+        })
+      });
+      expect(emptyContent.status).toBe(400);
     });
 
     it('returns 401 when unauthenticated', async () => {

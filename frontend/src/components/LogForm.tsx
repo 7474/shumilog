@@ -25,9 +25,10 @@ type LogFormValues = z.infer<typeof formSchema>;
 interface LogFormProps {
   log?: Log;
   onSuccess: () => void;
+  onCancel?: () => void;
 }
 
-export function LogForm({ log, onSuccess }: LogFormProps) {
+export function LogForm({ log, onSuccess, onCancel }: LogFormProps) {
   const form = useForm<LogFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,13 +56,13 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-primary-700 font-semibold">Title</FormLabel>
+              <FormLabel>Title</FormLabel>
               <FormControl>
                 <Input placeholder="Enter a descriptive title for your log..." {...field} />
               </FormControl>
@@ -74,11 +75,10 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
           name="content_md"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-primary-700 font-semibold">Content</FormLabel>
+              <FormLabel>Content</FormLabel>
               <FormControl>
                 <Textarea 
                   placeholder="Share your hobby experience in detail..." 
-                  className="min-h-[160px]"
                   {...field} 
                 />
               </FormControl>
@@ -86,9 +86,16 @@ export function LogForm({ log, onSuccess }: LogFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full md:w-auto">
-          {log ? 'Update Log' : 'Create Log'}
-        </Button>
+        <div>
+          <Button type="submit">
+            {log ? 'Update Log' : 'Create Log'}
+          </Button>
+          {onCancel && (
+            <Button type="button" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );

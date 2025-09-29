@@ -59,7 +59,7 @@ describe('TagForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
     await waitFor(() => {
-      expect(mockCreateTag).toHaveBeenCalledWith({ name: 'New Tag' });
+      expect(mockCreateTag).toHaveBeenCalledWith({ name: 'New Tag', description: '' });
       expect(mockOnSuccess).toHaveBeenCalled();
     });
   });
@@ -79,7 +79,7 @@ describe('TagForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /Update/i }));
 
     await waitFor(() => {
-      expect(mockUpdateTag).toHaveBeenCalledWith('1', { name: 'Updated Tag' });
+      expect(mockUpdateTag).toHaveBeenCalledWith('1', { name: 'Updated Tag', description: '' });
       expect(mockOnSuccess).toHaveBeenCalled();
     });
   });

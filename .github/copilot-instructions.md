@@ -16,7 +16,11 @@ Auto-generated from all feature plans. Last updated: 2025-01-08
 - TypeScript 5.9+ (コンパイラ・開発言語)
 - Cloudflare Workers + Hono (バックエンドフレームワーク)
 - Cloudflare D1 (SQLiteベースデータベース)
-- Vite + React 19 (フロントエンド)
+- React 19 (フロントエンドライブラリ)
+- Vite 7+ (フロントエンドビルドツール)
+- Tailwind CSS 3.4+ (ユーティリティファーストCSSフレームワーク)
+- shadcn/ui (アクセシブルUIコンポーネントライブラリ)
+- PostCSS + Autoprefixer (CSS処理)
 - Vitest (テストフレームワーク)
 - Wrangler CLI (Cloudflare開発ツール)
 - ESLint + Prettier (コード品質)
@@ -25,9 +29,15 @@ Auto-generated from all feature plans. Last updated: 2025-01-08
 ```
 api/                    # 正規API仕様書（信頼できる情報源）
 backend/                # Cloudflare Workers バックエンド
-frontend/               # React + Vite フロントエンド
+frontend/               # React 19 + Tailwind CSS フロントエンド
 tests/                  # テストファイル
 ```
+
+## デザイン指針
+- **スマートフォンファーストのレスポンシブデザイン** - モバイル端末での利用を最優先
+- **ライトテーマ** - 清涼感のある明るいデザイン
+- **シンプルで軽量** - 最小限のUIコンポーネントで直感的な操作性
+- **アクセシビリティ** - shadcn/uiによる標準準拠のアクセシブルコンポーネント
 
 ## API開発ガイドライン
 - 正規のAPI仕様書は `/api/v1/openapi.yaml` にあり、これを最新に保つ必要があります
@@ -59,6 +69,8 @@ tests/                  # テストファイル
 - 2025-01-08: Copilotインストラクション見直し - 日本語応答・npmパッケージ管理・LTS優先の必須指針追加
 - Node.js 22 LTS + npm 10+への統一（.nvmrc: 22.20.0）
 - TypeScript 5.9+、React 19、Vite 7+への更新
+- Tailwind CSS 3.4+ + shadcn/ui導入によるレスポンシブデザイン実装
+- スマートフォンファーストのライトテーマUIコンポーネント体系構築
 
 <!-- MANUAL ADDITIONS START -->
 ## API仕様の管理

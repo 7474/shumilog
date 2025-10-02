@@ -149,6 +149,32 @@ describe('Contract: Logs routes', () => {
       expect(log.tags.map((tag: any) => tag.id)).toEqual(expect.arrayContaining(['tag_anime', 'tag_manga']));
     });
 
+    it('defaults to public when is_public is not specified', async () => {
+      const userId = 'user_default_public';
+      await createTestUser(userId, 'default_public');
+      await seedTestTags();
+      const sessionToken = await createTestSession(userId);
+
+      const response = await app.request('/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({
+          title: 'Default public log',
+          content_md: '# Log\nThis should be public by default',
+          tag_ids: ['tag_anime']
+          // Note: is_public is NOT specified
+        })
+      });
+
+      expect(response.status).toBe(201);
+      const log = await response.json();
+      expect(log.is_public).toBe(true);
+      expect(log.privacy).toBe('public');
+    });
+
     it('creates a new log using tag_names and auto-creates missing tags', async () => {
       const userId = 'user_writer_tags';
       await createTestUser(userId, 'writer_tags');

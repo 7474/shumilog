@@ -84,7 +84,48 @@ npm run dev         # 開発サーバー起動
 
 ### 更新系操作のセッション指定
 
-更新系のAPIをテストする際は、セッショントークンをCookieヘッダーで指定する必要があります:
+#### 開発時のセッション発行（手動テスト用）
+
+特定のユーザーでログインした状態を作成するには、npmコマンドでセッショントークンを発行します:
+
+```bash
+cd backend
+npm run dev:create-session alice
+
+# 出力例:
+# ==========================================
+# セッショントークン:
+# RmLPtgoNSPNt4lSZ0zUPcWag7fcvtdWY
+# ==========================================
+```
+
+利用可能なユーザー:
+- `alice` (user_alice) - アニメ好き
+- `bob` (user_bob) - ゲーマー
+- `carol` (user_carol) - 音楽愛好家
+- `dave` (user_dave) - マンガ読者
+
+発行されたトークンを使用してAPIをテストできます:
+
+```bash
+# curlでの例
+curl -X GET http://localhost:8787/api/users/me \
+  -H "Cookie: session=RmLPtgoNSPNt4lSZ0zUPcWag7fcvtdWY"
+
+curl -X POST http://localhost:8787/api/logs \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=RmLPtgoNSPNt4lSZ0zUPcWag7fcvtdWY" \
+  -d '{"title":"Test","content_md":"# Test","is_public":true}'
+```
+
+**ブラウザでの設定:**
+開発者ツールでCookieを設定:
+- 名前: `session`
+- 値: `<発行されたトークン>`
+- ドメイン: `localhost`
+- パス: `/`
+
+#### テストコード内でのセッション作成
 
 ```bash
 # テストヘルパーでセッション作成する場合（テストコード内）
@@ -103,15 +144,6 @@ const response = await app.request('/logs', {
     is_public: true
   })
 });
-```
-
-**curlでの例:**
-```bash
-# シードデータ内のユーザーでセッションを作成後
-curl -X POST http://localhost:8787/logs \
-  -H "Content-Type: application/json" \
-  -H "Cookie: session=<session_token>" \
-  -d '{"title":"Test","content_md":"# Test","is_public":true}'
 ```
 
 ## 最新の変更

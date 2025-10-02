@@ -89,6 +89,35 @@ npm run test:smoke
 - ヘルスチェック → http://localhost:8787/health
 - パブリックログAPI → http://localhost:8787/api/logs
 
+### 5. 認証が必要なAPIのテスト
+
+特定のユーザーでログインした状態でAPIをテストするには、セッショントークンを発行します:
+
+```bash
+cd backend
+npm run dev:create-session alice
+```
+
+発行されたトークンを使用してAPIをテストできます:
+
+```bash
+# curlの例
+curl -X GET http://localhost:8787/api/users/me \
+  -H "Cookie: session=<発行されたトークン>"
+
+# または、ブラウザの開発者ツールでCookieを設定
+# 名前: session
+# 値: <発行されたトークン>
+# ドメイン: localhost
+# パス: /
+```
+
+利用可能なユーザー:
+- `alice` (user_alice) - アニメ好き
+- `bob` (user_bob) - ゲーマー
+- `carol` (user_carol) - 音楽愛好家
+- `dave` (user_dave) - マンガ読者
+
 ## 有用なスクリプト
 
 | 場所 | コマンド | 目的 |
@@ -97,6 +126,7 @@ npm run test:smoke
 | `backend/` | `npm run test:contract` | VitestでAPIコントラクトスイートを実行 |
 | `backend/` | `npm run db:migrate` | 再シードなしでマイグレーションを適用 |
 | `backend/` | `npm run db:seed` | スキーマを再作成し、実用的なシードデータ（4ユーザー、8タグ、10ログ）を読み込み |
+| `backend/` | `npm run dev:create-session <user_id>` | 開発用セッショントークンを発行（例: `alice`, `user_bob`） |
 | `frontend/` | `npm run dev` | HMR + APIプロキシでVite開発サーバーを起動 |
 | `frontend/` | `npm run build` | `frontend/dist/`への本番ビルドを生成 |
 | `frontend/` | `npm run test:smoke` | 最小UIスモークテストハーネスを実行 |

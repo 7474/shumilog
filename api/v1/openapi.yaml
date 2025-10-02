@@ -303,6 +303,11 @@ paths:
     get:
       summary: List public logs
       parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search logs by title or content (case-insensitive partial match)
         - name: tag_ids
           in: query
           schema:

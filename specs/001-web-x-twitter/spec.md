@@ -56,14 +56,6 @@ An otaku (anime/manga/game enthusiast) wants to easily record their thoughts and
 - **Sub-Content**: Episodes, chapters, or other divisions of serialized content
 - **AI Assistant**: Service providing information gathering and summarization support
 
-### デザイン・UI要件
-- **UIR-001**: システムはスマートフォンファーストのレスポンシブデザインを提供しなければならない。タブレットとデスクトップでも利用可能だが、主要な最適化対象はスマートフォンである
-- **UIR-002**: インターフェースはアクセシビリティガイドライン（WCAG 2.1 AA準拠）に従い、キーボードナビゲーションとスクリーンリーダー対応を提供しなければならない
-- **UIR-003**: デザインは清涼感のあるライトテーマを採用し、明るくシンプルな視覚的印象を提供しなければならない
-- **UIR-004**: UIはオタクコミュニティのユーザーに適した直感的な操作性を提供し、コンテンツ記録を迅速に行えなければならない
-- **UIR-005**: 初回ページ読み込みは3秒以内、ユーザー操作への応答は200ms以内で完了しなければならない
-- **UIR-006**: システムは青緑系（fresh）をプライマリカラー、青系（sky）をセカンダリカラーとする一貫した色彩設計を採用しなければならない
-
 ## Review & Acceptance Checklist
 
 ### Content Quality

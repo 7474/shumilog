@@ -47,13 +47,6 @@ As a developer tasked with reviving the project, I need to run a minimal version
 - **Developer Runbook**: Represents the README-driven instructions, prerequisites, and validation steps that guide a developer from clone to verified API responses.
 - **Cloudflare D1 Dataset**: Represents the persisted storage layer backing the revived endpoints, matching the original schema and supporting contract-required CRUD flows across sessions.
 
-### デザイン・UI要件 *(UI機能がある場合に含める)*
-- **UIR-001**: システムはReact 19 + Tailwind CSSベースのスマートフォンファーストレスポンシブデザインを提供しなければならない
-- **UIR-002**: インターフェースはshadcn/uiコンポーネントを基盤としたアクセシブルなUIを採用しなければならない
-- **UIR-003**: デザインは清涼感のあるライトテーマを採用し、青緑系プライマリカラー（fresh）と青系セカンダリカラー（sky）による一貫した色彩設計を実装しなければならない
-- **UIR-004**: フロントエンドアプリケーションはVite 7+による高速開発環境とビルド最適化を提供しなければならない
-- **UIR-005**: UIコンポーネントはTypeScript 5.9+による型安全性とPostCSS + Autoprefixerによるクロスブラウザ対応を実現しなければならない
-
 ## Review & Acceptance Checklist
 
 ### Content Quality

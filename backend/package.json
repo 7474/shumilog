@@ -14,8 +14,7 @@
     "lint:fix": "eslint src tests --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "db:migrate": "NO_D1_WARNING=true wrangler d1 migrations apply shumilog-db-dev --local --env development",
-    "db:seed": "NO_D1_WARNING=true wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql",
-    "db:create-session": "tsx src/db/create-session.ts"
+    "db:seed": "NO_D1_WARNING=true wrangler d1 execute shumilog-db-dev --local --file src/db/seeds.sql"
   },
   "dependencies": {
     "hono": "^4.9.9",
@@ -33,7 +32,6 @@
     "globals": "^16.4.0",
     "miniflare": "^4.20250924.0",
     "prettier": "^3.6.2",
-    "tsx": "^4.20.6",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
     "wrangler": "^4.40.2"

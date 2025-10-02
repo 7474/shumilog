@@ -82,33 +82,6 @@ npm run dev         # 開発サーバー起動
 - **8個のタグ**: Anime, Manga, Gaming, Music, Attack on Titan, RPG, J-POP, Shonen
 - **10個のログエントリ**: 公開ログ8個、非公開ログ2個
 
-### ユーザーセッションの作成
-
-動作確認時に特定のユーザーとして操作を行う場合、以下のコマンドでセッショントークンを作成できます:
-
-```bash
-cd backend
-npm run db:create-session <user_id>
-```
-
-**利用可能なユーザー:**
-- `user_alice` - Alice アニメ好き (@alice_anime)
-- `user_bob` - Bob ゲーマー (@bob_gamer)
-- `user_carol` - Carol 音楽愛好家 (@carol_music)
-- `user_dave` - Dave マンガ読者 (@dave_manga)
-
-**使用例:**
-```bash
-# Aliceのセッションを作成
-npm run db:create-session user_alice
-
-# 出力されたセッショントークンを使用してAPIリクエスト
-curl -X POST http://localhost:8787/logs \
-  -H "Content-Type: application/json" \
-  -H "Cookie: session=<表示されたトークン>" \
-  -d '{"title":"テストログ","content_md":"# テスト","is_public":true}'
-```
-
 ### 更新系操作のセッション指定
 
 更新系のAPIをテストする際は、セッショントークンをCookieヘッダーで指定する必要があります:
@@ -134,10 +107,7 @@ const response = await app.request('/logs', {
 
 **curlでの例:**
 ```bash
-# 1. セッションを作成
-npm run db:create-session user_alice
-
-# 2. 表示されたトークンを使用
+# シードデータ内のユーザーでセッションを作成後
 curl -X POST http://localhost:8787/logs \
   -H "Content-Type: application/json" \
   -H "Cookie: session=<session_token>" \

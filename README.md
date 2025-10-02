@@ -97,6 +97,7 @@ npm run test:smoke
 | `backend/` | `npm run test:contract` | VitestでAPIコントラクトスイートを実行 |
 | `backend/` | `npm run db:migrate` | 再シードなしでマイグレーションを適用 |
 | `backend/` | `npm run db:seed` | スキーマを再作成し、実用的なシードデータ（4ユーザー、8タグ、10ログ）を読み込み |
+| `backend/` | `npm run db:create-session <user_id>` | 動作確認用のユーザーセッショントークンを作成（例: `user_alice`, `user_bob`, `user_carol`, `user_dave`） |
 | `frontend/` | `npm run dev` | HMR + APIプロキシでVite開発サーバーを起動 |
 | `frontend/` | `npm run build` | `frontend/dist/`への本番ビルドを生成 |
 | `frontend/` | `npm run test:smoke` | 最小UIスモークテストハーネスを実行 |

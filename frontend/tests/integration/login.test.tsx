@@ -41,7 +41,7 @@ describe('Login Flow Integration Test', () => {
     mockUseAuth.isAuthenticated = false;
     renderWithRouter(['/']);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Login with X/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /X \(Twitter\) でログイン/i })).toBeInTheDocument();
     });
   });
 
@@ -63,7 +63,7 @@ describe('Login Flow Integration Test', () => {
 
     // 4. Assert
     await waitFor(() => {
-      expect(screen.getByText('No logs yet')).toBeInTheDocument();
+      expect(screen.getByText('まだログがありません')).toBeInTheDocument();
     });
     expect(mockApi.logs.$get).toHaveBeenCalledTimes(1);
   });
@@ -79,7 +79,7 @@ describe('Login Flow Integration Test', () => {
     
     renderWithRouter(['/login']);
 
-    const loginButton = await screen.findByRole('button', { name: /Login with X/i });
+    const loginButton = await screen.findByRole('button', { name: /X \(Twitter\) でログイン/i });
     await user.click(loginButton);
 
     await waitFor(() => {

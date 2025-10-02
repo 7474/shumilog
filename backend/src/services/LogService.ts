@@ -195,7 +195,7 @@ export class LogService {
    * Search logs with full-text search
    */
   async searchLogs(options: LogSearchParams): Promise<LogSearchResult> {
-    const { tag_ids, user_id, is_public, limit = 20, offset = 0 } = options;
+    const { tag_ids, user_id, is_public, search, limit = 20, offset = 0 } = options;
     
     let sql = `
       SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
@@ -221,6 +221,12 @@ export class LogService {
     if (is_public !== undefined) {
       conditions.push('l.is_public = ?');
       params.push(is_public ? 1 : 0);
+    }
+
+    if (search) {
+      const searchPattern = `%${search}%`;
+      conditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
+      params.push(searchPattern, searchPattern);
     }
 
     if (conditions.length > 0) {
@@ -257,6 +263,12 @@ export class LogService {
     if (is_public !== undefined) {
       countConditions.push('l.is_public = ?');
       countParams.push(is_public ? 1 : 0);
+    }
+
+    if (search) {
+      const searchPattern = `%${search}%`;
+      countConditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
+      countParams.push(searchPattern, searchPattern);
     }
     
     if (countConditions.length > 0) {

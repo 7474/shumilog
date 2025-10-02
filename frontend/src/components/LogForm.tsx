@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,6 +30,7 @@ interface LogFormProps {
 }
 
 export function LogForm({ log, onSuccess, onCancel }: LogFormProps) {
+  const [error, setError] = useState<string | null>(null);
   const form = useForm<LogFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,6 +41,7 @@ export function LogForm({ log, onSuccess, onCancel }: LogFormProps) {
 
   const onSubmit = async (values: LogFormValues) => {
     try {
+      setError(null);
       const response = log
         ? await api.logs[':id'].$put({ param: { id: log.id }, json: values })
         : await api.logs.$post({ json: values });
@@ -48,23 +51,32 @@ export function LogForm({ log, onSuccess, onCancel }: LogFormProps) {
         throw new Error(errorData.error || 'Failed to save log');
       }
       onSuccess();
-    } catch (error) {
-      console.error(error);
-      // Optionally, you can set an error state here to display in the UI
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel className="text-gray-700 font-semibold">タイトル</FormLabel>
               <FormControl>
-                <Input placeholder="Enter a descriptive title for your log..." {...field} />
+                <Input 
+                  placeholder="ログのタイトルを入力してください..." 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fresh-500 focus:border-transparent transition-all"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -75,10 +87,12 @@ export function LogForm({ log, onSuccess, onCancel }: LogFormProps) {
           name="content_md"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Content</FormLabel>
+              <FormLabel className="text-gray-700 font-semibold">内容</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Share your hobby experience in detail..." 
+                  placeholder="趣味の体験を詳しく記録しましょう..."
+                  rows={8}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fresh-500 focus:border-transparent transition-all resize-y"
                   {...field} 
                 />
               </FormControl>
@@ -86,13 +100,21 @@ export function LogForm({ log, onSuccess, onCancel }: LogFormProps) {
             </FormItem>
           )}
         />
-        <div>
-          <Button type="submit">
-            {log ? 'Update Log' : 'Create Log'}
+        <div className="flex gap-3 pt-2">
+          <Button 
+            type="submit"
+            className="btn-fresh"
+          >
+            {log ? '✏️ ログを更新' : '✨ ログを作成'}
           </Button>
           {onCancel && (
-            <Button type="button" onClick={onCancel}>
-              Cancel
+            <Button 
+              type="button" 
+              onClick={onCancel}
+              variant="outline"
+              className="border-gray-300 hover:bg-gray-50"
+            >
+              ✕ キャンセル
             </Button>
           )}
         </div>

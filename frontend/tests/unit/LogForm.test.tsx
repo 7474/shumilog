@@ -67,9 +67,9 @@ describe('LogForm', () => {
         <LogForm onSuccess={mockOnSuccess} />
       </MemoryRouter>
     );
-    expect(screen.getByPlaceholderText('Enter a descriptive title for your log...')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Share your hobby experience in detail...')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Create Log/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('ログのタイトルを入力してください...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('趣味の体験を詳しく記録しましょう...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ログを作成/i })).toBeInTheDocument();
   });
 
   it('should render edit form correctly with initial values', () => {
@@ -81,7 +81,7 @@ describe('LogForm', () => {
     );
     expect(screen.getByDisplayValue('Existing Log')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Log content')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Update Log/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ログを更新/i })).toBeInTheDocument();
   });
 
   it('should call api.logs.$post on form submission for new log', async () => {
@@ -91,9 +91,9 @@ describe('LogForm', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText('Enter a descriptive title for your log...'), { target: { value: 'New Log Title' } });
-    fireEvent.change(screen.getByPlaceholderText('Share your hobby experience in detail...'), { target: { value: 'New content.' } });
-    fireEvent.click(screen.getByRole('button', { name: /Create Log/i }));
+    fireEvent.change(screen.getByPlaceholderText('ログのタイトルを入力してください...'), { target: { value: 'New Log Title' } });
+    fireEvent.change(screen.getByPlaceholderText('趣味の体験を詳しく記録しましょう...'), { target: { value: 'New content.' } });
+    fireEvent.click(screen.getByRole('button', { name: /ログを作成/i }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith({
@@ -114,8 +114,8 @@ describe('LogForm', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText('Enter a descriptive title for your log...'), { target: { value: 'Updated Log Title' } });
-    fireEvent.click(screen.getByRole('button', { name: /Update Log/i }));
+    fireEvent.change(screen.getByPlaceholderText('ログのタイトルを入力してください...'), { target: { value: 'Updated Log Title' } });
+    fireEvent.click(screen.getByRole('button', { name: /ログを更新/i }));
 
     await waitFor(() => {
       expect(mockPut).toHaveBeenCalledWith({

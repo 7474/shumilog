@@ -50,6 +50,11 @@ npm run db:migrate
 npm run db:seed
 ```
 
+シードデータには以下が含まれます:
+- **4人のユーザー**: Alice (アニメ好き), Bob (ゲーマー), Carol (音楽愛好家), Dave (マンガ読者)
+- **8個のタグ**: Anime, Manga, Gaming, Music, Attack on Titan, RPG, J-POP, Shonen
+- **10個のログエントリ**: 公開ログ8個、非公開ログ2個（各種趣味のコンテンツ）
+
 ### 3. ローカル環境でのスタック実行
 
 - **ターミナル A – Worker API**
@@ -91,7 +96,7 @@ npm run test:smoke
 | `backend/` | `npm run dev:worker` | ローカルD1永続化を使用してWranglerでWorkerを実行 |
 | `backend/` | `npm run test:contract` | VitestでAPIコントラクトスイートを実行 |
 | `backend/` | `npm run db:migrate` | 再シードなしでマイグレーションを適用 |
-| `backend/` | `npm run db:seed` | スキーマを再作成し、決定論的フィクスチャを読み込み |
+| `backend/` | `npm run db:seed` | スキーマを再作成し、実用的なシードデータ（4ユーザー、8タグ、10ログ）を読み込み |
 | `frontend/` | `npm run dev` | HMR + APIプロキシでVite開発サーバーを起動 |
 | `frontend/` | `npm run build` | `frontend/dist/`への本番ビルドを生成 |
 | `frontend/` | `npm run test:smoke` | 最小UIスモークテストハーネスを実行 |

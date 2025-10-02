@@ -65,6 +65,55 @@ tests/                  # テストファイル
 - Prettierによる自動フォーマット
 - 日本語コメント推奨
 
+## 開発時の動作確認手順（必須）
+
+### シードデータの投入
+**重要**: 開発中に画面や動作を確認する際は、**必ず**シードデータを投入してから確認すること。
+
+```bash
+cd backend
+npm run db:migrate  # 初回またはスキーマ変更時
+npm run db:seed     # シードデータを投入（毎回実行可能）
+npm run dev         # 開発サーバー起動
+```
+
+シードデータには以下が含まれます:
+- **4人のユーザー**: Alice, Bob, Carol, Dave（各種趣味を持つキャラクター）
+- **8個のタグ**: Anime, Manga, Gaming, Music, Attack on Titan, RPG, J-POP, Shonen
+- **10個のログエントリ**: 公開ログ8個、非公開ログ2個
+
+### 更新系操作のセッション指定
+
+更新系のAPIをテストする際は、セッショントークンをCookieヘッダーで指定する必要があります:
+
+```bash
+# テストヘルパーでセッション作成する場合（テストコード内）
+const sessionToken = await createTestSession('user_alice');
+
+# APIリクエスト時にセッションを指定
+const response = await app.request('/logs', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Cookie: `session=${sessionToken}`  // セッションをCookieで指定
+  },
+  body: JSON.stringify({
+    title: 'New Log',
+    content_md: '# Content',
+    is_public: true
+  })
+});
+```
+
+**curlでの例:**
+```bash
+# シードデータ内のユーザーでセッションを作成後
+curl -X POST http://localhost:8787/logs \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=<session_token>" \
+  -d '{"title":"Test","content_md":"# Test","is_public":true}'
+```
+
 ## 最新の変更
 - 2025-01-08: Copilotインストラクション見直し - 日本語応答・npmパッケージ管理・LTS優先の必須指針追加
 - Node.js 22 LTS + npm 10+への統一（.nvmrc: 22.20.0）

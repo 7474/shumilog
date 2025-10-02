@@ -2,6 +2,13 @@
 
 This directory contains the canonical API specifications for the shumilog project.
 
+## 技術コンテキスト
+
+- **バックエンド**: Cloudflare Workers + Hono で実装
+- **データベース**: Cloudflare D1 (SQLite)
+- **フロントエンド**: React 19 + Tailwind CSS
+- **契約テスト**: Vitest でAPIスキーマ準拠を検証
+
 ## Structure
 
 - `v1/` - Version 1 API specifications

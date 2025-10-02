@@ -1,6 +1,26 @@
 # Shumilog - 趣味コンテンツログサービス
 
-趣味コンテンツのログ記録のための最小構成のCloudflare Workerバックエンドと軽量なViteベースのフロントエンドです。
+趣味コンテンツのログ記録のための最小構成のCloudflare Workerバックエンドと、Tailwind CSS + React 19ベースのレスポンシブフロントエンドです。
+
+## 技術スタック
+
+### バックエンド
+- **Cloudflare Workers + Hono** - サーバーレスAPI
+- **Cloudflare D1** - SQLiteベースマネージドデータベース
+- **TypeScript 5.9+** - 型安全な開発
+
+### フロントエンド
+- **React 19** - UIライブラリ
+- **Vite 7+** - 高速ビルドツール
+- **Tailwind CSS 3.4+** - ユーティリティファーストCSSフレームワーク
+- **shadcn/ui** - アクセシブルなUIコンポーネントライブラリ
+- **PostCSS + Autoprefixer** - CSS処理
+- **スマートフォンファーストのレスポンシブデザイン**
+
+### 開発・テスト
+- **Vitest** - 高速テストフレームワーク
+- **ESLint + Prettier** - コード品質とフォーマット
+- **TypeScript** - 型チェック
 
 ## 必要な環境
 
@@ -120,10 +140,15 @@ shumilog/
 │   │   ├── models/          # データモデル
 │   │   └── db/              # マイグレーション + シードヘルパー
 │   └── tests/               # コントラクト、統合、ユニットテストスイート
-├── frontend/                # 手動検証用の最小Viteサーフェス
-│   ├── src/App.tsx          # Reactログリスト + 共有UI
-│   ├── src/main.tsx         # ViteにワイヤードされたReactエントリーポイント
-│   └── src/services/        # Workerバックエンド用APIクライアントヘルパー
+├── frontend/                # React + Tailwind CSSフロントエンド
+│   ├── src/
+│   │   ├── components/      # shadcn/ui + カスタムUIコンポーネント
+│   │   ├── pages/           # ページコンポーネント
+│   │   ├── services/        # API クライアント
+│   │   ├── hooks/           # カスタムReactフック
+│   │   └── lib/             # ユーティリティと設定
+│   ├── tailwind.config.cjs  # Tailwind CSS設定
+│   └── components.json      # shadcn/ui設定
 ├── specs/                   # 製品計画、リサーチ、タスク管理
 ├── tests/                   # リポジトリレベルの統合スモークテスト
 └── README.md                # このファイル

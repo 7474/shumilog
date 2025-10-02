@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { LogService } from '../../src/services/LogService.js';
 import { Database } from '../../src/db/database.js';
 import { clearTestData, getTestD1Database, createTestUser, seedTestTags } from '../helpers/app.js';
-import { CreateLogData } from '../../src/models/Log.js';
 
 describe('Log Search Functionality', () => {
   let logService: LogService;

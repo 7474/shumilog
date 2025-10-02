@@ -12,7 +12,10 @@
  *   npm run db:create-session user_bob
  */
 
-import { getLocalDatabase } from './local-db.js';
+import { Miniflare } from 'miniflare';
+import { Database } from './database.js';
+import { SessionService } from '../services/SessionService.js';
+import { UserService } from '../services/UserService.js';
 
 const SEED_USERS = [
   { id: 'user_alice', name: 'Alice アニメ好き', username: '@alice_anime' },
@@ -21,31 +24,42 @@ const SEED_USERS = [
   { id: 'user_dave', name: 'Dave マンガ読者', username: '@dave_manga' },
 ];
 
+/**
+ * ローカルD1データベースに接続
+ */
+async function getLocalD1Database() {
+  // Wranglerのローカルストレージパスを使用
+  const mf = new Miniflare({
+    modules: true,
+    script: `export default { async fetch() { return new Response('session creation script', { status: 404 }); } };`,
+    d1Databases: {
+      DB: 'local-shumilog-db-dev',
+    },
+    d1Persist: '.wrangler/state/v3/d1',
+  });
+
+  return await mf.getD1Database('DB');
+}
+
+/**
+ * セッションを作成
+ */
 async function createSession(userId: string): Promise<string> {
-  const db = await getLocalDatabase();
+  // D1データベースに接続
+  const d1Database = await getLocalD1Database();
+  const database = new Database({ d1Database });
   
-  // ユーザーが存在するか確認
-  const user = await db.prepare('SELECT id, display_name FROM users WHERE id = ?')
-    .bind(userId)
-    .first();
+  // サービス層を使用してユーザーを確認
+  const userService = new UserService(database);
+  const user = await userService.findById(userId);
   
   if (!user) {
     throw new Error(`ユーザー "${userId}" が見つかりません。先に npm run db:seed を実行してください。`);
   }
   
-  // セッショントークンを生成（UUIDv4形式）
-  const token = crypto.randomUUID();
-  
-  // 有効期限を30日後に設定
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  
-  // セッションを作成
-  await db.prepare(
-    'INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)'
-  )
-    .bind(token, userId, now.toISOString(), expiresAt.toISOString())
-    .run();
+  // サービス層を使用してセッションを作成
+  const sessionService = new SessionService(database);
+  const token = await sessionService.issueSession(userId);
   
   return token;
 }

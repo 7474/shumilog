@@ -3,6 +3,7 @@ import { api } from '@/services/api';
 import { Tag } from '@/models';
 import { TagForm } from '@/components/TagForm';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -18,12 +19,14 @@ export function TagsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedTag, setSelectedTag] = useState<Tag | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated } = useAuth();
 
-  const fetchTags = async () => {
+  const fetchTags = async (search?: string) => {
     try {
       setLoading(true);
-      const response = await api.tags.$get();
+      const queryParams = search ? { query: { search } } : undefined;
+      const response = await api.tags.$get(queryParams);
       if (!response.ok) {
         throw new Error('Failed to fetch tags');
       }
@@ -39,6 +42,15 @@ export function TagsPage() {
   useEffect(() => {
     fetchTags();
   }, []);
+
+  // 検索クエリが変更されたときにタグを再取得（デバウンス処理付き）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchTags(searchQuery || undefined);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleSuccess = () => {
     setShowForm(false);
@@ -111,6 +123,37 @@ export function TagsPage() {
         </Button>
       </div>
 
+      {/* 検索ボックス */}
+      <Card className="card-fresh">
+        <CardContent className="pt-6">
+          <div className="flex items-center space-x-2">
+            <span className="text-2xl">🔍</span>
+            <Input
+              type="text"
+              placeholder="タグを検索（名前または説明）..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1"
+            />
+            {searchQuery && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="text-gray-600"
+              >
+                ✕ クリア
+              </Button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-gray-600 mt-2">
+              「{searchQuery}」で検索中...
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* タグ作成フォーム */}
       {showForm && (
         <Card className="card-fresh">
@@ -136,18 +179,27 @@ export function TagsPage() {
           <Card className="card-fresh text-center py-12">
             <CardContent className="space-y-4">
               <div className="text-6xl">🏷️</div>
-              <h3 className="text-xl font-semibold text-gray-900">まだタグがありません</h3>
-              <p className="text-gray-600">最初のタグを作成してログを整理しましょう！</p>
-              {isAuthenticated ? (
-                <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
-                  ✨ 最初のタグを作成
-                </Button>
-              ) : (
-                <Link to="/login">
-                  <Button className="btn-fresh mt-4">
-                    🔒 ログインしてタグを作成
+              <h3 className="text-xl font-semibold text-gray-900">
+                {searchQuery ? 'タグが見つかりません' : 'まだタグがありません'}
+              </h3>
+              <p className="text-gray-600">
+                {searchQuery 
+                  ? '検索条件に一致するタグがありません。別のキーワードで試してください。'
+                  : '最初のタグを作成してログを整理しましょう！'
+                }
+              </p>
+              {!searchQuery && (
+                isAuthenticated ? (
+                  <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
+                    ✨ 最初のタグを作成
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/login">
+                    <Button className="btn-fresh mt-4">
+                      🔒 ログインしてタグを作成
+                    </Button>
+                  </Link>
+                )
               )}
             </CardContent>
           </Card>

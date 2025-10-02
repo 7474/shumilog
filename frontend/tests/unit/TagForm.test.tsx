@@ -31,9 +31,9 @@ describe('TagForm', () => {
 
   it('should render create form correctly', () => {
     render(<TagForm onSuccess={mockOnSuccess} />);
-    expect(screen.getByLabelText(/Tag Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Create/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/タグ名/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/説明/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /タグを作成/i })).toBeInTheDocument();
   });
 
   it('should render edit form correctly', () => {
@@ -46,17 +46,17 @@ describe('TagForm', () => {
       updated_at: '2024-01-01T00:00:00Z'
     };
     render(<TagForm tag={tag} onSuccess={mockOnSuccess} />);
-    expect(screen.getByLabelText(/Tag Name/i)).toHaveValue('Test Tag');
-    expect(screen.getByLabelText(/Description/i)).toHaveValue('Test description');
-    expect(screen.getByRole('button', { name: /Update/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/タグ名/i)).toHaveValue('Test Tag');
+    expect(screen.getByLabelText(/説明/i)).toHaveValue('Test description');
+    expect(screen.getByRole('button', { name: /タグを更新/i })).toBeInTheDocument();
   });
 
   it('should call createTag on form submission for new tag', async () => {
     mockCreateTag.mockResolvedValue({ id: '1', name: 'New Tag' });
     render(<TagForm onSuccess={mockOnSuccess} />);
     
-    fireEvent.change(screen.getByLabelText(/Tag Name/i), { target: { value: 'New Tag' } });
-    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
+    fireEvent.change(screen.getByLabelText(/タグ名/i), { target: { value: 'New Tag' } });
+    fireEvent.click(screen.getByRole('button', { name: /タグを作成/i }));
 
     await waitFor(() => {
       expect(mockCreateTag).toHaveBeenCalledWith({ name: 'New Tag', description: '' });
@@ -75,8 +75,8 @@ describe('TagForm', () => {
     mockUpdateTag.mockResolvedValue({ id: '1', name: 'Updated Tag' });
     render(<TagForm tag={tag} onSuccess={mockOnSuccess} />);
     
-    fireEvent.change(screen.getByLabelText(/Tag Name/i), { target: { value: 'Updated Tag' } });
-    fireEvent.click(screen.getByRole('button', { name: /Update/i }));
+    fireEvent.change(screen.getByLabelText(/タグ名/i), { target: { value: 'Updated Tag' } });
+    fireEvent.click(screen.getByRole('button', { name: /タグを更新/i }));
 
     await waitFor(() => {
       expect(mockUpdateTag).toHaveBeenCalledWith('1', { name: 'Updated Tag', description: '' });
@@ -86,7 +86,7 @@ describe('TagForm', () => {
 
   it('should show validation error for empty name', async () => {
     render(<TagForm onSuccess={mockOnSuccess} />);
-    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
+    fireEvent.click(screen.getByRole('button', { name: /タグを作成/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Tag name is required/i)).toBeInTheDocument();

@@ -52,22 +52,27 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {error && (
-          <div>
-            <p>{error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+            <span className="text-red-500 text-xl">⚠️</span>
+            <p className="text-red-700 text-sm flex-1">{error}</p>
           </div>
         )}
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tag Name</FormLabel>
+            <FormItem className="space-y-2">
+              <FormLabel className="text-sm font-semibold text-gray-700">🏷️ タグ名</FormLabel>
               <FormControl>
-                <Input placeholder="Enter tag name..." {...field} />
+                <Input 
+                  placeholder="タグ名を入力してください..." 
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-colors bg-white shadow-sm"
+                  {...field} 
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-sm text-red-600" />
             </FormItem>
           )}
         />
@@ -75,25 +80,34 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           control={form.control}
           name="description"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description (optional)</FormLabel>
+            <FormItem className="space-y-2">
+              <FormLabel className="text-sm font-semibold text-gray-700">📝 説明（任意）</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Describe what this tag represents..." 
+                  placeholder="このタグが表すものを説明してください..." 
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-colors bg-white shadow-sm min-h-[100px] resize-y"
                   {...field} 
                 />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-sm text-red-600" />
             </FormItem>
           )}
         />
-        <div>
-          <Button type="submit">
-            {tag ? 'Update Tag' : 'Create Tag'}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button 
+            type="submit" 
+            className="btn-fresh flex-1 sm:flex-none px-6 py-2.5"
+          >
+            {tag ? '✏️ タグを更新' : '✨ タグを作成'}
           </Button>
           {onCancel && (
-            <Button type="button" onClick={onCancel}>
-              Cancel
+            <Button 
+              type="button" 
+              onClick={onCancel}
+              variant="outline"
+              className="flex-1 sm:flex-none px-6 py-2.5 border-gray-300 hover:bg-gray-50"
+            >
+              ✕ キャンセル
             </Button>
           )}
         </div>

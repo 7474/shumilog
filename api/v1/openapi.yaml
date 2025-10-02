@@ -619,7 +619,8 @@ components:
             will be automatically extracted and associated with the log as tags.
         is_public:
           type: boolean
-          default: false
+          default: true
+          description: Whether the log is publicly visible. Defaults to true (public) when not specified.
 
     LogUpdate:
       type: object

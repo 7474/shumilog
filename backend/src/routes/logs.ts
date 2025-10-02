@@ -257,7 +257,11 @@ logs.post('/', async (c) => {
   // Note: We no longer require explicit tags since hashtags can be auto-extracted from content
 
   try {
-    const isPublic = parsePrivacyInput(body.is_public ?? body.privacy, false) as boolean;
+    // Default to public when is_public/privacy is not specified
+    const privacyValue = body.is_public ?? body.privacy;
+    const isPublic = privacyValue !== undefined 
+      ? parsePrivacyInput(privacyValue, false) as boolean
+      : true;
 
     const newLog = await logService.createLog({
       title: body.title,

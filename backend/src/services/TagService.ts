@@ -557,7 +557,8 @@ export class TagService {
       
       const response = await fetch(apiUrl, {
         headers: {
-          'User-Agent': 'ShumilogApp/1.0',
+          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
+          'Api-User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
           'Accept': 'application/json'
         }
       });
@@ -654,7 +655,8 @@ export class TagService {
       
       const response = await fetch(apiUrl, {
         headers: {
-          'User-Agent': 'ShumilogApp/1.0',
+          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
+          'Api-User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
           'Accept': 'application/json'
         }
       });

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
+import { TagForm } from '@/components/TagForm';
 import { useAuth } from '@/hooks/useAuth';
 
 interface TagDetail extends Tag {
@@ -24,6 +25,7 @@ export function TagDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -51,6 +53,31 @@ export function TagDetailPage() {
 
     fetchTag();
   }, [id]);
+
+  const fetchTag = async () => {
+    if (!id) return;
+    
+    try {
+      const response = await api.tags[':id'].$get({ param: { id } });
+      if (!response.ok) {
+        throw new Error('Failed to fetch tag');
+      }
+      const data = await response.json();
+      setTag(data as TagDetail);
+    } catch (err) {
+      console.error('Failed to fetch tag:', err);
+      setError('Failed to load tag');
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditForm(false);
+    fetchTag();
+  };
+
+  const handleEditCancel = () => {
+    setShowEditForm(false);
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -137,15 +164,14 @@ export function TagDetailPage() {
             >
               {showLogForm ? '✕ キャンセル' : '✨ このタグでログを作成'}
             </Button>
-            <Link to={`/tags`}>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-sky-600 border-sky-200 hover:bg-sky-50"
-              >
-                ✏️ 編集
-              </Button>
-            </Link>
+            <Button
+              onClick={() => setShowEditForm(!showEditForm)}
+              size="sm"
+              variant="outline"
+              className={showEditForm ? "bg-gray-500 hover:bg-gray-600 text-white border-gray-500" : "text-sky-600 border-sky-200 hover:bg-sky-50"}
+            >
+              {showEditForm ? '✕ キャンセル' : '✏️ 編集'}
+            </Button>
             <Button
               onClick={handleDelete}
               size="sm"
@@ -172,6 +198,25 @@ export function TagDetailPage() {
               initialContent={formatTagHashtag(tag.name)}
               onSuccess={handleLogSuccess}
               onCancel={() => setShowLogForm(false)}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* タグ編集フォーム */}
+      {showEditForm && (
+        <Card className="card-fresh">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span>✏️</span>
+              <span>タグを編集</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TagForm
+              tag={tag}
+              onSuccess={handleEditSuccess}
+              onCancel={handleEditCancel}
             />
           </CardContent>
         </Card>

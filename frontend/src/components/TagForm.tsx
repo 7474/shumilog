@@ -174,7 +174,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
                     </>
                   ) : (
                     <>
-                      🤖 AI編集サポート
+                      🤖 Wikipedia×AI
                     </>
                   )}
                 </Button>

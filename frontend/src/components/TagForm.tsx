@@ -68,7 +68,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
       const response = await api.support.tags.$post({
         json: {
           tag_name: tagName,
-          support_type: 'wikipedia_summary'
+          support_type: 'ai_enhanced'
         }
       });
 
@@ -174,7 +174,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
                     </>
                   ) : (
                     <>
-                      💡 Wikipedia要約
+                      🤖 AI編集サポート
                     </>
                   )}
                 </Button>

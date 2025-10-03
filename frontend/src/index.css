@@ -88,4 +88,8 @@
   .card-fresh {
     @apply glass-card hover:shadow-xl transition-all duration-300 hover:scale-[1.02] rounded-xl p-6;
   }
+  
+  .hashtag-link {
+    @apply text-sky-600 hover:text-sky-700 font-medium underline decoration-sky-300 hover:decoration-sky-500 transition-colors;
+  }
 }

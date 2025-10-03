@@ -187,7 +187,7 @@ export function TagDetailPage() {
           {tag.description ? (
             <div className="border-t border-gray-100 pt-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">📝 説明</h3>
-              <MarkdownRenderer content={tag.description} />
+              <MarkdownRenderer content={tag.description} tags={tag.associations} />
             </div>
           ) : (
             <div className="border-t border-gray-100 pt-6">

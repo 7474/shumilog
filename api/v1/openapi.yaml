@@ -442,6 +442,42 @@ paths:
         '404':
           description: Log not found
 
+  /logs/{logId}/related:
+    get:
+      summary: Get related logs
+      description: |
+        Get logs that are related to the specified log.
+        Relation is determined by shared tags - logs with more common tags are ranked higher.
+        Only public logs are returned, excluding the specified log itself.
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 20
+      responses:
+        '200':
+          description: List of related logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Log'
+                  total:
+                    type: integer
+        '404':
+          description: Log not found
+
   /logs/{logId}/share:
     post:
       summary: Share log to Twitter

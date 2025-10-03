@@ -320,6 +320,48 @@ logs.get('/:logId', async (c) => {
   }
 });
 
+// GET /logs/{logId}/related - Get related logs
+logs.get('/:logId/related', async (c) => {
+  const logId = c.req.param('logId');
+  const logService = getLogService(c);
+  const limit = parsePositiveInt(c.req.query('limit'), 10);
+
+  // Validate log ID format
+  if (!logId || logId.trim().length === 0) {
+    throw new HTTPException(400, { message: 'Invalid log ID format' });
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(logId)) {
+    throw new HTTPException(400, { message: 'Invalid log ID format' });
+  }
+
+  // Validate limit
+  if (limit <= 0 || limit > 20) {
+    throw new HTTPException(400, { message: 'Invalid limit parameter. Must be between 1 and 20.' });
+  }
+
+  try {
+    // Check if the log exists
+    const log = await logService.getLogById(logId);
+    if (!log) {
+      throw new HTTPException(404, { message: 'Log not found' });
+    }
+
+    // Get related logs
+    const relatedLogs = await logService.getRelatedLogs(logId, limit);
+
+    return c.json({
+      items: relatedLogs.map(toLogResponse),
+      total: relatedLogs.length
+    });
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Error fetching related logs:', error);
+    throw new HTTPException(500, { message: 'Internal server error' });
+  }
+});
+
 // PUT /logs/{logId} - Update log
 logs.put('/:logId', async (c) => {
   const logId = c.req.param('logId');

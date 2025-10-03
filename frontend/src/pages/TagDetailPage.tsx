@@ -6,6 +6,7 @@ import { Tag } from '@/models';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { LogForm } from '@/components/LogForm';
 import { useAuth } from '@/hooks/useAuth';
 
 interface TagDetail extends Tag {
@@ -19,6 +20,7 @@ export function TagDetailPage() {
   const [tag, setTag] = useState<TagDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showLogForm, setShowLogForm] = useState(false);
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -61,6 +63,16 @@ export function TagDetailPage() {
         alert(err instanceof Error ? err.message : 'タグの削除に失敗しました');
       }
     }
+  };
+
+  const handleLogSuccess = () => {
+    setShowLogForm(false);
+    navigate('/logs');
+  };
+
+  const formatTagHashtag = (tagName: string): string => {
+    // タグ名に空白が含まれる場合は #{tagName} 形式、そうでなければ #tagName 形式
+    return tagName.includes(' ') ? `#{${tagName}}` : `#${tagName}`;
   };
 
   if (loading) {
@@ -115,6 +127,13 @@ export function TagDetailPage() {
         </div>
         {isAuthenticated && (
           <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setShowLogForm(!showLogForm)}
+              size="sm"
+              className={showLogForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+            >
+              {showLogForm ? '✕ キャンセル' : '✨ このタグでログを作成'}
+            </Button>
             <Link to={`/tags`}>
               <Button
                 size="sm"
@@ -135,6 +154,25 @@ export function TagDetailPage() {
           </div>
         )}
       </div>
+
+      {/* ログ作成フォーム */}
+      {showLogForm && (
+        <Card className="card-fresh">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span>✨</span>
+              <span>{tag.name} のログを作成</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LogForm
+              initialContent={formatTagHashtag(tag.name)}
+              onSuccess={handleLogSuccess}
+              onCancel={() => setShowLogForm(false)}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* タグ詳細カード */}
       <Card className="card-fresh">

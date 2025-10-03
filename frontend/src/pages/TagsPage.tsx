@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
 import { Tag } from '@/models';
 import { TagForm } from '@/components/TagForm';
+import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
@@ -20,7 +21,10 @@ export function TagsPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedTag, setSelectedTag] = useState<Tag | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showLogForm, setShowLogForm] = useState(false);
+  const [logFormTag, setLogFormTag] = useState<Tag | null>(null);
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const fetchTags = async (search?: string) => {
     try {
@@ -61,6 +65,24 @@ export function TagsPage() {
   const handleCancel = () => {
     setShowForm(false);
     setSelectedTag(undefined);
+  };
+
+  const handleCreateLogWithTag = (tag: Tag, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent link navigation
+    e.stopPropagation();
+    setLogFormTag(tag);
+    setShowLogForm(true);
+  };
+
+  const handleLogSuccess = () => {
+    setShowLogForm(false);
+    setLogFormTag(null);
+    navigate('/logs');
+  };
+
+  const formatTagHashtag = (tagName: string): string => {
+    // タグ名に空白が含まれる場合は #{tagName} 形式、そうでなければ #tagName 形式
+    return tagName.includes(' ') ? `#{${tagName}}` : `#${tagName}`;
   };
 
   // 未ログインでも閲覧は可能、編集操作のみログインが必要
@@ -154,6 +176,28 @@ export function TagsPage() {
         </Card>
       )}
 
+      {/* ログ作成フォーム */}
+      {showLogForm && logFormTag && (
+        <Card className="card-fresh">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span>✨</span>
+              <span>{logFormTag.name} のログを作成</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LogForm
+              initialContent={formatTagHashtag(logFormTag.name)}
+              onSuccess={handleLogSuccess}
+              onCancel={() => {
+                setShowLogForm(false);
+                setLogFormTag(null);
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* タグリスト */}
       <div className="space-y-4">
         {tags.length === 0 ? (
@@ -187,21 +231,35 @@ export function TagsPage() {
         ) : (
           <div className="grid-responsive">
             {tags.map((tag) => (
-              <Link key={tag.id} to={`/tags/${tag.id}`}>
-                <Card className="card-fresh hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2">
-                      <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
-                      <span>{tag.name}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-gray-700 line-clamp-2">
-                      {tag.description || '説明なし'}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <div key={tag.id} className="relative group">
+                <Link to={`/tags/${tag.id}`}>
+                  <Card className="card-fresh hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                        <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
+                        <span>{tag.name}</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-gray-700 line-clamp-2">
+                        {tag.description || '説明なし'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+                {isAuthenticated && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      size="sm"
+                      onClick={(e) => handleCreateLogWithTag(tag, e)}
+                      className="btn-fresh shadow-md"
+                      title={`${tag.name}でログを作成`}
+                    >
+                      ✨
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}

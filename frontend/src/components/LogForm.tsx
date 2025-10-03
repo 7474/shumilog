@@ -25,17 +25,18 @@ type LogFormValues = z.infer<typeof formSchema>;
 
 interface LogFormProps {
   log?: Log;
+  initialContent?: string;
   onSuccess: () => void;
   onCancel?: () => void;
 }
 
-export function LogForm({ log, onSuccess, onCancel }: LogFormProps) {
+export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormProps) {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<LogFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: log?.title ?? '',
-      content_md: log?.content_md ?? '',
+      content_md: log?.content_md ?? initialContent ?? '',
     },
   });
 

@@ -16,7 +16,8 @@ const resolveTagService = (c: any): TagService => {
 // POST /support/tags - Get content support for tag editing (requires auth)
 // This endpoint doesn't require an existing tag ID, so it can be used when creating new tags
 support.post('/tags', async (c) => {
-  const user = getAuthUser(c);
+  // Authentication is required (enforced by middleware)
+  getAuthUser(c);
   const tagService = resolveTagService(c);
 
   const body = await c.req.json();

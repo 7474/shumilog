@@ -504,4 +504,109 @@ export class TagService {
       }
     }
   }
+
+  /**
+   * Get support content for tag editing based on tag name
+   * This doesn't require an existing tag ID, so it can be used when creating new tags
+   * Currently supports: wikipedia_summary
+   */
+  async getTagSupportByName(tagName: string, supportType: string): Promise<{ content: string; support_type: string }> {
+    if (!tagName || typeof tagName !== 'string' || tagName.trim().length === 0) {
+      throw new Error('Tag name is required');
+    }
+
+    switch (supportType) {
+      case 'wikipedia_summary':
+        return await this.getWikipediaSummary(tagName);
+      default:
+        throw new Error(`Unsupported support type: ${supportType}`);
+    }
+  }
+
+  /**
+   * Fetch Wikipedia summary for a tag and convert to markdown with hashtags
+   */
+  private async getWikipediaSummary(tagName: string): Promise<{ content: string; support_type: string }> {
+    try {
+      // Wikipedia API endpoint - using Japanese Wikipedia
+      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tagName)}`;
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'ShumilogApp/1.0',
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Wikipedia page not found');
+        }
+        throw new Error(`Wikipedia API error: ${response.status}`);
+      }
+
+      const data = await response.json() as any;
+      
+      if (!data.extract) {
+        throw new Error('No summary available');
+      }
+
+      // Convert the summary to include hashtags for key terms
+      const content = this.convertToHashtaggedContent(data.extract as string, tagName);
+      
+      return {
+        content,
+        support_type: 'wikipedia_summary'
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch Wikipedia summary: ${error.message}`);
+      }
+      throw new Error('Failed to fetch Wikipedia summary');
+    }
+  }
+
+  /**
+   * Convert plain text to markdown with hashtags for relevant terms
+   */
+  private convertToHashtaggedContent(text: string, primaryTagName: string): string {
+    // Common terms that should be hashtagged in Japanese context
+    const hashtaggableTerms = [
+      'アニメ', 'マンガ', '漫画', 'ゲーム', '音楽', '映画', '小説', '書籍',
+      'テレビ', 'ドラマ', '舞台', 'コンサート', 'ライブ', 'イベント',
+      '声優', 'キャラクター', 'ストーリー', 'シリーズ', '作品', 'エピソード',
+      'RPG', 'アクション', 'アドベンチャー', 'シミュレーション', 'パズル',
+      'J-POP', 'ロック', 'ジャズ', 'クラシック', 'ポップ',
+      'SF', 'ファンタジー', 'ミステリー', 'ホラー', 'コメディ', 'ラブコメ',
+      'バトル', '冒険', '恋愛', '日常', '学園', 'スポーツ'
+    ];
+
+    let content = text;
+
+    // Add hashtag to mentions of the primary tag name
+    const primaryRegex = new RegExp(`(?<!#)\\b${this.escapeRegExp(primaryTagName)}\\b`, 'gi');
+    content = content.replace(primaryRegex, `#${primaryTagName}`);
+
+    // Add hashtags to other relevant terms (case-sensitive match)
+    for (const term of hashtaggableTerms) {
+      // Only hashtag if not already a hashtag
+      const regex = new RegExp(`(?<!#)${this.escapeRegExp(term)}(?!\\})`, 'g');
+      content = content.replace(regex, (match) => {
+        // Check if this term contains spaces
+        if (match.includes(' ')) {
+          return `#{${match}}`;
+        }
+        return `#${match}`;
+      });
+    }
+
+    return content;
+  }
+
+  /**
+   * Escape special regex characters
+   */
+  private escapeRegExp(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 }

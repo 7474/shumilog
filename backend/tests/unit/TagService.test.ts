@@ -378,4 +378,92 @@ describe('TagService', () => {
       await expect(tagService.deleteTag('non-existent-id')).resolves.not.toThrow();
     });
   });
+
+  describe('getRecentReferringTags', () => {
+    it('should return tags that reference the target tag', async () => {
+      // Create target tag
+      const targetTag = await tagService.createTag({ name: 'Target Tag' }, 'user-1');
+      
+      // Create referring tags with associations
+      const referringTag1 = await tagService.createTag({ 
+        name: 'Referring Tag 1',
+        description: `This references ${targetTag.name}`
+      }, 'user-1');
+      await tagService.createTagAssociation(referringTag1.id, targetTag.id);
+      
+      const referringTag2 = await tagService.createTag({ 
+        name: 'Referring Tag 2',
+        description: `Also references ${targetTag.name}`
+      }, 'user-2');
+      await tagService.createTagAssociation(referringTag2.id, targetTag.id);
+
+      const result = await tagService.getRecentReferringTags(targetTag.id);
+
+      expect(result).toBeInstanceOf(Array);
+      expect(result.length).toBe(2);
+      expect(result.some(tag => tag.id === referringTag1.id)).toBe(true);
+      expect(result.some(tag => tag.id === referringTag2.id)).toBe(true);
+    });
+
+    it('should return empty array when no tags reference the target', async () => {
+      const tag = await tagService.createTag({ name: 'Lonely Tag' }, 'user-1');
+
+      const result = await tagService.getRecentReferringTags(tag.id);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should sort results by association creation date (newest first)', async () => {
+      const targetTag = await tagService.createTag({ name: 'Popular Tag' }, 'user-1');
+      
+      // Create first reference
+      const oldTag = await tagService.createTag({ name: 'Old Ref' }, 'user-1');
+      await tagService.createTagAssociation(oldTag.id, targetTag.id);
+      
+      // Add small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      // Create second reference
+      const newTag = await tagService.createTag({ name: 'New Ref' }, 'user-2');
+      await tagService.createTagAssociation(newTag.id, targetTag.id);
+
+      const result = await tagService.getRecentReferringTags(targetTag.id);
+
+      expect(result.length).toBe(2);
+      // The newer reference should come first
+      expect(result[0].id).toBe(newTag.id);
+      expect(result[1].id).toBe(oldTag.id);
+    });
+
+    it('should respect limit parameter', async () => {
+      const targetTag = await tagService.createTag({ name: 'Target' }, 'user-1');
+      
+      // Create 5 referring tags
+      for (let i = 0; i < 5; i++) {
+        const refTag = await tagService.createTag({ name: `Ref ${i}` }, 'user-1');
+        await tagService.createTagAssociation(refTag.id, targetTag.id);
+      }
+
+      const result = await tagService.getRecentReferringTags(targetTag.id, 3);
+
+      expect(result.length).toBe(3);
+    });
+
+    it('should not include bidirectional references from getTagAssociations', async () => {
+      const tag1 = await tagService.createTag({ name: 'Tag 1' }, 'user-1');
+      const tag2 = await tagService.createTag({ name: 'Tag 2' }, 'user-1');
+      
+      // Create association: tag1 -> tag2
+      await tagService.createTagAssociation(tag1.id, tag2.id);
+
+      // getRecentReferringTags for tag2 should return tag1
+      const referringToTag2 = await tagService.getRecentReferringTags(tag2.id);
+      expect(referringToTag2.length).toBe(1);
+      expect(referringToTag2[0].id).toBe(tag1.id);
+
+      // getRecentReferringTags for tag1 should return empty (no one references tag1)
+      const referringToTag1 = await tagService.getRecentReferringTags(tag1.id);
+      expect(referringToTag1.length).toBe(0);
+    });
+  });
 });

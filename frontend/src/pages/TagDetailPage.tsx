@@ -13,6 +13,7 @@ interface TagDetail extends Tag {
   associations: Tag[];
   usage_count: number;
   recent_logs: Log[];
+  recent_referring_tags: Tag[];
 }
 
 export function TagDetailPage() {
@@ -237,6 +238,23 @@ export function TagDetailPage() {
                     <span className="inline-flex items-center space-x-1 px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm hover:bg-sky-100 transition-colors cursor-pointer">
                       <span className="w-2 h-2 rounded-full bg-sky-400"></span>
                       <span>{associatedTag.name}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 新着の被参照関連タグ */}
+          {tag.recent_referring_tags && tag.recent_referring_tags.length > 0 && (
+            <div className="border-t border-gray-100 pt-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">🔖 新着の被参照関連タグ</h3>
+              <div className="flex flex-wrap gap-2">
+                {tag.recent_referring_tags.map((referringTag) => (
+                  <Link key={referringTag.id} to={`/tags/${referringTag.id}`}>
+                    <span className="inline-flex items-center space-x-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100 transition-colors cursor-pointer">
+                      <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                      <span>{referringTag.name}</span>
                     </span>
                   </Link>
                 ))}

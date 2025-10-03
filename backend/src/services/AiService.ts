@@ -32,9 +32,16 @@ export class AiService {
    * @returns AI生成された要約と関連タグ
    */
   async generateEnhancedTagContent(input: AiEnhancedTagInput): Promise<AiEnhancedTagOutput> {
+    console.log('[AiService] generateEnhancedTagContent called with input:', {
+      tagName: input.tagName,
+      wikipediaUrl: input.wikipediaUrl,
+      wikipediaContentLength: input.wikipediaContent.length
+    });
+
     const prompt = this.buildPrompt(input);
     
     try {
+      console.log('[AiService] Sending request to AI model: @cf/meta/llama-3.2-3b-instruct');
       const response = await this.ai.run('@cf/meta/llama-3.2-3b-instruct', {
         messages: [
           {
@@ -49,10 +56,23 @@ export class AiService {
         stream: false
       });
 
+      console.log('[AiService] AI response received:', {
+        hasResponse: !!response,
+        responseType: typeof response,
+        responseKeys: response ? Object.keys(response) : []
+      });
+
       // AI応答をパース
-      return this.parseAiResponse(response, input.tagName);
+      const result = this.parseAiResponse(response, input.tagName);
+      console.log('[AiService] generateEnhancedTagContent result:', {
+        summary: result.summary,
+        relatedTagsCount: result.relatedTags.length,
+        hasSubsections: !!result.subsections,
+        subsectionsCount: result.subsections?.length || 0
+      });
+      return result;
     } catch (error) {
-      console.error('AI request failed:', error);
+      console.error('[AiService] AI request failed:', error);
       throw new Error('Failed to generate AI-enhanced content');
     }
   }
@@ -61,7 +81,7 @@ export class AiService {
    * プロンプトを構築
    */
   private buildPrompt(input: AiEnhancedTagInput): string {
-    return `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明を生成してください：
+    const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明を生成してください：
 
 Wikipedia内容：
 ${input.wikipediaContent}
@@ -78,12 +98,27 @@ ${input.wikipediaContent}
 関連タグ: #マンガ #ゲーム #声優 #キャラクター #ストーリー #劇場版
 代表作品:
 #鬼滅の刃 #進撃の巨人 #ワンピース`;
+
+    console.log('[AiService] buildPrompt called:', {
+      tagName: input.tagName,
+      promptLength: prompt.length,
+      promptPreview: prompt.substring(0, 200) + '...'
+    });
+
+    return prompt;
   }
 
   /**
    * AI応答をパースして構造化データに変換
    */
   private parseAiResponse(response: any, tagName: string): AiEnhancedTagOutput {
+    console.log('[AiService] parseAiResponse called with:', {
+      tagName,
+      responseType: typeof response,
+      hasResponse: !!response?.response,
+      hasResult: !!response?.result
+    });
+
     // Cloudflare Workers AIのレスポンス形式に対応
     let content = '';
     if (response.response) {
@@ -93,11 +128,18 @@ ${input.wikipediaContent}
     } else if (typeof response === 'string') {
       content = response;
     } else {
+      console.error('[AiService] Unexpected AI response format:', response);
       throw new Error('Unexpected AI response format');
     }
 
+    console.log('[AiService] Extracted content:', {
+      contentLength: content.length,
+      contentPreview: content.substring(0, 200)
+    });
+
     // 簡易的なパース（実際のAI出力形式に応じて調整が必要）
     const lines = content.split('\n').filter(line => line.trim());
+    console.log('[AiService] Parsing', lines.length, 'lines');
     
     let summary = '';
     const relatedTags: string[] = [];
@@ -110,9 +152,11 @@ ${input.wikipediaContent}
       
       if (trimmed.startsWith('要約:') || trimmed.startsWith('説明:')) {
         summary = trimmed.split(':', 2)[1].trim();
+        console.log('[AiService] Found summary:', summary);
       } else if (trimmed.startsWith('関連タグ:') || trimmed.includes('#')) {
         // ハッシュタグを抽出
         const tags = this.extractHashtags(trimmed);
+        console.log('[AiService] Extracted tags from line:', { line: trimmed, tags });
         relatedTags.push(...tags);
       } else if (trimmed.startsWith('サブセクション:') || trimmed.startsWith('-')) {
         if (trimmed.includes(':')) {
@@ -125,9 +169,12 @@ ${input.wikipediaContent}
             title: title.replace(/^-\s*/, '').trim(),
             tags: this.extractHashtags(tagsStr || '')
           };
+          console.log('[AiService] Started new subsection:', currentSubsection.title);
         } else if (currentSubsection && trimmed.includes('#')) {
           // 既存のサブセクションにタグを追加
-          currentSubsection.tags.push(...this.extractHashtags(trimmed));
+          const tags = this.extractHashtags(trimmed);
+          currentSubsection.tags.push(...tags);
+          console.log('[AiService] Added tags to subsection:', tags);
         }
       }
     }
@@ -139,13 +186,22 @@ ${input.wikipediaContent}
     // サマリーがない場合はデフォルト
     if (!summary) {
       summary = `${tagName}に関する情報`;
+      console.log('[AiService] Using default summary');
     }
 
-    return {
+    const result = {
       summary,
       relatedTags: [...new Set(relatedTags)], // 重複削除
       subsections: subsections.length > 0 ? subsections : undefined
     };
+
+    console.log('[AiService] parseAiResponse result:', {
+      summaryLength: result.summary.length,
+      relatedTagsCount: result.relatedTags.length,
+      subsectionsCount: result.subsections?.length || 0
+    });
+
+    return result;
   }
 
   /**
@@ -174,6 +230,13 @@ ${input.wikipediaContent}
    * AI生成部分をMarkdownコメントでラップする
    */
   formatAsMarkdown(output: AiEnhancedTagOutput, wikipediaUrl: string): string {
+    console.log('[AiService] formatAsMarkdown called with:', {
+      summary: output.summary,
+      relatedTagsCount: output.relatedTags.length,
+      subsectionsCount: output.subsections?.length || 0,
+      wikipediaUrl
+    });
+
     let markdown = '<!-- AI生成コンテンツ開始 -->\n\n';
     
     // 要約
@@ -202,6 +265,11 @@ ${input.wikipediaContent}
     // Wikipedia出典
     markdown += `出典: [Wikipedia](<${wikipediaUrl}>)`;
     
+    console.log('[AiService] formatAsMarkdown result:', {
+      markdownLength: markdown.length,
+      markdownPreview: markdown.substring(0, 200) + '...'
+    });
+
     return markdown;
   }
 

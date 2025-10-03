@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 export function LogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
@@ -24,9 +25,13 @@ export function LogsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState(''); 
 
-  const fetchLogs = async (search?: string) => {
+  const fetchLogs = async (search?: string, isInitialLoad = false) => {
     try {
-      setLoading(true);
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setSearching(true);
+      }
       const query = search ? { search } : {};
       const response = await api.logs.$get({ query });
       if (!response.ok) {
@@ -37,28 +42,32 @@ export function LogsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+      } else {
+        setSearching(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchLogs();
+    fetchLogs(undefined, true);
   }, []);
 
   const handleSuccess = () => {
     setShowForm(false);
     setSelectedLog(undefined);
-    fetchLogs(searchQuery || undefined);
+    fetchLogs(searchQuery || undefined, false);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchLogs(searchQuery || undefined);
+    fetchLogs(searchQuery || undefined, false);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    fetchLogs();
+    fetchLogs(undefined, false);
   };
 
   const handleCancel = () => {
@@ -160,7 +169,12 @@ export function LogsPage() {
 
       {/* ログリスト */}
       <div className="space-y-4">
-        {logs.length === 0 ? (
+        {searching ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fresh-500"></div>
+            <p className="text-gray-600 text-sm">検索中...</p>
+          </div>
+        ) : logs.length === 0 ? (
           <Card className="card-fresh text-center py-12">
             <CardContent className="space-y-4">
               <div className="text-6xl">📝</div>

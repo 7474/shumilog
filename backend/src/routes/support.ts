@@ -17,6 +17,12 @@ const resolveTagService = (c: any): TagService => {
 support.post('/tags', async (c) => {
   // Authentication is required (enforced by middleware in index.ts)
   const tagService = resolveTagService(c);
+  
+  // AiServiceが利用可能な場合、TagServiceに設定
+  const aiService = (c as any).get('aiService');
+  if (aiService) {
+    tagService.setAiService(aiService);
+  }
 
   const body = await c.req.json();
   if (!body || typeof body !== 'object') {
@@ -33,7 +39,7 @@ support.post('/tags', async (c) => {
     throw new HTTPException(400, { message: 'Support type is required' });
   }
 
-  const validSupportTypes = ['wikipedia_summary'];
+  const validSupportTypes = ['wikipedia_summary', 'ai_enhanced'];
   if (!validSupportTypes.includes(supportType)) {
     throw new HTTPException(400, { message: `Invalid support type. Valid types: ${validSupportTypes.join(', ')}` });
   }

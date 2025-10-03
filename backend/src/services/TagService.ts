@@ -1,5 +1,6 @@
 import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
 import { Database, PaginatedResult } from '../db/database.js';
+import { AiService } from './AiService.js';
 
 export interface TagUsageStats {
   tagId: string;
@@ -8,7 +9,17 @@ export interface TagUsageStats {
 }
 
 export class TagService {
+  private aiService?: AiService;
+
   constructor(private db: Database) {}
+
+  /**
+   * AiServiceを設定（オプション）
+   * テスト時にモックを注入するために使用
+   */
+  setAiService(aiService: AiService): void {
+    this.aiService = aiService;
+  }
 
   private generateTagId(): string {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -519,7 +530,7 @@ export class TagService {
   /**
    * Get support content for tag editing based on tag name
    * This doesn't require an existing tag ID, so it can be used when creating new tags
-   * Currently supports: wikipedia_summary
+   * Currently supports: wikipedia_summary, ai_enhanced
    */
   async getTagSupportByName(tagName: string, supportType: string): Promise<{ content: string; support_type: string }> {
     if (!tagName || typeof tagName !== 'string' || tagName.trim().length === 0) {
@@ -529,6 +540,8 @@ export class TagService {
     switch (supportType) {
       case 'wikipedia_summary':
         return await this.getWikipediaSummary(tagName);
+      case 'ai_enhanced':
+        return await this.getAiEnhancedSummary(tagName);
       default:
         throw new Error(`Unsupported support type: ${supportType}`);
     }
@@ -625,5 +638,64 @@ export class TagService {
    */
   private escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
+   * AIを使用してWikipediaの内容を基に編集サポート内容を生成
+   */
+  private async getAiEnhancedSummary(tagName: string): Promise<{ content: string; support_type: string }> {
+    if (!this.aiService) {
+      throw new Error('AI service not available');
+    }
+
+    try {
+      // まずWikipediaから基本情報を取得
+      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tagName)}`;
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'ShumilogApp/1.0',
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Wikipedia page not found');
+        }
+        throw new Error(`Wikipedia API error: ${response.status}`);
+      }
+
+      const data = await response.json() as any;
+      
+      if (!data.extract) {
+        throw new Error('No summary available');
+      }
+
+      const wikipediaUrl = data.content_urls?.desktop?.page;
+      if (!wikipediaUrl) {
+        throw new Error('Wikipedia URL not available');
+      }
+
+      // AIサービスを使用して編集サポート内容を生成
+      const aiOutput = await this.aiService.generateEnhancedTagContent({
+        tagName,
+        wikipediaContent: data.extract as string,
+        wikipediaUrl
+      });
+
+      // AI生成内容をMarkdown形式に変換
+      const content = this.aiService.formatAsMarkdown(aiOutput, wikipediaUrl);
+      
+      return {
+        content,
+        support_type: 'ai_enhanced'
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to generate AI-enhanced summary: ${error.message}`);
+      }
+      throw new Error('Failed to generate AI-enhanced summary');
+    }
   }
 }

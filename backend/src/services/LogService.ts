@@ -328,6 +328,43 @@ export class LogService {
   }
 
   /**
+   * Get related logs based on shared tags
+   */
+  async getRelatedLogs(logId: string, limit = 10): Promise<Log[]> {
+    // First, get the tags of the target log
+    const targetLog = await this.getLogById(logId);
+    if (!targetLog || targetLog.associated_tags.length === 0) {
+      return [];
+    }
+
+    const tagIds = targetLog.associated_tags.map(tag => tag.id);
+    const placeholders = tagIds.map(() => '?').join(',');
+
+    // Find public logs that share tags with the target log
+    // Order by the number of shared tags (descending)
+    const sql = `
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at,
+             COUNT(DISTINCT lta.tag_id) as shared_tag_count
+      FROM logs l
+      JOIN users u ON l.user_id = u.id
+      JOIN log_tag_associations lta ON l.id = lta.log_id
+      WHERE lta.tag_id IN (${placeholders})
+        AND l.id != ?
+        AND l.is_public = 1
+      GROUP BY l.id, l.user_id, l.title, l.content_md, l.is_public, l.created_at, l.updated_at,
+               u.twitter_username, u.display_name, u.avatar_url, u.created_at
+      ORDER BY shared_tag_count DESC, l.created_at DESC
+      LIMIT ?
+    `;
+
+    const params = [...tagIds, logId, limit];
+    const logRows = await this.db.query(sql, params);
+    const logs = await this.enrichLogsWithTags(logRows);
+
+    return logs;
+  }
+
+  /**
    * Associate tags with log using tag names, creating tags if they don't exist
    */
   async associateTagsByNamesWithLog(logId: string, tagNames: string[], userId: string): Promise<void> {

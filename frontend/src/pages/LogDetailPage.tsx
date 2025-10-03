@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
+import { RelatedLogs } from '@/components/RelatedLogs';
 import { useAuth } from '@/hooks/useAuth';
 
 export function LogDetailPage() {
@@ -261,6 +262,9 @@ export function LogDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* 関連するログ */}
+          {log && <RelatedLogs logId={log.id} />}
         </>
       )}
 

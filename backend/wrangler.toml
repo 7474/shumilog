@@ -21,6 +21,9 @@ database_id = "local-shumilog-db-dev"
 preview_database_id = "local-shumilog-db-dev"
 migrations_dir = "migrations"
 
+[ai]
+binding = "AI"
+
 [env.development]
 name = "shumilog-backend-dev"
 
@@ -29,6 +32,9 @@ binding = "DB"
 database_name = "shumilog-db-devel"
 database_id = "617b5001-c479-48d0-b9a6-202e2b3d51f2"
 migrations_dir = "migrations"
+
+[env.development.ai]
+binding = "AI"
 
 [env.development.vars]
 ENVIRONMENT = "development"
@@ -44,6 +50,9 @@ binding = "DB"
 database_name = "shumilog-db"
 database_id = "c97e1c8a-45cd-4748-8792-3faa6ceb5a41"
 migrations_dir = "migrations"
+
+[env.production.ai]
+binding = "AI"
 
 [env.production.vars]
 ENVIRONMENT = "production"

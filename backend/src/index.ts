@@ -9,6 +9,7 @@ import { TagService } from './services/TagService.js';
 import { LogService } from './services/LogService.js';
 import { SessionService } from './services/SessionService.js';
 import { TwitterService } from './services/TwitterService.js';
+import { AiService, type AiBinding } from './services/AiService.js';
 
 import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
 import { securityHeaders, requestLogger, rateLimiter } from './middleware/security.js';
@@ -24,6 +25,7 @@ import supportRoutes from './routes/support.js';
 export interface RuntimeEnv {
   DB?: D1Database;
   SESSIONS?: KVNamespace;
+  AI?: AiBinding;
   DATABASE_URL?: string;
   DB_PATH?: string;
   NODE_ENV?: string;
@@ -54,6 +56,7 @@ type AppBindings = {
     tagService: TagService;
     logService: LogService;
     twitterService: TwitterService;
+    aiService?: AiService;
     config: RuntimeConfig;
   };
 };
@@ -139,6 +142,9 @@ export function createApp(env: RuntimeEnv = {}) {
   const tagService = new TagService(database);
   const logService = new LogService(database);
 
+  // AiServiceを初期化（AIバインディングがある場合のみ）
+  const aiService = env.AI ? new AiService(env.AI) : undefined;
+
   const appBaseUrl = env.APP_BASE_URL ?? process.env.APP_BASE_URL ?? 'http://localhost:5173';
   const runtimeConfig: RuntimeConfig = {
     nodeEnv,
@@ -194,6 +200,9 @@ export function createApp(env: RuntimeEnv = {}) {
     c.set('tagService', tagService);
     c.set('logService', logService);
     c.set('twitterService', twitterService);
+    if (aiService) {
+      c.set('aiService', aiService);
+    }
     c.set('config', runtimeConfig);
     await next();
   });

@@ -28,7 +28,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 migrations apply shumilog-db --env development --remote
+          command: d1 migrations apply shumilog-db-devel --env development --remote
           workingDirectory: backend
       - name: Run D1 Migrations production
         uses: cloudflare/wrangler-action@v3

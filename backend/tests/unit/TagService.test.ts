@@ -378,4 +378,46 @@ describe('TagService', () => {
       await expect(tagService.deleteTag('non-existent-id')).resolves.not.toThrow();
     });
   });
+
+  describe('getReverseTagAssociations', () => {
+    it('should return tags that reference the given tag ordered by recency', async () => {
+      // Create tags
+      const baseTag = await tagService.createTag({ name: 'BaseTag' }, 'user-1');
+      const referringTag1 = await tagService.createTag({ name: 'Referring1', description: `This references #BaseTag` }, 'user-1');
+      
+      // Wait a bit to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      const referringTag2 = await tagService.createTag({ name: 'Referring2', description: `Also references #BaseTag` }, 'user-1');
+
+      // Get reverse associations
+      const result = await tagService.getReverseTagAssociations(baseTag.id);
+
+      expect(result).toHaveLength(2);
+      // Should be ordered by recency (newest first)
+      expect(result[0].id).toBe(referringTag2.id);
+      expect(result[1].id).toBe(referringTag1.id);
+    });
+
+    it('should return empty array when no tags reference the given tag', async () => {
+      const tag = await tagService.createTag({ name: 'Lonely' }, 'user-1');
+
+      const result = await tagService.getReverseTagAssociations(tag.id);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should respect limit parameter', async () => {
+      const baseTag = await tagService.createTag({ name: 'Popular' }, 'user-1');
+      
+      // Create 5 tags that reference the base tag
+      for (let i = 0; i < 5; i++) {
+        await tagService.createTag({ name: `Ref${i}`, description: `#Popular` }, 'user-1');
+      }
+
+      const result = await tagService.getReverseTagAssociations(baseTag.id, 3);
+
+      expect(result).toHaveLength(3);
+    });
+  });
 });

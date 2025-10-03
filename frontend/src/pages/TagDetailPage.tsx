@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface TagDetail extends Tag {
   associations: Tag[];
+  reverse_associations: Tag[];
   usage_count: number;
 }
 
@@ -236,6 +237,23 @@ export function TagDetailPage() {
                     <span className="inline-flex items-center space-x-1 px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm hover:bg-sky-100 transition-colors cursor-pointer">
                       <span className="w-2 h-2 rounded-full bg-sky-400"></span>
                       <span>{associatedTag.name}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 被参照タグ（新着順） */}
+          {tag.reverse_associations && tag.reverse_associations.length > 0 && (
+            <div className="border-t border-gray-100 pt-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">🔖 このタグを参照しているタグ（新着順）</h3>
+              <div className="flex flex-wrap gap-2">
+                {tag.reverse_associations.map((reverseTag) => (
+                  <Link key={reverseTag.id} to={`/tags/${reverseTag.id}`}>
+                    <span className="inline-flex items-center space-x-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100 transition-colors cursor-pointer">
+                      <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                      <span>{reverseTag.name}</span>
                     </span>
                   </Link>
                 ))}

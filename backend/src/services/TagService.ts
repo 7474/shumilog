@@ -173,7 +173,7 @@ export class TagService {
     };
   }
 
-  async getTagDetail(id: string): Promise<(Tag & { associations: Tag[]; usage_count: number }) | null> {
+  async getTagDetail(id: string): Promise<(Tag & { associations: Tag[]; reverse_associations: Tag[]; usage_count: number }) | null> {
     const tag = await this.getTagById(id);
 
     if (!tag) {
@@ -181,11 +181,13 @@ export class TagService {
     }
 
     const associations = await this.getTagAssociations(id);
+    const reverseAssociations = await this.getReverseTagAssociations(id);
     const usageStats = await this.getTagUsageStats(id);
 
     return {
       ...tag,
       associations,
+      reverse_associations: reverseAssociations,
       usage_count: usageStats.usageCount
     };
   }
@@ -330,6 +332,23 @@ export class TagService {
        )
        ORDER BY t.name ASC`,
       [tagId, tagId]
+    );
+
+    return rows.map(row => TagModel.fromRow(row));
+  }
+
+  /**
+   * Get tags that reference this tag (reverse associations) ordered by recency
+   */
+  async getReverseTagAssociations(tagId: string, limit = 10): Promise<Tag[]> {
+    const rows = await this.db.query(
+      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+       FROM tags t
+       JOIN tag_associations ta ON t.id = ta.tag_id
+       WHERE ta.associated_tag_id = ?
+       ORDER BY ta.created_at DESC
+       LIMIT ?`,
+      [tagId, limit]
     );
 
     return rows.map(row => TagModel.fromRow(row));

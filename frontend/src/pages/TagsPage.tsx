@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -231,9 +232,10 @@ export function TagsPage() {
         ) : (
           <div className="grid-responsive">
             {tags.map((tag) => (
-              <div key={tag.id} className="relative group">
+              <Card key={tag.id} className="card-fresh overflow-hidden">
+                {/* Clickable card content area */}
                 <Link to={`/tags/${tag.id}`}>
-                  <Card className="card-fresh hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className="cursor-pointer hover:bg-gray-50 transition-colors">
                     <CardHeader>
                       <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2">
                         <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
@@ -245,21 +247,22 @@ export function TagsPage() {
                         {tag.description || '説明なし'}
                       </p>
                     </CardContent>
-                  </Card>
-                </Link>
-                {isAuthenticated && (
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      size="sm"
-                      onClick={(e) => handleCreateLogWithTag(tag, e)}
-                      className="btn-fresh shadow-md"
-                      title={`${tag.name}でログを作成`}
-                    >
-                      ✨
-                    </Button>
                   </div>
+                </Link>
+                
+                {/* Action buttons - always visible for authenticated users */}
+                {isAuthenticated && (
+                  <CardFooter className="bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 py-3 px-4">
+                    <Button
+                      onClick={(e) => handleCreateLogWithTag(tag, e)}
+                      size="sm"
+                      className="btn-fresh w-full"
+                    >
+                      ✨ このタグでログを作成
+                    </Button>
+                  </CardFooter>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         )}

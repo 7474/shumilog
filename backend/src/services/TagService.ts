@@ -173,7 +173,7 @@ export class TagService {
     };
   }
 
-  async getTagDetail(id: string): Promise<(Tag & { associations: Tag[]; usage_count: number; recent_logs: any[] }) | null> {
+  async getTagDetail(id: string): Promise<(Tag & { associations: Tag[]; usage_count: number; recent_logs: any[]; recent_referring_tags: Tag[] }) | null> {
     const tag = await this.getTagById(id);
 
     if (!tag) {
@@ -183,12 +183,14 @@ export class TagService {
     const associations = await this.getTagAssociations(id);
     const usageStats = await this.getTagUsageStats(id);
     const recentLogs = await this.getRecentLogsForTag(id, 10);
+    const recentReferringTags = await this.getRecentReferringTags(id, 10);
 
     return {
       ...tag,
       associations,
       usage_count: usageStats.usageCount,
-      recent_logs: recentLogs
+      recent_logs: recentLogs,
+      recent_referring_tags: recentReferringTags
     };
   }
 
@@ -384,6 +386,25 @@ export class TagService {
        )
        ORDER BY t.name ASC`,
       [tagId, tagId]
+    );
+
+    return rows.map(row => TagModel.fromRow(row));
+  }
+
+  /**
+   * Get tags that recently created associations to this tag (reverse references)
+   * Sorted by when the association was created (newest first)
+   */
+  async getRecentReferringTags(tagId: string, limit = 10): Promise<Tag[]> {
+    const rows = await this.db.query(
+      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+              ta.created_at as association_created_at
+       FROM tags t
+       JOIN tag_associations ta ON t.id = ta.tag_id
+       WHERE ta.associated_tag_id = ?
+       ORDER BY ta.created_at DESC
+       LIMIT ?`,
+      [tagId, limit]
     );
 
     return rows.map(row => TagModel.fromRow(row));

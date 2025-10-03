@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { Edit2, Trash2 } from 'lucide-react';
 
 export function LogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
@@ -18,7 +20,8 @@ export function LogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
 
   const fetchLogs = async () => {
     try {
@@ -153,51 +156,66 @@ export function LogsPage() {
           </Card>
         ) : (
           <div className="grid-responsive">
-            {logs.map((log) => (
-              <Card key={log.id} className="card-fresh">
-                <CardHeader>
-                  <div className="flex flex-col space-y-3">
-                    <CardTitle className="line-clamp-2">
-                      <Link 
-                        to={`/logs/${log.id}`}
-                        className="text-gray-900 hover:text-fresh-600 transition-colors"
-                      >
+            {logs.map((log) => {
+              const isOwner = user && log.author && log.author.id === user.id;
+              
+              return (
+                <Card key={log.id} className="card-fresh overflow-hidden">
+                  {/* Clickable card content area */}
+                  <div 
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/logs/${log.id}`)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="line-clamp-2 text-gray-900 hover:text-fresh-600 transition-colors">
                         {log.title}
-                      </Link>
-                    </CardTitle>
-                    <div className="flex flex-wrap gap-2">
-                      <Button 
-                        onClick={() => handleEdit(log)}
-                        size="sm"
-                        variant="outline"
-                        className="text-fresh-600 border-fresh-200 hover:bg-fresh-50"
-                        disabled={!isAuthenticated}
-                      >
-                        ✏️ 編集
-                      </Button>
-                      <Button 
-                        onClick={() => handleDelete(log.id.toString())}
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                        disabled={!isAuthenticated}
-                      >
-                        🗑️ 削除
-                      </Button>
-                    </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-gray-700 line-clamp-3">
+                        {log.content_md.substring(0, 150)}...
+                      </p>
+                      <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-gray-500 space-y-1 sm:space-y-0">
+                        <span>📅 作成: {new Date(log.created_at).toLocaleDateString('ja-JP')}</span>
+                        <span>🔄 更新: {new Date(log.updated_at).toLocaleDateString('ja-JP')}</span>
+                      </div>
+                    </CardContent>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-gray-700 line-clamp-3">
-                    {log.content_md.substring(0, 150)}...
-                  </p>
-                  <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-gray-500 space-y-1 sm:space-y-0">
-                    <span>📅 作成: {new Date(log.created_at).toLocaleDateString('ja-JP')}</span>
-                    <span>🔄 更新: {new Date(log.updated_at).toLocaleDateString('ja-JP')}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  
+                  {/* Action buttons - only shown to log owner */}
+                  {isOwner && (
+                    <CardFooter className="bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 py-3 px-4">
+                      <div className="flex items-center gap-2 w-full">
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(log);
+                          }}
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-fresh-600 border-fresh-200 hover:bg-fresh-50 hover:border-fresh-300 transition-all duration-200 font-medium"
+                        >
+                          <Edit2 className="w-4 h-4 mr-1.5" />
+                          編集
+                        </Button>
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(log.id.toString());
+                          }}
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200 font-medium"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1.5" />
+                          削除
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

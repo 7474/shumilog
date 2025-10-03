@@ -173,7 +173,7 @@ export class TagService {
     };
   }
 
-  async getTagDetail(id: string): Promise<(Tag & { associations: Tag[]; reverse_associations: Tag[]; usage_count: number }) | null> {
+  async getTagDetail(id: string): Promise<(Tag & { associations: Tag[]; reverse_associations: Tag[]; usage_count: number; recent_logs: any[] }) | null> {
     const tag = await this.getTagById(id);
 
     if (!tag) {
@@ -183,12 +183,14 @@ export class TagService {
     const associations = await this.getTagAssociations(id);
     const reverseAssociations = await this.getReverseTagAssociations(id);
     const usageStats = await this.getTagUsageStats(id);
+    const recentLogs = await this.getRecentLogsForTag(id, 10);
 
     return {
       ...tag,
       associations,
       reverse_associations: reverseAssociations,
-      usage_count: usageStats.usageCount
+      usage_count: usageStats.usageCount,
+      recent_logs: recentLogs
     };
   }
 
@@ -274,6 +276,58 @@ export class TagService {
     );
     
     return rows.map(row => TagModel.fromRow(row));
+  }
+
+  /**
+   * Get recent public logs for a tag
+   */
+  async getRecentLogsForTag(tagId: string, limit = 10): Promise<any[]> {
+    const rows = await this.db.query(
+      `SELECT l.id, l.user_id, l.title, l.content_md, l.is_public, l.created_at, l.updated_at,
+              u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+       FROM logs l
+       JOIN users u ON l.user_id = u.id
+       JOIN log_tag_associations lta ON l.id = lta.log_id
+       WHERE lta.tag_id = ? AND l.is_public = 1
+       ORDER BY l.created_at DESC
+       LIMIT ?`,
+      [tagId, limit]
+    );
+    
+    // Enrich with tags for each log
+    const enrichedLogs = [];
+    for (const row of rows) {
+      const tagRows = await this.db.query(
+        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+         FROM tags t
+         JOIN log_tag_associations lta ON t.id = lta.tag_id
+         WHERE lta.log_id = ?`,
+        [row.id]
+      );
+      
+      const tags = tagRows.map((tagRow: any) => TagModel.fromRow(tagRow));
+      
+      enrichedLogs.push({
+        id: row.id,
+        user_id: row.user_id,
+        title: row.title,
+        content_md: row.content_md,
+        is_public: row.is_public === 1,
+        privacy: row.is_public === 1 ? 'public' : 'private',
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        author: {
+          id: row.user_id,
+          twitter_username: row.twitter_username,
+          display_name: row.display_name,
+          avatar_url: row.avatar_url,
+          created_at: row.user_created_at
+        },
+        tags: tags
+      });
+    }
+    
+    return enrichedLogs;
   }
 
   /**

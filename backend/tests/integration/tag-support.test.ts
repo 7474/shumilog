@@ -13,10 +13,10 @@ describe.skip('Integration: Tag Support Feature', () => {
     sessionToken = await setupTestEnvironment();
   });
 
-  describe('POST /tags/support', () => {
+  describe('POST /support/tags', () => {
     it('should get Wikipedia summary for a tag name', async () => {
       // Request Wikipedia summary
-      const response = await app.request('/api/tags/support', {
+      const response = await app.request('/api/support/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ describe.skip('Integration: Tag Support Feature', () => {
 
     it('should work for new tags not yet in database', async () => {
       // Request support for a tag that doesn't exist in database yet
-      const response = await app.request('/api/tags/support', {
+      const response = await app.request('/api/support/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ describe.skip('Integration: Tag Support Feature', () => {
 
     it('should require authentication', async () => {
       // Request without session
-      const response = await app.request('/api/tags/support', {
+      const response = await app.request('/api/support/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -74,7 +74,7 @@ describe.skip('Integration: Tag Support Feature', () => {
 
     it('should validate support type', async () => {
       // Request with invalid support type
-      const response = await app.request('/api/tags/support', {
+      const response = await app.request('/api/support/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ describe.skip('Integration: Tag Support Feature', () => {
 
     it('should require support_type in request body', async () => {
       // Request without support_type
-      const response = await app.request('/api/tags/support', {
+      const response = await app.request('/api/support/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ describe.skip('Integration: Tag Support Feature', () => {
 
     it('should require tag_name in request body', async () => {
       // Request without tag_name
-      const response = await app.request('/api/tags/support', {
+      const response = await app.request('/api/support/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ describe.skip('Integration: Tag Support Feature', () => {
 
     it('should return 404 for non-existent Wikipedia pages', async () => {
       // Request with a tag name that definitely doesn't have a Wikipedia page
-      const response = await app.request('/api/tags/support', {
+      const response = await app.request('/api/support/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -299,7 +299,7 @@ paths:
         '404':
           description: Tag or association not found
 
-  /tags/support:
+  /support/tags:
     post:
       summary: Get content support for tag editing
       description: |

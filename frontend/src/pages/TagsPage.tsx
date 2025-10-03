@@ -58,25 +58,6 @@ export function TagsPage() {
     fetchTags();
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this tag?')) {
-      try {
-        const response = await api.tags[':id'].$delete({ param: { id } });
-        if (!response.ok) {
-          throw new Error('Failed to delete tag');
-        }
-        fetchTags();
-      } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to delete tag');
-      }
-    }
-  };
-
-  const handleEdit = (tag: Tag) => {
-    setSelectedTag(tag);
-    setShowForm(true);
-  };
-
   const handleCancel = () => {
     setShowForm(false);
     setSelectedTag(undefined);
@@ -206,44 +187,21 @@ export function TagsPage() {
         ) : (
           <div className="grid-responsive">
             {tags.map((tag) => (
-              <Card key={tag.id} className="card-fresh">
-                <CardHeader>
-                  <div className="flex flex-col space-y-3">
+              <Link key={tag.id} to={`/tags/${tag.id}`}>
+                <Card className="card-fresh hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader>
                     <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2">
                       <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
                       <span>{tag.name}</span>
                     </CardTitle>
-                    <div className="flex flex-wrap gap-2">
-                      <Button 
-                        onClick={() => handleEdit(tag)}
-                        size="sm"
-                        variant="outline"
-                        className="text-sky-600 border-sky-200 hover:bg-sky-50"
-                        disabled={!isAuthenticated}
-                      >
-                        ✏️ 編集
-                      </Button>
-                      <Button 
-                        onClick={() => handleDelete(tag.id.toString())}
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                        disabled={!isAuthenticated}
-                      >
-                        🗑️ 削除
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-gray-700">
-                    {tag.description || '説明なし'}
-                  </p>
-                  <div className="text-xs text-gray-500">
-                    📅 作成日: {new Date(tag.created_at).toLocaleDateString('ja-JP')}
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-gray-700 line-clamp-2">
+                      {tag.description || '説明なし'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

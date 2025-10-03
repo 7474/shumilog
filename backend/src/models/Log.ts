@@ -54,6 +54,7 @@ export interface LogSearchParams {
   tag_ids?: string[];
   user_id?: string;
   is_public?: boolean;
+  search?: string;
   limit?: number;
   offset?: number;
 }

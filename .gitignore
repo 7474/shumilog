@@ -11,3 +11,6 @@ tests/integration/legacy/
 
 # Frontend build output
 frontend/dist/
+
+# Screenshots
+.screenshots/

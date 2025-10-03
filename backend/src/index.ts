@@ -105,8 +105,8 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
   });
   app.route('/logs', logRoutes);
 
-  // Support routes require authentication
-  app.use('/support', requireAuth);
+  // Support routes require authentication for all methods
+  app.use('/support/*', requireAuth);
   app.route('/support', supportRoutes);
 }
 

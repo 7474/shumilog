@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { getAuthUser } from '../middleware/auth.js';
 import { TagService } from '../services/TagService.js';
 
 const support = new Hono();
@@ -16,8 +15,7 @@ const resolveTagService = (c: any): TagService => {
 // POST /support/tags - Get content support for tag editing (requires auth)
 // This endpoint doesn't require an existing tag ID, so it can be used when creating new tags
 support.post('/tags', async (c) => {
-  // Authentication is required (enforced by middleware)
-  getAuthUser(c);
+  // Authentication is required (enforced by middleware in index.ts)
   const tagService = resolveTagService(c);
 
   const body = await c.req.json();

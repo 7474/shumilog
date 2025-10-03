@@ -1,10 +1,51 @@
 # Backend Testing Status
 
+## AI-Enhanced Tag Support
+
+### Overview
+This backend now includes **AI-powered tag support** using Cloudflare Workers AI to automatically generate tag editing support content based on Wikipedia information.
+
+### Features
+- **AI Model**: Uses `@cf/meta/llama-3.2-3b-instruct` (LLaMA 3.2 3B Instruct)
+- **Content Generation**:
+  - One-line tag summary (targeting ~50 characters)
+  - Related tags extracted as hashtags
+  - Subsections for series/episode information
+- **AI Content Identification**: Wrapped with HTML comments `<!-- AI生成コンテンツ開始/終了 -->`
+- **Attribution**: Includes Wikipedia source link for all generated content
+
+### API Usage
+```bash
+# Request AI-enhanced tag support
+POST /api/support/tags
+Content-Type: application/json
+Cookie: session=<your-session-token>
+
+{
+  "tag_name": "進撃の巨人",
+  "support_type": "ai_enhanced"
+}
+```
+
+### Testing
+- **Unit Tests**: `tests/unit/AiService.test.ts` - Tests AI service logic with mocks
+- **Integration Tests**: `tests/integration/tag-support-ai.test.ts` - Tests API endpoint behavior
+
+### Implementation Details
+- **AiService**: Wrapper class for Cloudflare Workers AI (`src/services/AiService.ts`)
+- **TagService Integration**: AI support integrated into existing TagService
+- **Wrangler Configuration**: AI bindings configured for all environments in `wrangler.toml`
+
+### Limitations
+- **Local Development**: AI features require Cloudflare environment (not available in `wrangler dev --local`)
+- **Rate Limits**: Subject to Cloudflare Workers AI usage limits
+- **Model Constraints**: Limited by LLaMA 3.2 3B model capabilities
+
 ## Current Test Suite Status
 
 ### ✅ All Tests (CI Enabled)
 - **Command**: `npm test`
-- **Status**: All tests passing - 176 passed, 70 appropriately skipped
+- **Status**: All tests passing - 217 passed, 70 appropriately skipped
 - **Coverage**: Contract tests, unit tests, and integration tests with proper skipping
 - **CI**: Enabled in GitHub Actions running full test suite
 

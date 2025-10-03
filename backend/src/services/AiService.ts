@@ -69,14 +69,17 @@ ${input.wikipediaContent}
 以下の形式で出力してください：
 1. タグを1行で端的に説明（50文字以内）
 2. 関連する要素をハッシュタグとして列挙（3〜10個）
+   - 空白を含まないタグ名: #タグ名 形式（例: #マンガ #ゲーム）
+   - 空白を含むタグ名: #{タグ名} 形式（例: #{Attack on Titan} #{進撃の巨人 第1期}）
 3. 特に関連する連載やシリーズのサブタイトルがある場合、見出しとハッシュタグで構造化
 
 出力例：
-要約: アニメーション作品の総称で、日本の独自文化として世界的に人気
-関連タグ: #マンガ #ゲーム #声優 #キャラクター #ストーリー #劇場版
+アニメーション作品の総称で、日本の独自文化として世界的に人気
 
-サブセクション:
-- 代表作品: #鬼滅の刃 #進撃の巨人 #ワンピース`;
+#マンガ #ゲーム #声優 #キャラクター #ストーリー #劇場版
+
+代表作品:
+#鬼滅の刃 #進撃の巨人 #ワンピース`;
   }
 
   /**
@@ -181,7 +184,7 @@ ${input.wikipediaContent}
     // 関連タグ
     if (output.relatedTags.length > 0) {
       markdown += '**関連タグ**: ';
-      markdown += output.relatedTags.map(tag => `#${tag}`).join(' ');
+      markdown += output.relatedTags.map(tag => this.formatHashtag(tag)).join(' ');
       markdown += '\n\n';
     }
     
@@ -190,7 +193,7 @@ ${input.wikipediaContent}
       for (const subsection of output.subsections) {
         markdown += `### ${subsection.title}\n\n`;
         if (subsection.tags.length > 0) {
-          markdown += subsection.tags.map(tag => `- #${tag}`).join('\n');
+          markdown += subsection.tags.map(tag => `- ${this.formatHashtag(tag)}`).join('\n');
           markdown += '\n\n';
         }
       }
@@ -202,5 +205,16 @@ ${input.wikipediaContent}
     markdown += `出典: [Wikipedia](<${wikipediaUrl}>)`;
     
     return markdown;
+  }
+
+  /**
+   * タグ名をハッシュタグ形式にフォーマット
+   * 空白を含む場合は #{タグ名}、含まない場合は #タグ名 形式
+   */
+  private formatHashtag(tagName: string): string {
+    if (tagName.includes(' ')) {
+      return `#{${tagName}}`;
+    }
+    return `#${tagName}`;
   }
 }

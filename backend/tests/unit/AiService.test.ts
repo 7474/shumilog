@@ -136,6 +136,43 @@ describe('AiService', () => {
       expect(markdown).toContain('#タグ1');
       expect(markdown).not.toContain('###');
     });
+
+    it('should format tags with spaces using curly braces', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const output = {
+        summary: 'タグ名に空白を含む例',
+        relatedTags: ['Attack on Titan', '進撃の巨人 第1期', 'シンプルタグ', 'Another Tag'],
+        subsections: [
+          {
+            title: '主要キャラクター',
+            tags: ['Eren Yeager', 'ミカサ', 'Armin Arlert']
+          }
+        ]
+      };
+
+      const markdown = aiService.formatAsMarkdown(
+        output,
+        'https://ja.wikipedia.org/wiki/進撃の巨人'
+      );
+
+      // 空白を含むタグは #{} 形式
+      expect(markdown).toContain('#{Attack on Titan}');
+      expect(markdown).toContain('#{進撃の巨人 第1期}');
+      expect(markdown).toContain('#{Another Tag}');
+      expect(markdown).toContain('#{Eren Yeager}');
+      expect(markdown).toContain('#{Armin Arlert}');
+      
+      // 空白を含まないタグは # 形式
+      expect(markdown).toContain('#シンプルタグ');
+      expect(markdown).toContain('#ミカサ');
+      
+      // 混在していることを確認
+      expect(markdown).toMatch(/#{Attack on Titan}.*#シンプルタグ/);
+    });
   });
 
   describe('extractHashtags', () => {
@@ -156,7 +193,9 @@ describe('AiService', () => {
       const markdown = aiService.formatAsMarkdown(output, 'https://test.com');
       
       // 両方の形式が含まれていることを確認
-      expect(markdown).toContain('#テスト タグ');
+      // 空白を含むタグは #{} 形式
+      expect(markdown).toContain('#{テスト タグ}');
+      // 空白を含まないタグは # 形式
       expect(markdown).toContain('#シンプルタグ');
       expect(markdown).toContain('#Test123');
     });

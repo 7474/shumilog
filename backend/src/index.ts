@@ -89,7 +89,18 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
   app.route('/auth', authRoutes);
   app.route('/users', userRoutes);
 
+  // Apply authentication middleware to tags routes  
+  // Note: Hono's middleware matching:
+  // - `/tags` matches exactly /tags
+  // - `/tags/*` matches /tags/anything and /tags/anything/more (greedy wildcard)
+  // We need to handle both POST /tags and PUT/DELETE /tags/:id and POST/DELETE /tags/:id/associations
   app.use('/tags', async (c, next) => {
+    if (['POST'].includes(c.req.method)) {
+      return requireAuth(c, next);
+    }
+    return next();
+  });
+  app.use('/tags/*', async (c, next) => {
     if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
       return requireAuth(c, next);
     }
@@ -97,7 +108,15 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
   });
   app.route('/tags', tagRoutes);
 
+  // Apply authentication middleware to logs routes
+  // Similar pattern: handle both base path and all sub-paths
   app.use('/logs', async (c, next) => {
+    if (c.req.method === 'POST') {
+      return requireAuth(c, next);
+    }
+    return optionalAuth(c, next);
+  });
+  app.use('/logs/*', async (c, next) => {
     if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
       return requireAuth(c, next);
     }

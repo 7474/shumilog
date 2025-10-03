@@ -234,7 +234,7 @@ export function TagsPage() {
             {tags.map((tag) => (
               <Card key={tag.id} className="card-fresh overflow-hidden">
                 {/* Clickable card content area */}
-                <Link to={`/tags/${tag.id}`}>
+                <Link to={`/tags/${encodeURIComponent(tag.name)}`}>
                   <div className="cursor-pointer hover:bg-gray-50 transition-colors">
                     <CardHeader>
                       <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2">

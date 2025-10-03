@@ -51,10 +51,10 @@ describe('MarkdownRenderer', () => {
     const links = container.querySelectorAll('a.hashtag-link');
     expect(links).toHaveLength(2);
     
-    // Check the anime link (should link to tag_1)
+    // Check the anime link (should link to tag name)
     const animeLink = Array.from(links).find(link => link.textContent === '#anime');
     expect(animeLink).toBeDefined();
-    expect(animeLink?.getAttribute('href')).toBe('/tags/tag_1');
+    expect(animeLink?.getAttribute('href')).toBe('/tags/anime');
     
     // Check the gaming link (tag not in list, should link to search)
     const gamingLink = Array.from(links).find(link => link.textContent === '#gaming');
@@ -75,7 +75,7 @@ describe('MarkdownRenderer', () => {
     
     const ffLink = links[0];
     expect(ffLink.textContent).toBe('#{Final Fantasy}');
-    expect(ffLink.getAttribute('href')).toBe('/tags/tag_2');
+    expect(ffLink.getAttribute('href')).toBe('/tags/Final%20Fantasy');
   });
 
   it('should handle both hashtag formats in the same content', () => {
@@ -90,10 +90,10 @@ describe('MarkdownRenderer', () => {
     expect(links).toHaveLength(2);
     
     const animeLink = Array.from(links).find(link => link.textContent === '#anime');
-    expect(animeLink?.getAttribute('href')).toBe('/tags/tag_1');
+    expect(animeLink?.getAttribute('href')).toBe('/tags/anime');
     
     const ffLink = Array.from(links).find(link => link.textContent === '#{Final Fantasy}');
-    expect(ffLink?.getAttribute('href')).toBe('/tags/tag_2');
+    expect(ffLink?.getAttribute('href')).toBe('/tags/Final%20Fantasy');
   });
 
   it('should handle Japanese hashtags', () => {
@@ -109,7 +109,7 @@ describe('MarkdownRenderer', () => {
     
     const gameLink = links[0];
     expect(gameLink.textContent).toBe('#ゲーム');
-    expect(gameLink.getAttribute('href')).toBe('/tags/tag_3');
+    expect(gameLink.getAttribute('href')).toBe('/tags/%E3%82%B2%E3%83%BC%E3%83%A0');
   });
 
   it('should link to search when tags prop is not provided', () => {
@@ -137,9 +137,9 @@ describe('MarkdownRenderer', () => {
     const links = container.querySelectorAll('a.hashtag-link');
     expect(links).toHaveLength(2);
     
-    // Both should link to the same tag (case-insensitive)
+    // Both should link to the same tag (case-insensitive matching, but using actual tag name)
     links.forEach(link => {
-      expect(link.getAttribute('href')).toBe('/tags/tag_1');
+      expect(link.getAttribute('href')).toBe('/tags/anime');
     });
   });
 

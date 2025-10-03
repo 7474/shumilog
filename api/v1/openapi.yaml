@@ -191,12 +191,20 @@ paths:
   /tags/{tagId}:
     get:
       summary: Get tag details
+      description: |
+        Get detailed information about a tag. The `tagId` parameter accepts both:
+        - Tag name (user-friendly, URL-encoded if needed)
+        - Tag ID (for backward compatibility)
+        
+        The tag name is checked first, then the tag ID if not found by name.
       parameters:
         - name: tagId
           in: path
           required: true
           schema:
             type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
       responses:
         '200':
           description: Tag details
@@ -211,6 +219,7 @@ paths:
       summary: Update tag
       description: |
         Update an existing tag with automatic hashtag processing.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
         
         **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`), 
         the system will automatically create associations with existing tags or create new tags if they don't exist.
@@ -222,6 +231,8 @@ paths:
           required: true
           schema:
             type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
       requestBody:
         required: true
         content:
@@ -244,6 +255,8 @@ paths:
 
     delete:
       summary: Delete tag
+      description: |
+        Delete a tag. The `tagId` parameter accepts both tag name (preferred) and tag ID.
       security:
         - sessionAuth: []
       parameters:
@@ -252,6 +265,8 @@ paths:
           required: true
           schema:
             type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
       responses:
         '204':
           description: Tag deleted
@@ -265,12 +280,17 @@ paths:
   /tags/{tagId}/associations:
     get:
       summary: Get tags associated with this tag
+      description: |
+        Get all tags associated with the specified tag.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
       parameters:
         - name: tagId
           in: path
           required: true
           schema:
             type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
       responses:
         '200':
           description: List of associated tags
@@ -285,6 +305,9 @@ paths:
 
     post:
       summary: Create association between tags
+      description: |
+        Create an association between two tags.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
       security:
         - sessionAuth: []
       parameters:
@@ -293,6 +316,8 @@ paths:
           required: true
           schema:
             type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
       requestBody:
         required: true
         content:
@@ -317,6 +342,9 @@ paths:
 
     delete:
       summary: Remove association between tags
+      description: |
+        Remove an association between two tags.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
       security:
         - sessionAuth: []
       parameters:
@@ -325,6 +353,8 @@ paths:
           required: true
           schema:
             type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
         - name: associated_tag_id
           in: query
           required: true

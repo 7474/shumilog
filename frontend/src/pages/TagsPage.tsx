@@ -18,6 +18,7 @@ import { Link, useNavigate } from 'react-router-dom';
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedTag, setSelectedTag] = useState<Tag | undefined>(undefined);
@@ -27,9 +28,13 @@ export function TagsPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const fetchTags = async (search?: string) => {
+  const fetchTags = async (search?: string, isInitialLoad = false) => {
     try {
-      setLoading(true);
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setSearching(true);
+      }
       const queryParams = search ? { query: { search } } : undefined;
       const response = await api.tags.$get(queryParams);
       if (!response.ok) {
@@ -40,18 +45,22 @@ export function TagsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+      } else {
+        setSearching(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchTags();
+    fetchTags(undefined, true);
   }, []);
 
   // 検索クエリが変更されたときにタグを再取得（デバウンス処理付き）
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchTags(searchQuery || undefined);
+      fetchTags(searchQuery || undefined, false);
     }, 300);
 
     return () => clearTimeout(timer);
@@ -201,7 +210,12 @@ export function TagsPage() {
 
       {/* タグリスト */}
       <div className="space-y-4">
-        {tags.length === 0 ? (
+        {searching ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
+            <p className="text-gray-600 text-sm">検索中...</p>
+          </div>
+        ) : tags.length === 0 ? (
           <Card className="card-fresh text-center py-12">
             <CardContent className="space-y-4">
               <div className="text-6xl">🏷️</div>

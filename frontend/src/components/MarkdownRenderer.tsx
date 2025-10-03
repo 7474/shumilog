@@ -15,11 +15,11 @@ function createHashtagRenderer(tags?: Tag[]) {
   const renderer = new marked.Renderer();
   const originalText = renderer.text.bind(renderer);
 
-  // タグ名からタグIDへのマッピングを作成
+  // タグ名からタグ名へのマッピングを作成（大文字小文字を区別しないため）
   const tagMap = new Map<string, string>();
   if (tags) {
     tags.forEach(tag => {
-      tagMap.set(tag.name.toLowerCase(), tag.id);
+      tagMap.set(tag.name.toLowerCase(), tag.name);
     });
   }
 
@@ -29,13 +29,13 @@ function createHashtagRenderer(tags?: Tag[]) {
     // Pattern 1: #{tagName} - 拡張形式（空白を含むタグ名）
     text = text.replace(/#\{([^}]+)\}/g, (match, tagName) => {
       const trimmedName = tagName.trim();
-      const tagId = tagMap.get(trimmedName.toLowerCase());
+      const actualTagName = tagMap.get(trimmedName.toLowerCase());
       
-      if (tagId) {
-        // タグIDが見つかった場合は直接リンク
-        return `<a href="/tags/${tagId}" class="hashtag-link">${match}</a>`;
+      if (actualTagName) {
+        // タグが見つかった場合はタグ名でリンク
+        return `<a href="/tags/${encodeURIComponent(actualTagName)}" class="hashtag-link">${match}</a>`;
       } else {
-        // タグIDが見つからない場合は検索リンク
+        // タグが見つからない場合は検索リンク
         return `<a href="/tags?search=${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
       }
     });
@@ -43,13 +43,13 @@ function createHashtagRenderer(tags?: Tag[]) {
     // Pattern 2: #tagName - シンプル形式（空白なし）
     text = text.replace(/#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_-]+)/g, (match, tagName) => {
       const trimmedName = tagName.trim();
-      const tagId = tagMap.get(trimmedName.toLowerCase());
+      const actualTagName = tagMap.get(trimmedName.toLowerCase());
       
-      if (tagId) {
-        // タグIDが見つかった場合は直接リンク
-        return `<a href="/tags/${tagId}" class="hashtag-link">${match}</a>`;
+      if (actualTagName) {
+        // タグが見つかった場合はタグ名でリンク
+        return `<a href="/tags/${encodeURIComponent(actualTagName)}" class="hashtag-link">${match}</a>`;
       } else {
-        // タグIDが見つからない場合は検索リンク
+        // タグが見つからない場合は検索リンク
         return `<a href="/tags?search=${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
       }
     });

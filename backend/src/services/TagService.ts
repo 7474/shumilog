@@ -145,6 +145,17 @@ export class TagService {
   }
 
   /**
+   * Get tag by name
+   */
+  async getTagByName(name: string): Promise<Tag | null> {
+    const row = await this.db.queryFirst(
+      'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags WHERE name = ?',
+      [name]
+    );
+    return row ? TagModel.fromRow(row) : null;
+  }
+
+  /**
    * Search tags
    */
   async searchTags(options: TagSearchParams = {}): Promise<PaginatedResult<Tag>> {

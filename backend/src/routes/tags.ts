@@ -95,11 +95,25 @@ tags.post('/', async (c) => {
 });
 
 // GET /tags/{tagId} - Get tag details (public)
+// Accepts both tag ID and tag name for flexibility
 tags.get('/:tagId', async (c) => {
   const tagService = resolveTagService(c);
-  const tagId = c.req.param('tagId');
+  const tagIdOrName = c.req.param('tagId');
 
-  const detail = await tagService.getTagDetail(tagId);
+  // Try to get tag by name first (user-friendly URLs)
+  let tag = await tagService.getTagByName(tagIdOrName);
+  
+  // If not found by name, try by ID (backward compatibility)
+  if (!tag) {
+    tag = await tagService.getTagById(tagIdOrName);
+  }
+
+  if (!tag) {
+    throw new HTTPException(404, { message: 'Tag not found' });
+  }
+
+  // Get tag details using the found tag's ID
+  const detail = await tagService.getTagDetail(tag.id);
   if (!detail) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
@@ -111,12 +125,18 @@ tags.get('/:tagId', async (c) => {
 });
 
 // PUT /tags/{tagId} - Update tag (requires auth)
+// Accepts both tag ID and tag name for flexibility
 tags.put('/:tagId', async (c) => {
   const user = getAuthUser(c);
   const tagService = resolveTagService(c);
-  const tagId = c.req.param('tagId');
+  const tagIdOrName = c.req.param('tagId');
 
-  const existing = await tagService.getTagById(tagId);
+  // Try to get tag by name first, then by ID
+  let existing = await tagService.getTagByName(tagIdOrName);
+  if (!existing) {
+    existing = await tagService.getTagById(tagIdOrName);
+  }
+  
   if (!existing) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
@@ -161,7 +181,7 @@ tags.put('/:tagId', async (c) => {
   }
 
   try {
-    const updated = await tagService.updateTag(tagId, updates);
+    const updated = await tagService.updateTag(existing.id, updates);
     return c.json(updated);
   } catch (error: any) {
     const message = typeof error?.message === 'string' ? error.message : 'Failed to update tag';
@@ -177,12 +197,18 @@ tags.put('/:tagId', async (c) => {
 });
 
 // DELETE /tags/{tagId} - Delete tag (requires auth)
+// Accepts both tag ID and tag name for flexibility
 tags.delete('/:tagId', async (c) => {
   const user = getAuthUser(c);
   const tagService = resolveTagService(c);
-  const tagId = c.req.param('tagId');
+  const tagIdOrName = c.req.param('tagId');
 
-  const existing = await tagService.getTagById(tagId);
+  // Try to get tag by name first, then by ID
+  let existing = await tagService.getTagByName(tagIdOrName);
+  if (!existing) {
+    existing = await tagService.getTagById(tagIdOrName);
+  }
+  
   if (!existing) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
@@ -191,31 +217,43 @@ tags.delete('/:tagId', async (c) => {
     throw new HTTPException(403, { message: 'Not tag owner' });
   }
 
-  await tagService.deleteTag(tagId);
+  await tagService.deleteTag(existing.id);
   return c.body(null, 204);
 });
 
 // GET /tags/{tagId}/associations - List associated tags (public)
+// Accepts both tag ID and tag name for flexibility
 tags.get('/:tagId/associations', async (c) => {
   const tagService = resolveTagService(c);
-  const tagId = c.req.param('tagId');
+  const tagIdOrName = c.req.param('tagId');
 
-  const tag = await tagService.getTagById(tagId);
+  // Try to get tag by name first, then by ID
+  let tag = await tagService.getTagByName(tagIdOrName);
+  if (!tag) {
+    tag = await tagService.getTagById(tagIdOrName);
+  }
+  
   if (!tag) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
 
-  const associations = await tagService.getTagAssociations(tagId);
+  const associations = await tagService.getTagAssociations(tag.id);
   return c.json(associations);
 });
 
 // POST /tags/{tagId}/associations - Create association (requires auth)
+// Accepts both tag ID and tag name for flexibility
 tags.post('/:tagId/associations', async (c) => {
   const user = getAuthUser(c);
   const tagService = resolveTagService(c);
-  const tagId = c.req.param('tagId');
+  const tagIdOrName = c.req.param('tagId');
 
-  const tag = await tagService.getTagById(tagId);
+  // Try to get tag by name first, then by ID
+  let tag = await tagService.getTagByName(tagIdOrName);
+  if (!tag) {
+    tag = await tagService.getTagById(tagIdOrName);
+  }
+  
   if (!tag) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
@@ -234,12 +272,12 @@ tags.post('/:tagId/associations', async (c) => {
     throw new HTTPException(400, { message: 'Associated tag ID is required' });
   }
 
-  if (associatedTagId === tagId) {
+  if (associatedTagId === tag.id) {
     throw new HTTPException(400, { message: 'Cannot associate tag with itself' });
   }
 
   try {
-    await tagService.createTagAssociation(tagId, associatedTagId);
+    await tagService.createTagAssociation(tag.id, associatedTagId);
     return c.body(null, 201);
   } catch (error: any) {
     const message = typeof error?.message === 'string' ? error.message : 'Failed to create association';
@@ -255,13 +293,19 @@ tags.post('/:tagId/associations', async (c) => {
 });
 
 // DELETE /tags/{tagId}/associations - Remove association (requires auth)
+// Accepts both tag ID and tag name for flexibility
 tags.delete('/:tagId/associations', async (c) => {
   const user = getAuthUser(c);
   const tagService = resolveTagService(c);
-  const tagId = c.req.param('tagId');
+  const tagIdOrName = c.req.param('tagId');
   const associatedTagId = c.req.query('associated_tag_id');
 
-  const tag = await tagService.getTagById(tagId);
+  // Try to get tag by name first, then by ID
+  let tag = await tagService.getTagByName(tagIdOrName);
+  if (!tag) {
+    tag = await tagService.getTagById(tagIdOrName);
+  }
+  
   if (!tag) {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
@@ -275,7 +319,7 @@ tags.delete('/:tagId/associations', async (c) => {
   }
 
   try {
-    await tagService.removeTagAssociation(tagId, associatedTagId);
+    await tagService.removeTagAssociation(tag.id, associatedTagId);
     return c.body(null, 204);
   } catch (error) {
     console.error('Failed to remove tag association:', error);

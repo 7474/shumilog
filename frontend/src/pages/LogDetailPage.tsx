@@ -244,7 +244,7 @@ export function LogDetailPage() {
                   {log.tags.map((tag) => (
                     <Link
                       key={tag.id}
-                      to={`/tags/${tag.id}`}
+                      to={`/tags/${encodeURIComponent(tag.name)}`}
                       className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-sky-50 to-fresh-50 hover:from-sky-100 hover:to-fresh-100 text-sky-700 rounded-full text-sm font-medium transition-all border border-sky-200 hover:border-sky-300"
                     >
                       <span className="w-2 h-2 rounded-full bg-sky-500"></span>

@@ -19,7 +19,7 @@ interface TagDetail extends Tag {
 }
 
 export function TagDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const [tag, setTag] = useState<TagDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,14 +30,16 @@ export function TagDetailPage() {
 
   useEffect(() => {
     const fetchTag = async () => {
-      if (!id) {
-        setError('Tag ID not provided');
+      if (!name) {
+        setError('Tag name not provided');
         setLoading(false);
         return;
       }
 
       try {
-        const response = await api.tags[':id'].$get({ param: { id } });
+        // Decode the URL-encoded tag name
+        const decodedName = decodeURIComponent(name);
+        const response = await api.tags[':id'].$get({ param: { id: decodedName } });
         if (!response.ok) {
           throw new Error('Failed to fetch tag');
         }
@@ -52,13 +54,14 @@ export function TagDetailPage() {
     };
 
     fetchTag();
-  }, [id]);
+  }, [name]);
 
   const fetchTag = async () => {
-    if (!id) return;
+    if (!name) return;
     
     try {
-      const response = await api.tags[':id'].$get({ param: { id } });
+      const decodedName = decodeURIComponent(name);
+      const response = await api.tags[':id'].$get({ param: { id: decodedName } });
       if (!response.ok) {
         throw new Error('Failed to fetch tag');
       }
@@ -80,11 +83,12 @@ export function TagDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!name) return;
     
     if (window.confirm('このタグを削除してもよろしいですか？')) {
       try {
-        const response = await api.tags[':id'].$delete({ param: { id } });
+        const decodedName = decodeURIComponent(name);
+        const response = await api.tags[':id'].$delete({ param: { id: decodedName } });
         if (!response.ok) {
           throw new Error('Failed to delete tag');
         }
@@ -280,7 +284,7 @@ export function TagDetailPage() {
               <h3 className="text-sm font-semibold text-gray-700 mb-3">🔗 関連タグ</h3>
               <div className="flex flex-wrap gap-2">
                 {tag.associations.map((associatedTag) => (
-                  <Link key={associatedTag.id} to={`/tags/${associatedTag.id}`}>
+                  <Link key={associatedTag.id} to={`/tags/${encodeURIComponent(associatedTag.name)}`}>
                     <span className="inline-flex items-center space-x-1 px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm hover:bg-sky-100 transition-colors cursor-pointer">
                       <span className="w-2 h-2 rounded-full bg-sky-400"></span>
                       <span>{associatedTag.name}</span>
@@ -297,7 +301,7 @@ export function TagDetailPage() {
               <h3 className="text-sm font-semibold text-gray-700 mb-3">🔖 新着の被参照関連タグ</h3>
               <div className="flex flex-wrap gap-2">
                 {tag.recent_referring_tags.map((referringTag) => (
-                  <Link key={referringTag.id} to={`/tags/${referringTag.id}`}>
+                  <Link key={referringTag.id} to={`/tags/${encodeURIComponent(referringTag.name)}`}>
                     <span className="inline-flex items-center space-x-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100 transition-colors cursor-pointer">
                       <span className="w-2 h-2 rounded-full bg-green-400"></span>
                       <span>{referringTag.name}</span>

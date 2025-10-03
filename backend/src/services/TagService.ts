@@ -649,13 +649,13 @@ export class TagService {
     }
 
     try {
-      // まずWikipediaから全文を取得（mobile-sectionsエンドポイントを使用）
-      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/mobile-sections/${encodeURIComponent(tagName)}`;
+      // まずWikipediaから全文を取得（HTMLエンドポイントを使用）
+      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(tagName)}`;
       
       const response = await fetch(apiUrl, {
         headers: {
           'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
-          'Accept': 'application/json'
+          'Accept': 'text/html; charset=utf-8; profile="https://www.mediawiki.org/wiki/Specs/HTML/2.1.0"'
         }
       });
 
@@ -666,28 +666,21 @@ export class TagService {
         throw new Error(`Wikipedia API error: ${response.status}`);
       }
 
-      const data = await response.json() as any;
-      
-      // セクションから全テキストを抽出
-      let fullContent = '';
-      if (data.lead && data.lead.sections && data.lead.sections.length > 0) {
-        // リード部分のテキストを追加
-        fullContent += data.lead.sections[0].text || '';
-      }
-      
-      // 残りのセクションからテキストを抽出
-      if (data.remaining && data.remaining.sections) {
-        for (const section of data.remaining.sections) {
-          if (section.text) {
-            fullContent += '\n\n' + section.text;
-          }
-        }
-      }
+      // HTMLをテキストとして取得
+      const htmlContent = await response.text();
       
       // HTMLタグを除去してプレーンテキストに変換
-      fullContent = fullContent
+      let fullContent = htmlContent
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // スクリプトタグを削除
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')   // スタイルタグを削除
         .replace(/<[^>]*>/g, ' ')  // HTMLタグを削除
-        .replace(/\s+/g, ' ')       // 連続する空白を1つに
+        .replace(/&nbsp;/g, ' ')   // &nbsp;を空白に変換
+        .replace(/&lt;/g, '<')     // HTMLエンティティをデコード
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')      // 連続する空白を1つに
         .trim();
       
       if (!fullContent) {
@@ -695,9 +688,7 @@ export class TagService {
       }
 
       // Wikipedia URLを取得
-      const wikipediaUrl = data.lead?.displaytitle 
-        ? `https://ja.wikipedia.org/wiki/${encodeURIComponent(data.lead.displaytitle)}`
-        : `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
+      const wikipediaUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
 
       // AIサービスを使用して編集サポート内容を生成
       const aiOutput = await this.aiService.generateEnhancedTagContent({

@@ -81,23 +81,27 @@ export class AiService {
    * プロンプトを構築
    */
   private buildPrompt(input: AiEnhancedTagInput): string {
-    const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明を生成してください：
+    const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明を生成してください。
 
 Wikipedia内容：
 ${input.wikipediaContent}
 
-以下の形式で出力してください：
-1. タグを1行で端的に説明（50文字以内）
-2. 関連する要素をハッシュタグとして列挙（3〜10個）
-   - 空白を含まないタグ名: #タグ名 形式（例: #マンガ #ゲーム）
-   - 空白を含むタグ名: #{タグ名} 形式（例: #{Attack on Titan} #{進撃の巨人 第1期}）
-3. 特に関連する連載やシリーズのサブタイトルがある場合、見出しとハッシュタグで構造化
+【重要】以下の形式で必ず出力してください：
 
-出力例：
+1行目: "要約: " で始まる1行の端的な説明（50文字以内）
+2行目: "関連タグ: " で始まり、その後にハッシュタグを空白区切りで列挙（3〜10個）
+   - 空白を含まないタグ: #タグ名 形式（例: #マンガ #ゲーム）
+   - 空白を含むタグ: #{タグ名} 形式（例: #{Attack on Titan}）
+
+任意で追加セクション（関連作品や登場人物など）:
+3行目以降: "セクション名:" で始まり、その後にハッシュタグを列挙
+
+【出力形式例】
 要約: アニメーション作品の総称で、日本の独自文化として世界的に人気
 関連タグ: #マンガ #ゲーム #声優 #キャラクター #ストーリー #劇場版
-代表作品:
-#鬼滅の刃 #進撃の巨人 #ワンピース`;
+代表作品: #鬼滅の刃 #進撃の巨人 #ワンピース
+
+この形式を厳密に守って出力してください。`;
 
     console.log('[AiService] buildPrompt called:', {
       tagName: input.tagName,
@@ -137,50 +141,63 @@ ${input.wikipediaContent}
       contentPreview: content.substring(0, 200)
     });
 
-    // 簡易的なパース（実際のAI出力形式に応じて調整が必要）
+    // 行ごとに分割して解析
     const lines = content.split('\n').filter(line => line.trim());
     console.log('[AiService] Parsing', lines.length, 'lines');
     
     let summary = '';
     const relatedTags: string[] = [];
     const subsections: { title: string; tags: string[] }[] = [];
-    
-    let currentSubsection: { title: string; tags: string[] } | null = null;
 
     for (const line of lines) {
       const trimmed = line.trim();
       
+      // "要約:" または "説明:" で始まる行からサマリーを抽出
       if (trimmed.startsWith('要約:') || trimmed.startsWith('説明:')) {
         summary = trimmed.split(':', 2)[1].trim();
         console.log('[AiService] Found summary:', summary);
-      } else if (trimmed.startsWith('関連タグ:') || trimmed.includes('#')) {
-        // ハッシュタグを抽出
-        const tags = this.extractHashtags(trimmed);
-        console.log('[AiService] Extracted tags from line:', { line: trimmed, tags });
+      } 
+      // "関連タグ:" で始まる行から関連タグを抽出
+      else if (trimmed.startsWith('関連タグ:')) {
+        const tagsText = trimmed.split(':', 2)[1].trim();
+        const tags = this.extractHashtags(tagsText);
+        console.log('[AiService] Extracted related tags:', tags);
         relatedTags.push(...tags);
-      } else if (trimmed.startsWith('サブセクション:') || trimmed.startsWith('-')) {
-        if (trimmed.includes(':')) {
-          // 新しいサブセクションの開始
-          if (currentSubsection) {
-            subsections.push(currentSubsection);
+      }
+      // その他のセクション（":"を含む行）
+      else if (trimmed.includes(':') && !trimmed.startsWith('#')) {
+        const colonIndex = trimmed.indexOf(':');
+        const sectionTitle = trimmed.substring(0, colonIndex).trim();
+        const tagsText = trimmed.substring(colonIndex + 1).trim();
+        
+        // セクションタイトルが有効な場合のみ追加
+        if (sectionTitle && tagsText) {
+          const tags = this.extractHashtags(tagsText);
+          if (tags.length > 0) {
+            subsections.push({
+              title: sectionTitle,
+              tags: tags
+            });
+            console.log('[AiService] Found subsection:', sectionTitle, 'with', tags.length, 'tags');
           }
-          const [title, tagsStr] = trimmed.split(':', 2);
-          currentSubsection = {
-            title: title.replace(/^-\s*/, '').trim(),
-            tags: this.extractHashtags(tagsStr || '')
-          };
-          console.log('[AiService] Started new subsection:', currentSubsection.title);
-        } else if (currentSubsection && trimmed.includes('#')) {
-          // 既存のサブセクションにタグを追加
-          const tags = this.extractHashtags(trimmed);
-          currentSubsection.tags.push(...tags);
-          console.log('[AiService] Added tags to subsection:', tags);
         }
       }
-    }
-
-    if (currentSubsection) {
-      subsections.push(currentSubsection);
+      // ハッシュタグのみの行（前のセクションに追加）
+      else if (trimmed.includes('#')) {
+        const tags = this.extractHashtags(trimmed);
+        if (tags.length > 0) {
+          // 関連タグが空の場合は関連タグとして扱う
+          if (relatedTags.length === 0) {
+            relatedTags.push(...tags);
+            console.log('[AiService] Added to related tags:', tags);
+          }
+          // 直前にサブセクションがある場合はそこに追加
+          else if (subsections.length > 0) {
+            subsections[subsections.length - 1].tags.push(...tags);
+            console.log('[AiService] Added to last subsection:', tags);
+          }
+        }
+      }
     }
 
     // サマリーがない場合はデフォルト

@@ -5,6 +5,7 @@ import { api } from '@/services/api';
 import { Log } from '@/models';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 export function LogDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +22,11 @@ export function LogDetailPage() {
       }
 
       try {
-        const result = await api.logs.getById({ param: { id: parseInt(id) } });
+        const response = await api.logs[':logId'].$get({ param: { logId: id } });
+        if (!response.ok) {
+          throw new Error('Failed to fetch log');
+        }
+        const result = await response.json();
         setLog(result);
       } catch (err) {
         console.error('Failed to fetch log:', err);
@@ -108,7 +113,7 @@ export function LogDetailPage() {
         </CardHeader>
         <CardContent>
           <div>
-            <div>{log.content_md}</div>
+            <MarkdownRenderer content={log.content_md} />
           </div>
         </CardContent>
       </Card>

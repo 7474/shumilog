@@ -8,15 +8,67 @@
 - **Coverage**: Contract tests, unit tests, and integration tests with proper skipping
 - **CI**: Enabled in GitHub Actions running full test suite
 
-### ✅ Contract Tests
+### ✅ Contract Tests with OpenAPI Validation
 - **Command**: `npm run test:contract`
-- **Status**: All passing (72 passed, 29 appropriately skipped)
+- **Status**: All passing (79 passed, 29 appropriately skipped)
 - **Coverage**: API endpoint contracts, authentication flows, validation
+- **OpenAPI Validation**: Automated validation against `/api/v1/openapi.yaml` specification
 
 ### ⚠️ Integration Tests (Properly Skipped)
 - **Status**: Skipped with documented reasons (44 tests skipped)
 - **Reason**: Authentication middleware and OAuth flow issues in test environment
 - **Approach**: Tests are skipped with TODO comments explaining specific issues
+
+## OpenAPI Specification Validation
+
+The backend now includes **automated OpenAPI specification validation** to ensure that API implementations match the defined specification in `/api/v1/openapi.yaml`.
+
+### How It Works
+
+Contract tests automatically validate:
+- ✅ Response status codes match the specification
+- ✅ Response body structure matches defined schemas
+- ✅ Required fields are present
+- ✅ Field types are correct
+- ✅ Enum values are valid
+
+### Using OpenAPI Validation in Tests
+
+To add OpenAPI validation to a contract test:
+
+```typescript
+import { toOpenApiResponse } from '../helpers/openapi-setup';
+
+it('validates response against OpenAPI spec', async () => {
+  const response = await app.request('/users/me', {
+    method: 'GET',
+    headers: { Cookie: `session=${sessionToken}` }
+  });
+
+  // Convert Hono response to OpenAPI-compatible format and validate
+  const openApiResponse = await toOpenApiResponse(response, '/users/me', 'GET');
+  expect(openApiResponse).toSatisfyApiSpec();
+  
+  // Continue with additional assertions...
+});
+```
+
+### Maintaining the API Specification
+
+**Important**: The OpenAPI specification (`/api/v1/openapi.yaml`) is the **source of truth** for the API.
+
+When making API changes:
+1. **Update the specification first** - Modify `/api/v1/openapi.yaml`
+2. **Update contract tests** - Ensure tests match the new specification
+3. **Implement the changes** - Update the actual API implementation
+4. **Verify** - Run `npm run test:contract` to ensure implementation matches spec
+
+This workflow ensures:
+- ✅ API specification is always up-to-date
+- ✅ Implementation matches specification
+- ✅ Breaking changes are caught early
+- ✅ Documentation is automatically accurate
+
 
 ## Authentication Issues (Documented & Skipped)
 

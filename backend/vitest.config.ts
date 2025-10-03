@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    setupFiles: ['./tests/helpers/openapi-setup.ts'],
     env: {
       // Environment variables for testing
       ENVIRONMENT: 'test',

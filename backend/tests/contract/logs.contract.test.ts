@@ -7,13 +7,14 @@ import {
   seedTestTags,
   seedTestLogs
 } from '../helpers/app';
+import { toOpenApiResponse } from '../helpers/openapi-setup';
 
 /**
  * Contract Suite: Logs routes
  *
  * These tests define the expected behaviour for the logs endpoints served by the
- * Cloudflare Worker. They intentionally fail today because the Worker is still
- * returning mock data and does not persist to Cloudflare D1 yet.
+ * Cloudflare Worker. They include OpenAPI specification validation to ensure responses
+ * match the API contract.
  */
 describe('Contract: Logs routes', () => {
   beforeEach(async () => {
@@ -32,6 +33,10 @@ describe('Contract: Logs routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toContain('application/json');
+
+      // Validate response against OpenAPI specification
+      const openApiResponse = await toOpenApiResponse(response, '/logs', 'GET');
+      expect(openApiResponse).toSatisfyApiSpec();
 
       const payload = await response.json();
       expect(payload).toMatchObject({

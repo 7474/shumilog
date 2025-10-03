@@ -16,6 +16,45 @@ servers:
     description: Development server
 
 paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the API and its services
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - timestamp
+                  - services
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-10-03T12:00:00.000Z"
+                  services:
+                    type: object
+                    required:
+                      - database
+                      - backend
+                    properties:
+                      database:
+                        type: string
+                        enum: [connected, disconnected, unknown]
+                        example: connected
+                      backend:
+                        type: string
+                        enum: [running, degraded]
+                        example: running
+
   /auth/twitter:
     get:
       summary: Initiate Twitter OAuth flow

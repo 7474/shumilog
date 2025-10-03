@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Hono } from 'hono';
+import { toOpenApiResponse } from '../helpers/openapi-setup';
+
+/**
+ * Contract Test: GET /health
+ * 
+ * Validates that the health endpoint conforms to the OpenAPI specification
+ */
 
 describe('Contract Test: GET /health', () => {
   let app: Hono;
@@ -29,6 +36,10 @@ describe('Contract Test: GET /health', () => {
     const res = await app.request('/health');
     
     expect(res.status).toBe(200);
+    
+    // Validate response against OpenAPI specification
+    const openApiResponse = await toOpenApiResponse(res, '/health', 'GET');
+    expect(openApiResponse).toSatisfyApiSpec();
     
     const json = await res.json();
     expect(json).toMatchObject({

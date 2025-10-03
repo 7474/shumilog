@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { app, clearTestData, createTestSession, createTestUser } from '../helpers/app';
+import { toOpenApiResponse } from '../helpers/openapi-setup';
 
 /**
  * Contract Suite: Users routes
  *
  * These tests describe the expected behaviour for the `/users/me` endpoint.
- * They intentionally fail today because the Worker implementation still returns
- * hard-coded data and does not integrate with the session/user stores seeded in tests.
+ * They now include OpenAPI specification validation to ensure responses match the API contract.
  */
 describe('Contract: Users routes', () => {
   beforeEach(async () => {
@@ -34,6 +34,10 @@ describe('Contract: Users routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toContain('application/json');
+
+      // Validate response against OpenAPI specification
+      const openApiResponse = await toOpenApiResponse(response, '/users/me', 'GET');
+      expect(openApiResponse).toSatisfyApiSpec();
 
       const user = await response.json();
       expect(user).toMatchObject({

@@ -19,6 +19,7 @@ import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
 import healthRoutes from './routes/health.js';
 import devRoutes from './routes/dev.js';
+import supportRoutes from './routes/support.js';
 
 export interface RuntimeEnv {
   DB?: D1Database;
@@ -103,6 +104,10 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
     return optionalAuth(c, next);
   });
   app.route('/logs', logRoutes);
+
+  // Support routes require authentication
+  app.use('/support', requireAuth);
+  app.route('/support', supportRoutes);
 }
 
 export function createApp(env: RuntimeEnv = {}) {

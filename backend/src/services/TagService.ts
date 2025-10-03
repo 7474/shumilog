@@ -649,8 +649,8 @@ export class TagService {
     }
 
     try {
-      // まずWikipediaから基本情報を取得
-      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tagName)}`;
+      // まずWikipediaから全文を取得（mobile-sectionsエンドポイントを使用）
+      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/mobile-sections/${encodeURIComponent(tagName)}`;
       
       const response = await fetch(apiUrl, {
         headers: {
@@ -668,19 +668,41 @@ export class TagService {
 
       const data = await response.json() as any;
       
-      if (!data.extract) {
-        throw new Error('No summary available');
+      // セクションから全テキストを抽出
+      let fullContent = '';
+      if (data.lead && data.lead.sections && data.lead.sections.length > 0) {
+        // リード部分のテキストを追加
+        fullContent += data.lead.sections[0].text || '';
+      }
+      
+      // 残りのセクションからテキストを抽出
+      if (data.remaining && data.remaining.sections) {
+        for (const section of data.remaining.sections) {
+          if (section.text) {
+            fullContent += '\n\n' + section.text;
+          }
+        }
+      }
+      
+      // HTMLタグを除去してプレーンテキストに変換
+      fullContent = fullContent
+        .replace(/<[^>]*>/g, ' ')  // HTMLタグを削除
+        .replace(/\s+/g, ' ')       // 連続する空白を1つに
+        .trim();
+      
+      if (!fullContent) {
+        throw new Error('No content available');
       }
 
-      const wikipediaUrl = data.content_urls?.desktop?.page;
-      if (!wikipediaUrl) {
-        throw new Error('Wikipedia URL not available');
-      }
+      // Wikipedia URLを取得
+      const wikipediaUrl = data.lead?.displaytitle 
+        ? `https://ja.wikipedia.org/wiki/${encodeURIComponent(data.lead.displaytitle)}`
+        : `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
 
       // AIサービスを使用して編集サポート内容を生成
       const aiOutput = await this.aiService.generateEnhancedTagContent({
         tagName,
-        wikipediaContent: data.extract as string,
+        wikipediaContent: fullContent,
         wikipediaUrl
       });
 

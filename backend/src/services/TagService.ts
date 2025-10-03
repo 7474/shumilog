@@ -563,7 +563,13 @@ export class TagService {
       }
 
       // Convert the summary to include hashtags for key terms
-      const content = this.convertToHashtaggedContent(data.extract as string, tagName);
+      let content = this.convertToHashtaggedContent(data.extract as string, tagName);
+      
+      // Add Wikipedia CC attribution link at the end of content
+      const wikipediaUrl = data.content_urls?.desktop?.page;
+      if (wikipediaUrl) {
+        content += `\n\n出典: [Wikipedia](<${wikipediaUrl}>)`;
+      }
       
       return {
         content,

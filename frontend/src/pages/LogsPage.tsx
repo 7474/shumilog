@@ -3,6 +3,7 @@ import { api } from '@/services/api';
 import { Log } from '@/models';
 import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -18,12 +19,14 @@ export function LogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated } = useAuth();
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (search?: string) => {
     try {
       setLoading(true);
-      const response = await api.logs.$get();
+      const query = search ? { search } : {};
+      const response = await api.logs.$get({ query });
       if (!response.ok) {
         throw new Error('Failed to fetch logs');
       }
@@ -43,6 +46,16 @@ export function LogsPage() {
   const handleSuccess = () => {
     setShowForm(false);
     setSelectedLog(undefined);
+    fetchLogs(searchQuery || undefined);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchLogs(searchQuery || undefined);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
     fetchLogs();
   };
 
@@ -110,6 +123,38 @@ export function LogsPage() {
           {!isAuthenticated ? '🔒 ログインして作成' : showForm ? '✕ キャンセル' : '✏️ 新しいログを作成'}
         </Button>
       </div>
+
+      {/* 検索フォーム */}
+      <Card className="card-fresh">
+        <CardContent className="pt-6">
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="🔍 ログを検索... (例: アニメ、進撃、RPG)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1"
+            />
+            <Button type="submit" className="btn-fresh">
+              検索
+            </Button>
+            {searchQuery && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleClearSearch}
+              >
+                クリア
+              </Button>
+            )}
+          </form>
+          {searchQuery && (
+            <p className="text-sm text-gray-600 mt-2">
+              「{searchQuery}」で検索中
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ログ作成フォーム */}
       {showForm && (

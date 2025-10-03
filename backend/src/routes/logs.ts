@@ -183,6 +183,7 @@ logs.get('/', async (c) => {
     ? rawTagIds.split(',').map((id) => id.trim()).filter(Boolean)
     : [];
   const userId = c.req.query('user_id')?.trim() || undefined;
+  const search = c.req.query('search')?.trim() || undefined;
   const limit = parsePositiveInt(c.req.query('limit'), 20);
   const offset = parsePositiveInt(c.req.query('offset'), 0);
 
@@ -201,6 +202,7 @@ logs.get('/', async (c) => {
       tag_ids: tagIds.length > 0 ? tagIds : undefined,
       user_id: userId,
       is_public: true,
+      search,
       limit,
       offset,
     };

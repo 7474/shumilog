@@ -14,12 +14,7 @@ export interface AiEnhancedTagInput {
 }
 
 export interface AiEnhancedTagOutput {
-  summary: string;
-  relatedTags: string[];
-  subsections?: {
-    title: string;
-    tags: string[];
-  }[];
+  markdown: string;
 }
 
 export class AiService {
@@ -65,10 +60,7 @@ export class AiService {
       // AI応答をパース
       const result = this.parseAiResponse(response, input.tagName);
       console.log('[AiService] generateEnhancedTagContent result:', {
-        summary: result.summary,
-        relatedTagsCount: result.relatedTags.length,
-        hasSubsections: !!result.subsections,
-        subsectionsCount: result.subsections?.length || 0
+        markdownLength: result.markdown.length
       });
       return result;
     } catch (error) {
@@ -79,32 +71,49 @@ export class AiService {
 
   /**
    * プロンプトを構築
+   * 
+   * 【重要】連載・シリーズ作品のサブタイトル情報の抽出は重要要素です。
+   * AIに対して、シーズン、期、章、巻、エピソード、各話タイトルなどの
+   * サブタイトル情報を省略せず、すべて列挙するよう明示的に指示しています。
+   * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
   private buildPrompt(input: AiEnhancedTagInput): string {
-    const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明を生成してください。
+    const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明をMarkdown形式で生成してください。
 
 Wikipedia内容：
 ${input.wikipediaContent}
 
-【重要】以下の形式で必ず出力してください：
+【重要】必ずMarkdown形式で出力してください：
 
-1行目: "要約: " で始まる1行の端的な説明（50文字以内）
-2行目: "関連タグ: " で始まり、その後にハッシュタグを空白区切りで列挙（3〜10個）
+1. 最初の段落: 1〜2行の端的な説明文（プレーンテキスト）
+2. 関連タグ: "**関連タグ**: " で始まり、その後にハッシュタグを空白区切りで列挙（3〜10個）
    - 空白を含まないタグ: #タグ名 形式（例: #マンガ #ゲーム）
    - 空白を含むタグ: #{タグ名} 形式（例: #{Attack on Titan}）
+3. サブセクション（オプション）: 連載・シリーズ作品の場合、### 見出しで各セクションを作成し、その下に箇条書き（- で始まる）でハッシュタグを列挙
+   - 【必須】連載・シリーズのサブタイトル情報は省略しないでください
+   - 特にシーズン、期、章、巻、エピソード、各話タイトルなどの情報はすべて列挙してください
+   - 各話・エピソードのタイトルも重要な情報として含めてください
 
-【必須】連載やシリーズのサブタイトル、関連作品、登場人物などがある場合は、必ず追加セクションとして出力してください：
-3行目以降: "セクション名:" で始まり、その後にハッシュタグを列挙
-   - 特に連載作品やシリーズものの場合、サブタイトルや関連作品を省略せず、すべて列挙してください
-   - 例: シーズン、期、章、巻、エピソードなどの情報も重要です
+【出力例】
+アニメーション作品の総称で、日本の独自文化として世界的に人気があります。
 
-【出力形式例】
-要約: アニメーション作品の総称で、日本の独自文化として世界的に人気
-関連タグ: #マンガ #ゲーム #声優 #キャラクター #ストーリー #劇場版
-代表作品: #鬼滅の刃 #進撃の巨人 #ワンピース
-シーズン: #{進撃の巨人 Season1} #{進撃の巨人 Season2} #{進撃の巨人 Season3}
+**関連タグ**: #マンガ #ゲーム #声優 #キャラクター #ストーリー #劇場版
 
-この形式を厳密に守って出力してください。特に連載・シリーズのサブタイトル情報は省略しないでください。`;
+### 代表作品
+- #鬼滅の刃
+- #進撃の巨人
+- #ワンピース
+
+### シーズン
+- #{進撃の巨人 Season1}
+- #{進撃の巨人 Season2}
+- #{進撃の巨人 Season3}
+
+### 主要エピソード（例）
+- #{第1話 二千年後の君へ}
+- #{第2話 その日}
+
+この形式を厳密に守ってMarkdownで出力してください。特に連載・シリーズのサブタイトル情報（各話・エピソードタイトルを含む）は省略しないでください。`;
 
     console.log('[AiService] buildPrompt called:', {
       tagName: input.tagName,
@@ -116,7 +125,8 @@ ${input.wikipediaContent}
   }
 
   /**
-   * AI応答をパースして構造化データに変換
+   * AI応答をパースしてMarkdownテキストに変換
+   * AI出力をそのまま使用し、加工は行わない
    */
   private parseAiResponse(response: any, tagName: string): AiEnhancedTagOutput {
     console.log('[AiService] parseAiResponse called with:', {
@@ -144,145 +154,36 @@ ${input.wikipediaContent}
       contentPreview: content.substring(0, 200)
     });
 
-    // 行ごとに分割して解析
-    const lines = content.split('\n').filter(line => line.trim());
-    console.log('[AiService] Parsing', lines.length, 'lines');
-    
-    let summary = '';
-    const relatedTags: string[] = [];
-    const subsections: { title: string; tags: string[] }[] = [];
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      
-      // "要約:" または "説明:" で始まる行からサマリーを抽出
-      if (trimmed.startsWith('要約:') || trimmed.startsWith('説明:')) {
-        summary = trimmed.split(':', 2)[1].trim();
-        console.log('[AiService] Found summary:', summary);
-      } 
-      // "関連タグ:" で始まる行から関連タグを抽出
-      else if (trimmed.startsWith('関連タグ:')) {
-        const tagsText = trimmed.split(':', 2)[1].trim();
-        const tags = this.extractHashtags(tagsText);
-        console.log('[AiService] Extracted related tags:', tags);
-        relatedTags.push(...tags);
-      }
-      // その他のセクション（":"を含む行）
-      else if (trimmed.includes(':') && !trimmed.startsWith('#')) {
-        const colonIndex = trimmed.indexOf(':');
-        const sectionTitle = trimmed.substring(0, colonIndex).trim();
-        const tagsText = trimmed.substring(colonIndex + 1).trim();
-        
-        // セクションタイトルが有効な場合のみ追加
-        if (sectionTitle && tagsText) {
-          const tags = this.extractHashtags(tagsText);
-          if (tags.length > 0) {
-            subsections.push({
-              title: sectionTitle,
-              tags: tags
-            });
-            console.log('[AiService] Found subsection:', sectionTitle, 'with', tags.length, 'tags');
-          }
-        }
-      }
-      // ハッシュタグのみの行（前のセクションに追加）
-      else if (trimmed.includes('#')) {
-        const tags = this.extractHashtags(trimmed);
-        if (tags.length > 0) {
-          // 関連タグが空の場合は関連タグとして扱う
-          if (relatedTags.length === 0) {
-            relatedTags.push(...tags);
-            console.log('[AiService] Added to related tags:', tags);
-          }
-          // 直前にサブセクションがある場合はそこに追加
-          else if (subsections.length > 0) {
-            subsections[subsections.length - 1].tags.push(...tags);
-            console.log('[AiService] Added to last subsection:', tags);
-          }
-        }
-      }
-    }
-
-    // サマリーがない場合はデフォルト
-    if (!summary) {
-      summary = `${tagName}に関する情報`;
-      console.log('[AiService] Using default summary');
-    }
+    // AI応答をそのまま返す（加工しない）
+    const markdown = content.trim() || `${tagName}に関する情報`;
 
     const result = {
-      summary,
-      relatedTags: [...new Set(relatedTags)], // 重複削除
-      subsections: subsections.length > 0 ? subsections : undefined
+      markdown
     };
 
     console.log('[AiService] parseAiResponse result:', {
-      summaryLength: result.summary.length,
-      relatedTagsCount: result.relatedTags.length,
-      subsectionsCount: result.subsections?.length || 0
+      markdownLength: result.markdown.length
     });
 
     return result;
   }
 
   /**
-   * テキストからハッシュタグを抽出
-   */
-  private extractHashtags(text: string): string[] {
-    const tags: string[] = [];
-    
-    // #{tagName} 形式
-    const curlyMatches = text.matchAll(/#\{([^}]+)\}/g);
-    for (const match of curlyMatches) {
-      tags.push(match[1].trim());
-    }
-    
-    // #tagName 形式（日本語対応）
-    const simpleMatches = text.matchAll(/#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_-]+)/g);
-    for (const match of simpleMatches) {
-      tags.push(match[1].trim());
-    }
-    
-    return tags;
-  }
-
-  /**
    * AI生成コンテンツをMarkdown形式に変換
-   * AI生成部分をMarkdownコメントでラップする
+   * AI生成部分をMarkdownコメントでラップし、Wikipedia出典を追加
    */
   formatAsMarkdown(output: AiEnhancedTagOutput, wikipediaUrl: string): string {
     console.log('[AiService] formatAsMarkdown called with:', {
-      summary: output.summary,
-      relatedTagsCount: output.relatedTags.length,
-      subsectionsCount: output.subsections?.length || 0,
+      markdownLength: output.markdown.length,
       wikipediaUrl
     });
 
+    // AI生成コンテンツをコメントでラップ
     let markdown = '<!-- AI生成コンテンツ開始 -->\n\n';
+    markdown += output.markdown;
+    markdown += '\n\n<!-- AI生成コンテンツ終了 -->\n\n';
     
-    // 要約
-    markdown += `${output.summary}\n\n`;
-    
-    // 関連タグ
-    if (output.relatedTags.length > 0) {
-      markdown += '**関連タグ**: ';
-      markdown += output.relatedTags.map(tag => this.formatHashtag(tag)).join(' ');
-      markdown += '\n\n';
-    }
-    
-    // サブセクション
-    if (output.subsections && output.subsections.length > 0) {
-      for (const subsection of output.subsections) {
-        markdown += `### ${subsection.title}\n\n`;
-        if (subsection.tags.length > 0) {
-          markdown += subsection.tags.map(tag => `- ${this.formatHashtag(tag)}`).join('\n');
-          markdown += '\n\n';
-        }
-      }
-    }
-    
-    markdown += '<!-- AI生成コンテンツ終了 -->\n\n';
-    
-    // Wikipedia出典
+    // Wikipedia出典を追加
     markdown += `出典: [Wikipedia](<${wikipediaUrl}>)`;
     
     console.log('[AiService] formatAsMarkdown result:', {
@@ -291,16 +192,5 @@ ${input.wikipediaContent}
     });
 
     return markdown;
-  }
-
-  /**
-   * タグ名をハッシュタグ形式にフォーマット
-   * 空白を含む場合は #{タグ名}、含まない場合は #タグ名 形式
-   */
-  private formatHashtag(tagName: string): string {
-    if (tagName.includes(' ')) {
-      return `#{${tagName}}`;
-    }
-    return `#${tagName}`;
   }
 }

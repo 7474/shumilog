@@ -78,9 +78,9 @@ export class AiService {
    * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
   private buildPrompt(input: AiEnhancedTagInput): string {
-    const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明をMarkdown形式で生成してください。
+    const prompt = `以下のWikipedia情報（HTML形式）を基に、タグ「${input.tagName}」の説明をMarkdown形式で生成してください。
 
-Wikipedia内容：
+Wikipedia内容（HTML）：
 ${input.wikipediaContent}
 
 【重要】必ずMarkdown形式で出力してください：

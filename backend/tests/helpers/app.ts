@@ -94,20 +94,22 @@ async function insertUser({
   twitterUsername,
   displayName,
   avatarUrl,
+  role,
   createdAt,
 }: {
   id: string;
   twitterUsername: string;
   displayName: string;
   avatarUrl?: string;
+  role?: 'user' | 'admin';
   createdAt: string;
 }): Promise<void> {
   await testD1
     .prepare(
-      `INSERT OR IGNORE INTO users (id, twitter_username, display_name, avatar_url, created_at)
-       VALUES (?, ?, ?, ?, ?)`
+      `INSERT OR IGNORE INTO users (id, twitter_username, display_name, avatar_url, role, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, twitterUsername, displayName, avatarUrl ?? null, createdAt)
+    .bind(id, twitterUsername, displayName, avatarUrl ?? null, role ?? 'user', createdAt)
     .run();
 }
 
@@ -206,19 +208,24 @@ export async function createTestSession(userId: string = 'mock-user-id'): Promis
   return token;
 }
 
-export async function createTestUser(userId: string = 'mock-user-id', username: string = 'testuser'): Promise<void> {
+export async function createTestUser(
+  userId: string = 'mock-user-id', 
+  username: string = 'testuser',
+  role: 'user' | 'admin' = 'user'
+): Promise<void> {
   const now = new Date().toISOString();
   await insertUser({
     id: userId,
     twitterUsername: username,
     displayName: `Test User ${username}`,
     avatarUrl: `https://example.com/avatar/${username}.jpg`,
+    role,
     createdAt: now,
   });
 }
 
 export async function seedTestTags(): Promise<void> {
-  await createTestUser('mock-user-id', 'tag_creator');
+  await createTestUser('mock-user-id', 'tag_creator', 'admin'); // Make tag creator an admin
   const now = new Date().toISOString();
   const tags = [
     {

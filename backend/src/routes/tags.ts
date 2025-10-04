@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { getAuthUser } from '../middleware/auth.js';
 import { TagService } from '../services/TagService.js';
+import { UserService } from '../services/UserService.js';
 
 const tags = new Hono();
 
@@ -9,6 +10,14 @@ const resolveTagService = (c: any): TagService => {
   const service = (c as any).get('tagService') as TagService | undefined;
   if (!service) {
     throw new HTTPException(500, { message: 'Tag service not available' });
+  }
+  return service;
+};
+
+const resolveUserService = (c: any): UserService => {
+  const service = (c as any).get('userService') as UserService | undefined;
+  if (!service) {
+    throw new HTTPException(500, { message: 'User service not available' });
   }
   return service;
 };
@@ -196,12 +205,18 @@ tags.put('/:tagId', async (c) => {
   }
 });
 
-// DELETE /tags/{tagId} - Delete tag (requires auth)
+// DELETE /tags/{tagId} - Delete tag (requires admin privileges)
 // Accepts both tag ID and tag name for flexibility
 tags.delete('/:tagId', async (c) => {
   const user = getAuthUser(c);
   const tagService = resolveTagService(c);
+  const userService = resolveUserService(c);
   const tagIdOrName = c.req.param('tagId');
+
+  // Check admin privileges
+  if (!userService.isAdmin(user)) {
+    throw new HTTPException(403, { message: 'Admin privileges required to delete tags' });
+  }
 
   // Try to get tag by name first, then by ID
   let existing = await tagService.getTagByName(tagIdOrName);
@@ -211,10 +226,6 @@ tags.delete('/:tagId', async (c) => {
   
   if (!existing) {
     throw new HTTPException(404, { message: 'Tag not found' });
-  }
-
-  if (existing.created_by !== user.id) {
-    throw new HTTPException(403, { message: 'Not tag owner' });
   }
 
   await tagService.deleteTag(existing.id);

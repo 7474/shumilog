@@ -286,9 +286,9 @@ describe('Contract: Tags routes', () => {
       expect(response.status).toBe(401);
     });
 
-    it('returns 403 when user is not the owner', async () => {
+    it('returns 403 when user is not admin', async () => {
       await setupTestEnvironment();
-      await createTestUser('other-user', 'other_user');
+      await createTestUser('other-user', 'other_user', 'user'); // Regular user, not admin
       const otherSession = await createTestSession('other-user');
 
       const response = await app.request('/tags/tag_anime', {
@@ -303,7 +303,7 @@ describe('Contract: Tags routes', () => {
 
     it('returns 404 when tag does not exist', async () => {
       const userId = 'tags_creator';
-      await createTestUser(userId, 'tags_creator');
+      await createTestUser(userId, 'tags_creator', 'admin'); // Create admin user
       const sessionToken = await createTestSession(userId);
 
       const response = await app.request('/tags/unknown-tag', {

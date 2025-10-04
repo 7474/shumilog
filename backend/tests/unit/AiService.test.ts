@@ -3,14 +3,23 @@ import { AiService, type AiBinding } from '../../src/services/AiService';
 
 describe('AiService', () => {
   describe('generateEnhancedTagContent', () => {
-    it('should generate enhanced content from AI response', async () => {
+    it('should generate enhanced content from AI response in markdown format', async () => {
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
-          response: `要約: 人類と巨人の戦いを描くダークファンタジー作品
-関連タグ: #マンガ #アニメ #ダークファンタジー #バトル #諫山創
-サブセクション:
-- 主要キャラクター: #エレン #ミカサ #アルミン #リヴァイ
-- 主要部隊: #調査兵団 #駐屯兵団 #憲兵団`
+          response: `人類と巨人の戦いを描くダークファンタジー作品。連載作品として大きな人気を博しました。
+
+**関連タグ**: #マンガ #アニメ #ダークファンタジー #バトル #諫山創
+
+### 主要キャラクター
+- #エレン
+- #ミカサ
+- #アルミン
+- #リヴァイ
+
+### 主要部隊
+- #調査兵団
+- #駐屯兵団
+- #憲兵団`
         })
       };
 
@@ -21,21 +30,20 @@ describe('AiService', () => {
         wikipediaUrl: 'https://ja.wikipedia.org/wiki/進撃の巨人'
       });
 
-      expect(result.summary).toBeTruthy();
-      expect(result.relatedTags).toBeInstanceOf(Array);
-      expect(result.relatedTags.length).toBeGreaterThan(0);
-      expect(result.relatedTags).toContain('マンガ');
-      expect(result.relatedTags).toContain('アニメ');
-      
-      expect(result.subsections).toBeDefined();
-      expect(result.subsections?.length).toBeGreaterThan(0);
+      expect(result.markdown).toBeTruthy();
+      expect(result.markdown).toContain('人類と巨人の戦い');
+      expect(result.markdown).toContain('**関連タグ**');
+      expect(result.markdown).toContain('#マンガ');
+      expect(result.markdown).toContain('#アニメ');
+      expect(result.markdown).toContain('### 主要キャラクター');
     });
 
     it('should handle AI response without subsections', async () => {
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
-          response: `要約: シンプルな説明
-関連タグ: #タグ1 #タグ2`
+          response: `シンプルな説明文です。
+
+**関連タグ**: #タグ1 #タグ2`
         })
       };
 
@@ -46,10 +54,10 @@ describe('AiService', () => {
         wikipediaUrl: 'https://ja.wikipedia.org/wiki/テスト'
       });
 
-      expect(result.summary).toBeTruthy();
-      expect(result.relatedTags).toContain('タグ1');
-      expect(result.relatedTags).toContain('タグ2');
-      expect(result.subsections).toBeUndefined();
+      expect(result.markdown).toBeTruthy();
+      expect(result.markdown).toContain('シンプルな説明文');
+      expect(result.markdown).toContain('#タグ1');
+      expect(result.markdown).toContain('#タグ2');
     });
 
     it('should throw error when AI request fails', async () => {
@@ -70,21 +78,20 @@ describe('AiService', () => {
   });
 
   describe('formatAsMarkdown', () => {
-    it('should format AI output as markdown with comments', () => {
+    it('should wrap AI markdown output with comments and add Wikipedia source', () => {
       const mockAi: AiBinding = {
         run: vi.fn()
       };
 
       const aiService = new AiService(mockAi);
       const output = {
-        summary: 'テストの説明',
-        relatedTags: ['タグ1', 'タグ2', 'タグ3'],
-        subsections: [
-          {
-            title: 'セクション1',
-            tags: ['サブタグ1', 'サブタグ2']
-          }
-        ]
+        markdown: `テストの説明文です。
+
+**関連タグ**: #タグ1 #タグ2 #タグ3
+
+### セクション1
+- #サブタグ1
+- #サブタグ2`
       };
 
       const markdown = aiService.formatAsMarkdown(
@@ -96,16 +103,12 @@ describe('AiService', () => {
       expect(markdown).toContain('<!-- AI生成コンテンツ開始 -->');
       expect(markdown).toContain('<!-- AI生成コンテンツ終了 -->');
       
-      // 要約を確認
-      expect(markdown).toContain('テストの説明');
-      
-      // 関連タグを確認
+      // AI生成内容がそのまま含まれていることを確認
+      expect(markdown).toContain('テストの説明文');
       expect(markdown).toContain('**関連タグ**');
       expect(markdown).toContain('#タグ1');
       expect(markdown).toContain('#タグ2');
       expect(markdown).toContain('#タグ3');
-      
-      // サブセクションを確認
       expect(markdown).toContain('### セクション1');
       expect(markdown).toContain('- #サブタグ1');
       expect(markdown).toContain('- #サブタグ2');
@@ -115,15 +118,16 @@ describe('AiService', () => {
       expect(markdown).toContain('https://ja.wikipedia.org/wiki/テスト');
     });
 
-    it('should format without subsections when not provided', () => {
+    it('should handle simple markdown without subsections', () => {
       const mockAi: AiBinding = {
         run: vi.fn()
       };
 
       const aiService = new AiService(mockAi);
       const output = {
-        summary: 'シンプルな説明',
-        relatedTags: ['タグ1', 'タグ2']
+        markdown: `シンプルな説明
+
+**関連タグ**: #タグ1 #タグ2`
       };
 
       const markdown = aiService.formatAsMarkdown(
@@ -134,24 +138,24 @@ describe('AiService', () => {
       expect(markdown).toContain('<!-- AI生成コンテンツ開始 -->');
       expect(markdown).toContain('シンプルな説明');
       expect(markdown).toContain('#タグ1');
-      expect(markdown).not.toContain('###');
+      expect(markdown).not.toContain('###'); // セクション見出しがないことを確認
     });
 
-    it('should format tags with spaces using curly braces', () => {
+    it('should handle markdown with tags containing spaces', () => {
       const mockAi: AiBinding = {
         run: vi.fn()
       };
 
       const aiService = new AiService(mockAi);
       const output = {
-        summary: 'タグ名に空白を含む例',
-        relatedTags: ['Attack on Titan', '進撃の巨人 第1期', 'シンプルタグ', 'Another Tag'],
-        subsections: [
-          {
-            title: '主要キャラクター',
-            tags: ['Eren Yeager', 'ミカサ', 'Armin Arlert']
-          }
-        ]
+        markdown: `タグ名に空白を含む例
+
+**関連タグ**: #{Attack on Titan} #{進撃の巨人 第1期} #シンプルタグ #{Another Tag}
+
+### 主要キャラクター
+- #{Eren Yeager}
+- #ミカサ
+- #{Armin Arlert}`
       };
 
       const markdown = aiService.formatAsMarkdown(
@@ -159,45 +163,16 @@ describe('AiService', () => {
         'https://ja.wikipedia.org/wiki/進撃の巨人'
       );
 
-      // 空白を含むタグは #{} 形式
+      // 空白を含むタグは #{} 形式で保持されていることを確認
       expect(markdown).toContain('#{Attack on Titan}');
       expect(markdown).toContain('#{進撃の巨人 第1期}');
       expect(markdown).toContain('#{Another Tag}');
       expect(markdown).toContain('#{Eren Yeager}');
       expect(markdown).toContain('#{Armin Arlert}');
       
-      // 空白を含まないタグは # 形式
+      // 空白を含まないタグは # 形式で保持されていることを確認
       expect(markdown).toContain('#シンプルタグ');
       expect(markdown).toContain('#ミカサ');
-      
-      // 混在していることを確認
-      expect(markdown).toMatch(/#{Attack on Titan}.*#シンプルタグ/);
-    });
-  });
-
-  describe('extractHashtags', () => {
-    it('should extract hashtags in both formats', () => {
-      const mockAi: AiBinding = {
-        run: vi.fn()
-      };
-
-      const aiService = new AiService(mockAi);
-      
-      // プライベートメソッドなので、間接的にテスト
-      // formatAsMarkdownを通じて動作を確認
-      const output = {
-        summary: 'テスト',
-        relatedTags: ['テスト タグ', 'シンプルタグ', 'Test123']
-      };
-
-      const markdown = aiService.formatAsMarkdown(output, 'https://test.com');
-      
-      // 両方の形式が含まれていることを確認
-      // 空白を含むタグは #{} 形式
-      expect(markdown).toContain('#{テスト タグ}');
-      // 空白を含まないタグは # 形式
-      expect(markdown).toContain('#シンプルタグ');
-      expect(markdown).toContain('#Test123');
     });
   });
 });

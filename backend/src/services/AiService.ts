@@ -71,6 +71,10 @@ export class AiService {
 
   /**
    * プロンプトを構築
+   * 
+   * 【重要】連載・シリーズ作品のサブタイトル情報の抽出は重要要素です。
+   * AIに対して、シーズン、期、章、巻、エピソードなどのサブタイトル情報を
+   * 省略せず、すべて列挙するよう明示的に指示しています。
    */
   private buildPrompt(input: AiEnhancedTagInput): string {
     const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明をMarkdown形式で生成してください。
@@ -85,6 +89,8 @@ ${input.wikipediaContent}
    - 空白を含まないタグ: #タグ名 形式（例: #マンガ #ゲーム）
    - 空白を含むタグ: #{タグ名} 形式（例: #{Attack on Titan}）
 3. サブセクション（オプション）: 連載・シリーズ作品の場合、### 見出しで各セクションを作成し、その下に箇条書き（- で始まる）でハッシュタグを列挙
+   - 【必須】連載・シリーズのサブタイトル情報は省略しないでください
+   - 特にシーズン、期、章、巻、エピソードなどの情報はすべて列挙してください
 
 【出力例】
 アニメーション作品の総称で、日本の独自文化として世界的に人気があります。
@@ -101,7 +107,7 @@ ${input.wikipediaContent}
 - #{進撃の巨人 Season2}
 - #{進撃の巨人 Season3}
 
-この形式を厳密に守ってMarkdownで出力してください。`;
+この形式を厳密に守ってMarkdownで出力してください。特に連載・シリーズのサブタイトル情報は省略しないでください。`;
 
     console.log('[AiService] buildPrompt called:', {
       tagName: input.tagName,

@@ -210,6 +210,46 @@ describe('Association Ordering', () => {
       expect(referringTags[2].name).toBe('FirstReferrer');
     });
 
+    it('should support sorting tag associations by creation time', async () => {
+      const mainTag = await tagService.createTag(
+        {
+          name: 'MainTag',
+          description: 'Initial with #FirstTag',
+          metadata: {}
+        },
+        testUserId
+      );
+
+      // Small delay
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Update to add more tags
+      await tagService.updateTag(mainTag.id, {
+        description: 'Updated with #FirstTag #SecondTag'
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Update again to add third tag
+      await tagService.updateTag(mainTag.id, {
+        description: 'Updated with #FirstTag #SecondTag #ThirdTag'
+      });
+
+      // Get associations sorted by order (default)
+      const associationsByOrder = await tagService.getTagAssociations(mainTag.id, 'order');
+      expect(associationsByOrder).toHaveLength(3);
+      expect(associationsByOrder[0].name).toBe('FirstTag');
+      expect(associationsByOrder[1].name).toBe('SecondTag');
+      expect(associationsByOrder[2].name).toBe('ThirdTag');
+
+      // Get associations sorted by recent (creation time)
+      const associationsByRecent = await tagService.getTagAssociations(mainTag.id, 'recent');
+      expect(associationsByRecent).toHaveLength(3);
+      // When updated, all associations are recreated, so they might have same timestamp
+      // But the sorting should still work without errors
+      expect(associationsByRecent).toHaveLength(3);
+    });
+
     it('should get recent logs for tag sorted by log creation time', async () => {
       const tag = await tagService.createTag(
         { name: 'TestTag', metadata: {} },

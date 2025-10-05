@@ -398,15 +398,21 @@ export class TagService {
 
   /**
    * Get tag associations for a tag
+   * @param tagId - The tag ID to get associations for
+   * @param sortBy - Sort mode: 'order' (default, by appearance order) or 'recent' (by creation time)
    */
-  async getTagAssociations(tagId: string): Promise<Tag[]> {
+  async getTagAssociations(tagId: string, sortBy: 'order' | 'recent' = 'order'): Promise<Tag[]> {
+    const orderClause = sortBy === 'recent' 
+      ? 'ORDER BY ta.created_at DESC, t.name ASC'
+      : 'ORDER BY ta.association_order ASC, t.name ASC';
+
     const rows = await this.db.query(
       `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
-              ta.association_order
+              ta.association_order, ta.created_at as association_created_at
        FROM tags t
        JOIN tag_associations ta ON t.id = ta.associated_tag_id
        WHERE ta.tag_id = ?
-       ORDER BY ta.association_order ASC, t.name ASC`,
+       ${orderClause}`,
       [tagId]
     );
 

@@ -107,12 +107,21 @@ GET /api/tags/Anime
 -- タグ間関連の取得（出現順）
 ORDER BY ta.association_order ASC, t.name ASC
 
+-- タグ間関連の取得（最新順）- 新機能
+ORDER BY ta.created_at DESC, t.name ASC
+
 -- 被参照タグの取得（最新順）
 ORDER BY ta.created_at DESC
 
 -- ログのタグ取得（出現順）
 ORDER BY lta.association_order ASC, t.name ASC
 ```
+
+### API仕様
+タグ間関連の取得で、ソート方法を指定可能:
+- `GET /api/tags/{tagId}/associations` - デフォルトは出現順
+- `GET /api/tags/{tagId}/associations?sort=order` - 出現順で取得
+- `GET /api/tags/{tagId}/associations?sort=recent` - 最新順で取得
 
 ## まとめ
 要件で指定されたすべての機能を実装し、テストと動作確認を完了しました:
@@ -121,6 +130,7 @@ ORDER BY lta.association_order ASC, t.name ASC
 - ✅ 表示時に出現順にソート
 - ✅ ログ・タグ両方の関連を対応
 - ✅ 被参照時に最新順でソート
+- ✅ タグ間関連も被参照ソート可能（最新順）
 - ✅ ソートキーによる順序制御
 
 すべてのテストが通過し、既存機能への影響もありません。

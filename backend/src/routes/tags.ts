@@ -234,9 +234,11 @@ tags.delete('/:tagId', async (c) => {
 
 // GET /tags/{tagId}/associations - List associated tags (public)
 // Accepts both tag ID and tag name for flexibility
+// Query parameter: sort=order (default) or sort=recent
 tags.get('/:tagId/associations', async (c) => {
   const tagService = resolveTagService(c);
   const tagIdOrName = c.req.param('tagId');
+  const sortBy = c.req.query('sort') === 'recent' ? 'recent' : 'order';
 
   // Try to get tag by name first, then by ID
   let tag = await tagService.getTagByName(tagIdOrName);
@@ -248,7 +250,7 @@ tags.get('/:tagId/associations', async (c) => {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
 
-  const associations = await tagService.getTagAssociations(tag.id);
+  const associations = await tagService.getTagAssociations(tag.id, sortBy);
   return c.json(associations);
 });
 

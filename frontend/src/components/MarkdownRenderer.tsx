@@ -35,8 +35,8 @@ function createHashtagRenderer(tags?: Tag[]) {
         // タグが見つかった場合はタグ名でリンク
         return `<a href="/tags/${encodeURIComponent(actualTagName)}" class="hashtag-link">${match}</a>`;
       } else {
-        // タグが見つからない場合は検索リンク
-        return `<a href="/tags?search=${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
+        // タグが見つからない場合もタグ詳細ページへリンク
+        return `<a href="/tags/${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
       }
     });
     
@@ -49,8 +49,8 @@ function createHashtagRenderer(tags?: Tag[]) {
         // タグが見つかった場合はタグ名でリンク
         return `<a href="/tags/${encodeURIComponent(actualTagName)}" class="hashtag-link">${match}</a>`;
       } else {
-        // タグが見つからない場合は検索リンク
-        return `<a href="/tags?search=${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
+        // タグが見つからない場合もタグ詳細ページへリンク
+        return `<a href="/tags/${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
       }
     });
     

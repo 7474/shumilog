@@ -66,13 +66,18 @@ describe('AiService', () => {
       expect(mockAi.run).toHaveBeenCalledWith(
         '@cf/openai/gpt-oss-120b',
         expect.objectContaining({
-          prompt: expect.stringContaining('UK')
+          input: expect.arrayContaining([
+            expect.objectContaining({
+              role: 'user',
+              content: expect.stringContaining('UK')
+            }),
+            expect.objectContaining({
+              role: 'user',
+              content: expect.stringContaining('参照記事のタイトルとタグ名が異なる場合')
+            })
+          ])
         })
       );
-      
-      // Verify that the prompt also contains the redirect instruction
-      const callArgs = (mockAi.run as any).mock.calls[0];
-      expect(callArgs[1].prompt).toContain('参照記事のタイトルとタグ名が異なる場合');
     });
 
     it('should handle AI response without subsections', async () => {

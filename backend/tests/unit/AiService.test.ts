@@ -27,7 +27,8 @@ describe('AiService', () => {
       const result = await aiService.generateEnhancedTagContent({
         tagName: '進撃の巨人',
         wikipediaContent: '進撃の巨人は、諫山創による日本の漫画作品。',
-        wikipediaUrl: 'https://ja.wikipedia.org/wiki/進撃の巨人'
+        wikipediaUrl: 'https://ja.wikipedia.org/wiki/進撃の巨人',
+        requestedTagName: '進撃の巨人'
       });
 
       expect(result.markdown).toBeTruthy();
@@ -36,6 +37,47 @@ describe('AiService', () => {
       expect(result.markdown).toContain('#マンガ');
       expect(result.markdown).toContain('#アニメ');
       expect(result.markdown).toContain('### 主要キャラクター');
+    });
+
+    it('should generate enhanced content with requested tag name in prompt', async () => {
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          response: `イギリスに関する情報です。
+
+**関連タグ**: #ヨーロッパ #連合王国 #イングランド
+
+### 概要
+- イギリスは正式には連合王国です`
+        })
+      };
+
+      const aiService = new AiService(mockAi);
+      const result = await aiService.generateEnhancedTagContent({
+        tagName: 'イギリス',
+        wikipediaContent: '<html><head><title>イギリス - Wikipedia</title></head><body>イギリス（連合王国）は...</body></html>',
+        wikipediaUrl: 'https://ja.wikipedia.org/wiki/イギリス',
+        requestedTagName: 'UK'
+      });
+
+      expect(result.markdown).toBeTruthy();
+      expect(result.markdown).toContain('イギリスに関する情報');
+      
+      // Verify that the AI was called with the correct prompt containing the requested tag name
+      expect(mockAi.run).toHaveBeenCalledWith(
+        '@cf/openai/gpt-oss-120b',
+        expect.objectContaining({
+          messages: expect.arrayContaining([
+            expect.objectContaining({
+              role: 'user',
+              content: expect.stringContaining('UK')
+            }),
+            expect.objectContaining({
+              role: 'user',
+              content: expect.stringContaining('参照記事のタイトルとタグ名が異なる場合')
+            })
+          ])
+        })
+      );
     });
 
     it('should handle AI response without subsections', async () => {
@@ -51,7 +93,8 @@ describe('AiService', () => {
       const result = await aiService.generateEnhancedTagContent({
         tagName: 'テスト',
         wikipediaContent: 'テスト内容',
-        wikipediaUrl: 'https://ja.wikipedia.org/wiki/テスト'
+        wikipediaUrl: 'https://ja.wikipedia.org/wiki/テスト',
+        requestedTagName: 'テスト'
       });
 
       expect(result.markdown).toBeTruthy();
@@ -71,7 +114,8 @@ describe('AiService', () => {
         aiService.generateEnhancedTagContent({
           tagName: 'テスト',
           wikipediaContent: 'テスト内容',
-          wikipediaUrl: 'https://ja.wikipedia.org/wiki/テスト'
+          wikipediaUrl: 'https://ja.wikipedia.org/wiki/テスト',
+          requestedTagName: 'テスト'
         })
       ).rejects.toThrow('Failed to generate AI-enhanced content');
     });

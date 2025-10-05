@@ -677,10 +677,12 @@ export class TagService {
       const wikipediaUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
 
       // AIサービスを使用して編集サポート内容を生成
+      // tagNameをそのまま渡し、AIに転送判定を任せる
       const aiOutput = await this.aiService.generateEnhancedTagContent({
         tagName,
         wikipediaContent: htmlContent,
-        wikipediaUrl
+        wikipediaUrl,
+        requestedTagName: tagName  // リクエストされたタグ名をAIに渡す
       });
 
       // AI生成内容をMarkdown形式に変換

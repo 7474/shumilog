@@ -11,6 +11,7 @@ export interface AiEnhancedTagInput {
   tagName: string;
   wikipediaContent: string;
   wikipediaUrl: string;
+  requestedTagName: string; // ユーザーがリクエストした元のタグ名
 }
 
 export interface AiEnhancedTagOutput {
@@ -34,11 +35,12 @@ export class AiService {
   async generateEnhancedTagContent(input: AiEnhancedTagInput): Promise<AiEnhancedTagOutput> {
     console.log('[AiService] generateEnhancedTagContent called with input:', {
       tagName: input.tagName,
+      requestedTagName: input.requestedTagName,
       wikipediaUrl: input.wikipediaUrl,
       wikipediaContentLength: input.wikipediaContent.length
     });
 
-    const instructionPrompt = this.buildInstructionPrompt(input.tagName);
+    const instructionPrompt = this.buildInstructionPrompt(input.requestedTagName);
     
     try {
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
@@ -86,8 +88,10 @@ export class AiService {
    * サブタイトル情報を省略せず、すべて列挙するよう明示的に指示しています。
    * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
-  private buildInstructionPrompt(tagName: string): string {
-    const prompt = `上記の参照情報（Wikipedia HTML）を基に、タグ「${tagName}」の説明をMarkdown形式で生成してください。
+  private buildInstructionPrompt(requestedTagName: string): string {
+    const prompt = `上記の参照情報（Wikipedia HTML）を基に、タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。
+
+【注意】参照記事のタイトルとタグ名が異なる場合（転送・リダイレクトされた場合）は、記事全体を参照しつつ、タグ名「${requestedTagName}」に該当する内容を優先的に抽出してください。
 
 【重要】必ずMarkdown形式で出力してください：
 
@@ -122,7 +126,7 @@ export class AiService {
 この形式を厳密に守ってMarkdownで出力してください。特に連載・シリーズのサブタイトル情報（各話・エピソードタイトルを含む）は省略しないでください。`;
 
     console.log('[AiService] buildInstructionPrompt called:', {
-      tagName: tagName,
+      requestedTagName: requestedTagName,
       promptLength: prompt.length,
       promptPreview: prompt.substring(0, 200) + '...'
     });

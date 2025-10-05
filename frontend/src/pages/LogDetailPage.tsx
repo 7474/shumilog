@@ -254,10 +254,17 @@ export function LogDetailPage() {
                   </span>
                 </div>
               </div>
+            </CardHeader>
+
+            {/* コンテンツ */}
+            <CardContent>
+              <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-sky-600 hover:prose-a:text-sky-700 prose-strong:text-gray-900 prose-code:text-pink-600 prose-pre:bg-gray-50">
+                <MarkdownRenderer content={log.content_md} />
+              </div>
 
               {/* タグ */}
               {log.tags && log.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-4 mt-6">
                   {log.tags.map((tag) => (
                     <Link
                       key={tag.id}
@@ -270,13 +277,6 @@ export function LogDetailPage() {
                   ))}
                 </div>
               )}
-            </CardHeader>
-
-            {/* コンテンツ */}
-            <CardContent>
-              <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-sky-600 hover:prose-a:text-sky-700 prose-strong:text-gray-900 prose-code:text-pink-600 prose-pre:bg-gray-50">
-                <MarkdownRenderer content={log.content_md} />
-              </div>
             </CardContent>
           </Card>
 

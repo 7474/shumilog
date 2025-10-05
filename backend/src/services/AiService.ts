@@ -18,6 +18,11 @@ export interface AiEnhancedTagOutput {
   markdown: string;
 }
 
+/**
+ * 使用するAIモデル
+ */
+const AI_MODEL = '@cf/openai/gpt-oss-120b';
+
 export class AiService {
   constructor(private ai: AiBinding) {}
 
@@ -38,8 +43,8 @@ export class AiService {
     const instructionPrompt = this.buildInstructionPrompt(input.requestedTagName);
     
     try {
-      console.log('[AiService] Sending request to AI model: @cf/openai/gpt-oss-120b');
-      const response = await this.ai.run('@cf/openai/gpt-oss-120b', {
+      console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
+      const response = await this.ai.run(AI_MODEL, {
         messages: [
           {
             role: 'system',

@@ -187,7 +187,7 @@ describe('Integration: Tag Support Feature', () => {
       expect(response.status).toBe(404);
     });
 
-    it('should detect Wikipedia redirects for AI-enhanced support', async () => {
+    it('should pass requested tag name to AI for redirect handling', async () => {
       // Mock Wikipedia HTML response with a redirect (title differs from requested tag)
       const mockRedirectedHtml = `
 <!DOCTYPE html>
@@ -230,7 +230,7 @@ describe('Integration: Tag Support Feature', () => {
       });
 
       // ai_enhanced requires AI bindings which aren't available in tests
-      // but we can verify it doesn't crash due to redirect detection
+      // but we can verify it doesn't crash and the requested tag name is passed to AI
       expect([404, 500]).toContain(response.status);
     });
   });

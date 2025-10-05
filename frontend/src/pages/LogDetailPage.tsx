@@ -135,7 +135,7 @@ export function LogDetailPage() {
           {/* 公開ログの場合はXへの共有ボタンを表示 */}
           {log.is_public && (
             <ShareToXButton
-              text={`${log.title}\n\n${log.content_md.slice(0, 100)}${log.content_md.length > 100 ? '...' : ''}`}
+              text={log.title}
               url={window.location.href}
               hashtags={log.tags?.map(tag => tag.name) || []}
               size="sm"

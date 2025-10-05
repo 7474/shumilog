@@ -12,6 +12,27 @@ interface ShareToXButtonProps {
 }
 
 /**
+ * タグを正規化してハッシュタグに変換
+ * - 先頭の # を削除
+ * - 空白を含む場合は CamelCase に変換
+ * - 空白を含まない場合はそのまま使用
+ */
+function normalizeHashtag(tag: string): string {
+  // 先頭の # を削除
+  let normalized = tag.replace(/^#+/, '');
+  
+  // 空白を含む場合は CamelCase に変換
+  if (normalized.includes(' ')) {
+    normalized = normalized
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join('');
+  }
+  
+  return normalized;
+}
+
+/**
  * Xへの共有ボタンコンポーネント
  * クライアントサイドでX (Twitter) の投稿画面を開きます
  */
@@ -33,8 +54,13 @@ export function ShareToXButton({
     if (url) {
       shareText += `\n${url}`;
     }
+    
+    // タグは最大3つまでに制限し、正規化してハッシュタグに変換
     if (hashtags.length > 0) {
-      shareText += '\n' + hashtags.map(tag => `#${tag}`).join(' ');
+      const normalizedHashtags = hashtags
+        .slice(0, 3)  // 最大3つまで
+        .map(tag => `#${normalizeHashtag(tag)}`);
+      shareText += '\n' + normalizedHashtags.join(' ');
     }
     
     params.append('text', shareText);

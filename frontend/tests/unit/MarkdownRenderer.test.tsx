@@ -128,7 +128,7 @@ describe('MarkdownRenderer', () => {
     expect(gamingLink?.getAttribute('href')).toBe('/tags/gaming');
   });
 
-  it('should handle case-insensitive tag matching', () => {
+  it('should handle case preservation in hashtag links', () => {
     const { container } = render(
       <MarkdownRenderer 
         content="I love #Anime and #ANIME" 
@@ -139,10 +139,12 @@ describe('MarkdownRenderer', () => {
     const links = container.querySelectorAll('a.hashtag-link');
     expect(links).toHaveLength(2);
     
-    // Both should link to the same tag (case-insensitive matching, but using actual tag name)
-    links.forEach(link => {
-      expect(link.getAttribute('href')).toBe('/tags/anime');
-    });
+    // Links should preserve the case as written in the content
+    const animeLink = Array.from(links).find(link => link.textContent === '#Anime');
+    expect(animeLink?.getAttribute('href')).toBe('/tags/Anime');
+    
+    const animeUpperLink = Array.from(links).find(link => link.textContent === '#ANIME');
+    expect(animeUpperLink?.getAttribute('href')).toBe('/tags/ANIME');
   });
 
   it('should not convert hashtags inside code blocks', () => {

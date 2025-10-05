@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: shumilog API Cache
+  version: 0.1.0
+paths:
+  /{any}:
+    get:
+      summary: 任意のGETかつ認証不要APIのキャッシュ応答
+      parameters:
+        - in: path
+          name: any
+          required: true
+          schema:
+            type: string
+          description: 任意のAPIパス
+      responses:
+        '200':
+          description: キャッシュされたAPI応答
+          content:
+            application/json:
+              schema:
+                type: object
+      security: []
+      description: |
+        Cloudflare Workers組み込みCDNで1分間キャッシュ。SWR用ヘッダを付与。
+      x-cache:
+        enabled: true
+        ttl: 300
+        swr: true

@@ -171,11 +171,12 @@ export class LogService {
     
     // Get associated tags
       const tagRows = await this.db.query(`
-        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+               lta.association_order
         FROM tags t
         JOIN log_tag_associations lta ON t.id = lta.tag_id
         WHERE lta.log_id = ?
-        ORDER BY t.name
+        ORDER BY lta.association_order ASC, t.name ASC
       `, [id]);
     
     const user: User = {
@@ -417,12 +418,13 @@ export class LogService {
   async associateTagsWithLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
+    const now = new Date().toISOString();
     const stmt = this.db.prepare(
-      'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id) VALUES (?, ?)'
+      'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id, association_order, created_at) VALUES (?, ?, ?, ?)'
     );
     
-    for (const tagId of tagIds) {
-      await stmt.run([logId, tagId]);
+    for (let i = 0; i < tagIds.length; i++) {
+      await stmt.run([logId, tagIds[i], i, now]);
     }
   }
 
@@ -542,7 +544,7 @@ export class LogService {
    * This uses the same logic as TagService for consistency
    */
   private extractHashtagsFromContent(content: string): string[] {
-    const matches: string[] = [];
+    const hashtagsWithPositions: { position: number; name: string }[] = [];
     
     // Pattern 1: #{tagName} - extended format (for tags with whitespace)
     const extendedPattern = /#\{([^}]+)\}/g;
@@ -550,8 +552,8 @@ export class LogService {
     
     while ((match = extendedPattern.exec(content)) !== null) {
       const tagName = match[1].trim();
-      if (tagName && !matches.includes(tagName)) {
-        matches.push(tagName);
+      if (tagName) {
+        hashtagsWithPositions.push({ position: match.index, name: tagName });
       }
     }
     
@@ -560,12 +562,22 @@ export class LogService {
     
     while ((match = simplePattern.exec(content)) !== null) {
       const tagName = match[1].trim();
-      if (tagName && !matches.includes(tagName)) {
-        matches.push(tagName);
+      if (tagName) {
+        hashtagsWithPositions.push({ position: match.index, name: tagName });
       }
     }
     
-    return matches;
+    // Sort by position to maintain order of appearance, then remove duplicates
+    hashtagsWithPositions.sort((a, b) => a.position - b.position);
+    
+    const uniqueMatches: string[] = [];
+    for (const item of hashtagsWithPositions) {
+      if (!uniqueMatches.includes(item.name)) {
+        uniqueMatches.push(item.name);
+      }
+    }
+    
+    return uniqueMatches;
   }
 
   /**

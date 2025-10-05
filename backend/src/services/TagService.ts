@@ -320,10 +320,12 @@ export class TagService {
     const enrichedLogs = [];
     for (const row of rows) {
       const tagRows = await this.db.query(
-        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+                lta.association_order
          FROM tags t
          JOIN log_tag_associations lta ON t.id = lta.tag_id
-         WHERE lta.log_id = ?`,
+         WHERE lta.log_id = ?
+         ORDER BY lta.association_order ASC, t.name ASC`,
         [row.id]
       );
       
@@ -371,7 +373,7 @@ export class TagService {
   /**
    * Create tag-to-tag association (for tag hierarchies)
    */
-  async createTagAssociation(tagId: string, associatedTagId: string): Promise<void> {
+  async createTagAssociation(tagId: string, associatedTagId: string, associationOrder = 0): Promise<void> {
     if (tagId === associatedTagId) {
       throw new Error('Cannot create self-association');
     }
@@ -387,27 +389,31 @@ export class TagService {
     }
 
     const stmt = this.db.prepare(`
-      INSERT OR IGNORE INTO tag_associations (tag_id, associated_tag_id, created_at)
-      VALUES (?, ?, ?)
+      INSERT OR IGNORE INTO tag_associations (tag_id, associated_tag_id, created_at, association_order)
+      VALUES (?, ?, ?, ?)
     `);
 
-    await stmt.run([tagId, associatedTagId, new Date().toISOString()]);
+    await stmt.run([tagId, associatedTagId, new Date().toISOString(), associationOrder]);
   }
 
   /**
    * Get tag associations for a tag
+   * @param tagId - The tag ID to get associations for
+   * @param sortBy - Sort mode: 'order' (default, by appearance order) or 'recent' (by creation time)
    */
-  async getTagAssociations(tagId: string): Promise<Tag[]> {
+  async getTagAssociations(tagId: string, sortBy: 'order' | 'recent' = 'order'): Promise<Tag[]> {
+    const orderClause = sortBy === 'recent' 
+      ? 'ORDER BY ta.created_at DESC, t.name ASC'
+      : 'ORDER BY ta.association_order ASC, t.name ASC';
+
     const rows = await this.db.query(
-      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+              ta.association_order, ta.created_at as association_created_at
        FROM tags t
-       WHERE t.id IN (
-         SELECT associated_tag_id FROM tag_associations WHERE tag_id = ?
-         UNION
-         SELECT tag_id FROM tag_associations WHERE associated_tag_id = ?
-       )
-       ORDER BY t.name ASC`,
-      [tagId, tagId]
+       JOIN tag_associations ta ON t.id = ta.associated_tag_id
+       WHERE ta.tag_id = ?
+       ${orderClause}`,
+      [tagId]
     );
 
     return rows.map(row => TagModel.fromRow(row));
@@ -447,7 +453,7 @@ export class TagService {
    * Extract hashtag patterns from content (#{tagName} and #tagName formats)
    */
   private extractHashtagsFromContent(content: string): string[] {
-    const matches: string[] = [];
+    const hashtagsWithPositions: { position: number; name: string }[] = [];
     
     // Pattern 1: #{tagName} - extended format (for tags with whitespace)
     const extendedPattern = /#\{([^}]+)\}/g;
@@ -455,8 +461,8 @@ export class TagService {
     
     while ((match = extendedPattern.exec(content)) !== null) {
       const tagName = match[1].trim();
-      if (tagName && !matches.includes(tagName)) {
-        matches.push(tagName);
+      if (tagName) {
+        hashtagsWithPositions.push({ position: match.index, name: tagName });
       }
     }
     
@@ -465,12 +471,22 @@ export class TagService {
     
     while ((match = simplePattern.exec(content)) !== null) {
       const tagName = match[1].trim();
-      if (tagName && !matches.includes(tagName)) {
-        matches.push(tagName);
+      if (tagName) {
+        hashtagsWithPositions.push({ position: match.index, name: tagName });
       }
     }
     
-    return matches;
+    // Sort by position to maintain order of appearance, then remove duplicates
+    hashtagsWithPositions.sort((a, b) => a.position - b.position);
+    
+    const uniqueMatches: string[] = [];
+    for (const item of hashtagsWithPositions) {
+      if (!uniqueMatches.includes(item.name)) {
+        uniqueMatches.push(item.name);
+      }
+    }
+    
+    return uniqueMatches;
   }
 
   /**
@@ -482,7 +498,11 @@ export class TagService {
     const hashtagNames = this.extractHashtagsFromContent(description);
     if (hashtagNames.length === 0) return;
 
-    for (const tagName of hashtagNames) {
+    // Delete existing associations for this tag before recreating them with new order
+    await this.db.prepare('DELETE FROM tag_associations WHERE tag_id = ?').run([tagId]);
+
+    for (let i = 0; i < hashtagNames.length; i++) {
+      const tagName = hashtagNames[i];
       // Try to find existing tag by name
       const existingTag = await this.db.queryFirst(
         'SELECT id FROM tags WHERE name = ?',
@@ -516,9 +536,10 @@ export class TagService {
       }
 
       // Create association if it doesn't already exist and avoid self-association
+      // Use index i as the association_order to maintain order of appearance
       if (associatedTagId !== tagId) {
         try {
-          await this.createTagAssociation(tagId, associatedTagId);
+          await this.createTagAssociation(tagId, associatedTagId, i);
         } catch (error) {
           // Ignore errors from duplicate associations or other minor issues
           console.warn('Failed to create tag association:', { tagId, associatedTagId, error });

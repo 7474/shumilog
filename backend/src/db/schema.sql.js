@@ -47,6 +47,7 @@ export const DATABASE_SCHEMAS = [
     tag_id TEXT NOT NULL,
     associated_tag_id TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    association_order INTEGER NOT NULL DEFAULT 0,
     
     PRIMARY KEY (tag_id, associated_tag_id),
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
@@ -78,6 +79,8 @@ export const DATABASE_SCHEMAS = [
   CREATE TABLE log_tag_associations (
     log_id TEXT NOT NULL,
     tag_id TEXT NOT NULL,
+    association_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     PRIMARY KEY (log_id, tag_id),
     FOREIGN KEY (log_id) REFERENCES logs(id) ON DELETE CASCADE,

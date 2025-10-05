@@ -163,7 +163,7 @@ export function TagDetailPage() {
         <div className="flex flex-wrap gap-2">
           {/* Xへの共有ボタン（常に表示） */}
           <ShareToXButton
-            text={`#${tag.name}\n\n${tag.description ? tag.description.slice(0, 100) + (tag.description.length > 100 ? '...' : '') : 'タグの詳細をチェック！'}`}
+            text={`#${tag.name}`}
             url={window.location.href}
             hashtags={[tag.name]}
             size="sm"

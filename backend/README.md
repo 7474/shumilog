@@ -6,7 +6,7 @@
 This backend now includes **AI-powered tag support** using Cloudflare Workers AI to automatically generate tag editing support content based on Wikipedia information.
 
 ### Features
-- **AI Model**: Uses `@cf/meta/llama-3.2-3b-instruct` (LLaMA 3.2 3B Instruct)
+- **AI Model**: Uses `@cf/openai/gpt-oss-120b` (GPT OSS 120B)
 - **Content Generation**:
   - One-line tag summary (targeting ~50 characters)
   - Related tags extracted as hashtags
@@ -39,7 +39,7 @@ Cookie: session=<your-session-token>
 ### Limitations
 - **Local Development**: AI features require Cloudflare environment (not available in `wrangler dev --local`)
 - **Rate Limits**: Subject to Cloudflare Workers AI usage limits
-- **Model Constraints**: Limited by LLaMA 3.2 3B model capabilities
+- **Model Constraints**: Limited by GPT OSS 120B model capabilities
 
 ## Current Test Suite Status
 

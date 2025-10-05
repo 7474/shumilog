@@ -10,6 +10,7 @@ export interface AuthContext {
     twitter_username: string;
     display_name: string;
     avatar_url?: string;
+    role: 'user' | 'admin';
     created_at: string;
   };
   sessionId: string;

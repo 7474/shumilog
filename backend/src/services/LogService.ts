@@ -159,7 +159,7 @@ export class LogService {
   async getLogById(id: string, _userId?: string): Promise<LogDetail | null> {
     // Get log with user info
     const logRow = await this.db.queryFirst(`
-      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
       FROM logs l
       JOIN users u ON l.user_id = u.id
       WHERE l.id = ?
@@ -183,6 +183,7 @@ export class LogService {
       twitter_username: logRow.twitter_username,
       display_name: logRow.display_name,
       avatar_url: logRow.avatar_url,
+      role: logRow.role || 'user',
       created_at: logRow.user_created_at
     };
     
@@ -198,7 +199,7 @@ export class LogService {
     const { tag_ids, user_id, is_public, search, limit = 20, offset = 0 } = options;
     
     let sql = `
-      SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
       FROM logs l
       JOIN users u ON l.user_id = u.id
     `;
@@ -297,7 +298,7 @@ export class LogService {
    */
   async getPublicLogs(limit = 20, offset = 0): Promise<LogSearchResult> {
     const sql = `
-      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
       FROM logs l
       JOIN users u ON l.user_id = u.id
       WHERE l.is_public = 1
@@ -343,7 +344,7 @@ export class LogService {
     // Find public logs that share tags with the target log
     // Order by the number of shared tags (descending)
     const sql = `
-      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at,
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at,
              COUNT(DISTINCT lta.tag_id) as shared_tag_count
       FROM logs l
       JOIN users u ON l.user_id = u.id
@@ -352,7 +353,7 @@ export class LogService {
         AND l.id != ?
         AND l.is_public = 1
       GROUP BY l.id, l.user_id, l.title, l.content_md, l.is_public, l.created_at, l.updated_at,
-               u.twitter_username, u.display_name, u.avatar_url, u.created_at
+               u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at
       ORDER BY shared_tag_count DESC, l.created_at DESC
       LIMIT ?
     `;
@@ -513,7 +514,7 @@ export class LogService {
    */
   async getRecentLogs(limit = 10): Promise<Log[]> {
     const sql = `
-      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
+      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
       FROM logs l
       JOIN users u ON l.user_id = u.id
       WHERE l.is_public = 1
@@ -653,6 +654,7 @@ export class LogService {
         twitter_username: row.twitter_username,
         display_name: row.display_name,
         avatar_url: row.avatar_url,
+        role: row.role || 'user',
         created_at: row.user_created_at
       };
 

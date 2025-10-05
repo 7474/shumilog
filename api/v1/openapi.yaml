@@ -257,6 +257,8 @@ paths:
       summary: Delete tag
       description: |
         Delete a tag. The `tagId` parameter accepts both tag name (preferred) and tag ID.
+        
+        **Admin privileges required**: Only users with the 'admin' role can delete tags.
       security:
         - sessionAuth: []
       parameters:
@@ -273,7 +275,7 @@ paths:
         '401':
           description: Not authenticated
         '403':
-          description: Not tag owner
+          description: Admin privileges required
         '404':
           description: Tag not found
 
@@ -657,6 +659,11 @@ components:
           type: string
         avatar_url:
           type: string
+        role:
+          type: string
+          enum: [user, admin]
+          description: User role for privilege management. 'admin' users can delete any tags.
+          default: user
         created_at:
           type: string
           format: date-time

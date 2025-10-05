@@ -2,13 +2,13 @@
 -- 複数のユーザー、タグ、ログを含む実用的なシードデータ
 BEGIN TRANSACTION;
 
--- ユーザーデータ
-INSERT OR IGNORE INTO users (id, twitter_username, display_name, avatar_url, created_at)
+-- ユーザーデータ (Alice is admin, others are regular users)
+INSERT OR IGNORE INTO users (id, twitter_username, display_name, avatar_url, role, created_at)
 VALUES 
-  ('user_alice', 'alice_anime', 'Alice アニメ好き', 'https://example.com/avatar/alice.jpg', '2023-01-01T00:00:00Z'),
-  ('user_bob', 'bob_gamer', 'Bob ゲーマー', 'https://example.com/avatar/bob.jpg', '2023-01-01T00:00:00Z'),
-  ('user_carol', 'carol_music', 'Carol 音楽愛好家', 'https://example.com/avatar/carol.jpg', '2023-01-01T00:00:00Z'),
-  ('user_dave', 'dave_manga', 'Dave マンガ読者', 'https://example.com/avatar/dave.jpg', '2023-01-01T00:00:00Z');
+  ('user_alice', 'alice_anime', 'Alice アニメ好き', 'https://example.com/avatar/alice.jpg', 'admin', '2023-01-01T00:00:00Z'),
+  ('user_bob', 'bob_gamer', 'Bob ゲーマー', 'https://example.com/avatar/bob.jpg', 'user', '2023-01-01T00:00:00Z'),
+  ('user_carol', 'carol_music', 'Carol 音楽愛好家', 'https://example.com/avatar/carol.jpg', 'user', '2023-01-01T00:00:00Z'),
+  ('user_dave', 'dave_manga', 'Dave マンガ読者', 'https://example.com/avatar/dave.jpg', 'user', '2023-01-01T00:00:00Z');
 
 -- タグデータ（より多様なカテゴリ）
 INSERT OR IGNORE INTO tags (id, name, description, metadata, created_by, created_at, updated_at)

@@ -2,6 +2,10 @@
 
 趣味コンテンツのログ記録のための最小構成のCloudflare Workerバックエンドと、Tailwind CSS + React 19ベースのレスポンシブフロントエンドです。
 
+## 運用環境
+
+本番環境: **https://shumilog.pages.dev/**
+
 ## 技術スタック
 
 ### バックエンド

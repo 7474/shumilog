@@ -9,6 +9,7 @@ import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { RelatedLogs } from '@/components/RelatedLogs';
 import { useAuth } from '@/hooks/useAuth';
+import { ShareToXButton } from '@/components/ShareToXButton';
 
 export function LogDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -130,25 +131,41 @@ export function LogDetailPage() {
           </Button>
         </Link>
         
-        {isOwner && !isEditing && (
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => setIsEditing(true)}
-              className="btn-fresh flex items-center gap-2"
-            >
-              <Edit size={16} />
-              <span>編集</span>
-            </Button>
-            <Button 
-              onClick={() => setShowDeleteConfirm(true)}
-              variant="destructive"
-              className="flex items-center gap-2"
-            >
-              <Trash2 size={16} />
-              <span>削除</span>
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {/* 公開ログの場合はXへの共有ボタンを表示 */}
+          {log.is_public && (
+            <ShareToXButton
+              text={`${log.title}\n\n${log.content_md.slice(0, 100)}${log.content_md.length > 100 ? '...' : ''}`}
+              url={window.location.href}
+              hashtags={log.tags?.map(tag => tag.name) || []}
+              size="sm"
+              variant="outline"
+              className="text-sky-600 border-sky-200 hover:bg-sky-50"
+            />
+          )}
+          
+          {isOwner && !isEditing && (
+            <>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                className="btn-fresh flex items-center gap-2"
+                size="sm"
+              >
+                <Edit size={16} />
+                <span>編集</span>
+              </Button>
+              <Button 
+                onClick={() => setShowDeleteConfirm(true)}
+                variant="destructive"
+                className="flex items-center gap-2"
+                size="sm"
+              >
+                <Trash2 size={16} />
+                <span>削除</span>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 編集モード */}

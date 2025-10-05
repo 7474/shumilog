@@ -10,6 +10,7 @@ import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
 import { TagForm } from '@/components/TagForm';
 import { useAuth } from '@/hooks/useAuth';
+import { ShareToXButton } from '@/components/ShareToXButton';
 
 interface TagDetail extends Tag {
   associations: Tag[];
@@ -159,33 +160,45 @@ export function TagDetailPage() {
             </Button>
           </Link>
         </div>
-        {isAuthenticated && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => setShowLogForm(!showLogForm)}
-              size="sm"
-              className={showLogForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
-            >
-              {showLogForm ? '✕ キャンセル' : '✨ このタグでログを作成'}
-            </Button>
-            <Button
-              onClick={() => setShowEditForm(!showEditForm)}
-              size="sm"
-              variant="outline"
-              className={showEditForm ? "bg-gray-500 hover:bg-gray-600 text-white border-gray-500" : "text-sky-600 border-sky-200 hover:bg-sky-50"}
-            >
-              {showEditForm ? '✕ キャンセル' : '✏️ 編集'}
-            </Button>
-            <Button
-              onClick={handleDelete}
-              size="sm"
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              🗑️ 削除
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {/* Xへの共有ボタン（常に表示） */}
+          <ShareToXButton
+            text={`#${tag.name}\n\n${tag.description ? tag.description.slice(0, 100) + (tag.description.length > 100 ? '...' : '') : 'タグの詳細をチェック！'}`}
+            url={window.location.href}
+            hashtags={[tag.name]}
+            size="sm"
+            variant="outline"
+            className="text-sky-600 border-sky-200 hover:bg-sky-50"
+          />
+          
+          {isAuthenticated && (
+            <>
+              <Button
+                onClick={() => setShowLogForm(!showLogForm)}
+                size="sm"
+                className={showLogForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+              >
+                {showLogForm ? '✕ キャンセル' : '✨ このタグでログを作成'}
+              </Button>
+              <Button
+                onClick={() => setShowEditForm(!showEditForm)}
+                size="sm"
+                variant="outline"
+                className={showEditForm ? "bg-gray-500 hover:bg-gray-600 text-white border-gray-500" : "text-sky-600 border-sky-200 hover:bg-sky-50"}
+              >
+                {showEditForm ? '✕ キャンセル' : '✏️ 編集'}
+              </Button>
+              <Button
+                onClick={handleDelete}
+                size="sm"
+                variant="outline"
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                🗑️ 削除
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ログ作成フォーム */}

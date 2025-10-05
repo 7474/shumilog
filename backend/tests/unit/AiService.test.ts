@@ -38,6 +38,47 @@ describe('AiService', () => {
       expect(result.markdown).toContain('### 主要キャラクター');
     });
 
+    it('should generate enhanced content with redirect information', async () => {
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          response: `イギリスに関する情報です。
+
+**関連タグ**: #ヨーロッパ #連合王国 #イングランド
+
+### 概要
+- イギリスは正式には連合王国です`
+        })
+      };
+
+      const aiService = new AiService(mockAi);
+      const result = await aiService.generateEnhancedTagContent({
+        tagName: 'イギリス',
+        wikipediaContent: '<html><head><title>イギリス - Wikipedia</title></head><body>イギリス（連合王国）は...</body></html>',
+        wikipediaUrl: 'https://ja.wikipedia.org/wiki/イギリス',
+        redirectedFrom: 'UK'
+      });
+
+      expect(result.markdown).toBeTruthy();
+      expect(result.markdown).toContain('イギリスに関する情報');
+      
+      // Verify that the AI was called with the correct prompt
+      expect(mockAi.run).toHaveBeenCalledWith(
+        '@cf/meta/llama-3.2-3b-instruct',
+        expect.objectContaining({
+          messages: expect.arrayContaining([
+            expect.objectContaining({
+              role: 'user',
+              content: expect.stringContaining('UK')
+            }),
+            expect.objectContaining({
+              role: 'user',
+              content: expect.stringContaining('「UK」から「イギリス」へ転送')
+            })
+          ])
+        })
+      );
+    });
+
     it('should handle AI response without subsections', async () => {
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({

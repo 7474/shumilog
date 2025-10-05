@@ -11,6 +11,7 @@ export interface AiEnhancedTagInput {
   tagName: string;
   wikipediaContent: string;
   wikipediaUrl: string;
+  redirectedFrom?: string; // 元のタグ名（転送が発生した場合）
 }
 
 export interface AiEnhancedTagOutput {
@@ -29,11 +30,12 @@ export class AiService {
   async generateEnhancedTagContent(input: AiEnhancedTagInput): Promise<AiEnhancedTagOutput> {
     console.log('[AiService] generateEnhancedTagContent called with input:', {
       tagName: input.tagName,
+      redirectedFrom: input.redirectedFrom,
       wikipediaUrl: input.wikipediaUrl,
       wikipediaContentLength: input.wikipediaContent.length
     });
 
-    const instructionPrompt = this.buildInstructionPrompt(input.tagName);
+    const instructionPrompt = this.buildInstructionPrompt(input.tagName, input.redirectedFrom);
     
     try {
       console.log('[AiService] Sending request to AI model: @cf/meta/llama-3.2-3b-instruct');
@@ -81,8 +83,13 @@ export class AiService {
    * サブタイトル情報を省略せず、すべて列挙するよう明示的に指示しています。
    * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
-  private buildInstructionPrompt(tagName: string): string {
-    const prompt = `上記の参照情報（Wikipedia HTML）を基に、タグ「${tagName}」の説明をMarkdown形式で生成してください。
+  private buildInstructionPrompt(tagName: string, redirectedFrom?: string): string {
+    // 転送が発生した場合の注意書きを追加
+    const redirectNote = redirectedFrom 
+      ? `\n\n【注意】Wikipediaで「${redirectedFrom}」から「${tagName}」へ転送されています。記事全体を参照しつつ、「${redirectedFrom}」に関連するセクションや情報を優先的に抽出してください。`
+      : '';
+    
+    const prompt = `上記の参照情報（Wikipedia HTML）を基に、タグ「${redirectedFrom || tagName}」の説明をMarkdown形式で生成してください。${redirectNote}
 
 【重要】必ずMarkdown形式で出力してください：
 

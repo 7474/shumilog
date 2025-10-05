@@ -641,6 +641,43 @@ export class TagService {
   }
 
   /**
+   * Wikipedia HTMLから転送情報を検出
+   * 転送が発生している場合、元のページ名を返す
+   * 
+   * @param htmlContent Wikipedia HTML
+   * @param requestedTag リクエストされたタグ名
+   * @returns 転送元のページ名（転送がない場合はundefined）
+   */
+  private detectWikipediaRedirect(htmlContent: string, requestedTag: string): string | undefined {
+    // Wikipediaのリダイレクト検出パターン
+    // 1. titleタグから実際のページタイトルを取得
+    const titleMatch = htmlContent.match(/<title>([^<]+)<\/title>/i);
+    if (!titleMatch) {
+      return undefined;
+    }
+    
+    const actualTitle = titleMatch[1]
+      .replace(/ - Wikipedia$/, '')
+      .trim();
+    
+    // リクエストされたタグ名と実際のタイトルが異なる場合は転送と判断
+    // ただし、URLエンコーディングの差異による誤検出を避けるため、
+    // 正規化して比較する
+    const normalizedRequestedTag = requestedTag.trim();
+    const normalizedActualTitle = actualTitle.trim();
+    
+    if (normalizedRequestedTag !== normalizedActualTitle) {
+      console.log('[TagService] Redirect detected:', {
+        requested: normalizedRequestedTag,
+        actual: normalizedActualTitle
+      });
+      return normalizedRequestedTag;
+    }
+    
+    return undefined;
+  }
+
+  /**
    * AIを使用してWikipediaの内容を基に編集サポート内容を生成
    */
   private async getAiEnhancedSummary(tagName: string): Promise<{ content: string; support_type: string }> {
@@ -676,11 +713,22 @@ export class TagService {
       // Wikipedia URLを取得
       const wikipediaUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
 
+      // HTMLから転送情報を検出
+      // Wikipediaの転送が発生した場合、HTMLのtitleタグやdata-mw-redirect-target属性に情報が含まれる
+      const redirectedFrom = this.detectWikipediaRedirect(htmlContent, tagName);
+      
+      console.log('[TagService] Wikipedia redirect detection:', {
+        requestedTag: tagName,
+        redirectedFrom: redirectedFrom,
+        hasRedirect: !!redirectedFrom
+      });
+
       // AIサービスを使用して編集サポート内容を生成
       const aiOutput = await this.aiService.generateEnhancedTagContent({
         tagName,
         wikipediaContent: htmlContent,
-        wikipediaUrl
+        wikipediaUrl,
+        redirectedFrom
       });
 
       // AI生成内容をMarkdown形式に変換

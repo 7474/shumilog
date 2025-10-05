@@ -171,11 +171,12 @@ export class LogService {
     
     // Get associated tags
       const tagRows = await this.db.query(`
-        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+               lta.association_order
         FROM tags t
         JOIN log_tag_associations lta ON t.id = lta.tag_id
         WHERE lta.log_id = ?
-        ORDER BY t.name
+        ORDER BY lta.association_order ASC, t.name ASC
       `, [id]);
     
     const user: User = {
@@ -417,12 +418,13 @@ export class LogService {
   async associateTagsWithLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
+    const now = new Date().toISOString();
     const stmt = this.db.prepare(
-      'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id) VALUES (?, ?)'
+      'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id, association_order, created_at) VALUES (?, ?, ?, ?)'
     );
     
-    for (const tagId of tagIds) {
-      await stmt.run([logId, tagId]);
+    for (let i = 0; i < tagIds.length; i++) {
+      await stmt.run([logId, tagIds[i], i, now]);
     }
   }
 

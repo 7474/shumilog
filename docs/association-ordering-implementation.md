@@ -7,6 +7,7 @@
 
 ### 1. データベーススキーマの変更
 - **tag_associations テーブル**に `association_order` (INTEGER) フィールドを追加
+  - 注: `created_at` は初期スキーマ（0001_initial_schema.sql）から存在しており、被参照ソートに使用
 - **log_tag_associations テーブル**に以下を追加:
   - `association_order` (INTEGER): 本文中の出現順
   - `created_at` (TIMESTAMP): 関連付けられた日時

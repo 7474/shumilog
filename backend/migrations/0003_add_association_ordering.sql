@@ -3,6 +3,7 @@
 
 -- Add association_order to tag_associations
 -- This represents the order of appearance in the tag description
+-- Note: tag_associations already has created_at (from initial schema) for reverse reference sorting
 ALTER TABLE tag_associations ADD COLUMN association_order INTEGER NOT NULL DEFAULT 0;
 
 -- Add association_order and created_at to log_tag_associations

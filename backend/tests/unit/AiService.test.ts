@@ -64,7 +64,7 @@ describe('AiService', () => {
       
       // Verify that the AI was called with the correct prompt containing the requested tag name
       expect(mockAi.run).toHaveBeenCalledWith(
-        '@cf/meta/llama-3.2-3b-instruct',
+        '@cf/openai/gpt-oss-120b',
         expect.objectContaining({
           messages: expect.arrayContaining([
             expect.objectContaining({

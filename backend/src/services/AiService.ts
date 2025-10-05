@@ -38,8 +38,8 @@ export class AiService {
     const instructionPrompt = this.buildInstructionPrompt(input.requestedTagName);
     
     try {
-      console.log('[AiService] Sending request to AI model: @cf/meta/llama-3.2-3b-instruct');
-      const response = await this.ai.run('@cf/meta/llama-3.2-3b-instruct', {
+      console.log('[AiService] Sending request to AI model: @cf/openai/gpt-oss-120b');
+      const response = await this.ai.run('@cf/openai/gpt-oss-120b', {
         messages: [
           {
             role: 'system',

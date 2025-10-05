@@ -44,22 +44,13 @@ export class AiService {
     
     try {
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
+      
+      // Cloudflare Workers AI Text Generation API形式に従ってプロンプトを構築
+      const systemInstruction = 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。与えられた情報から、タグの説明と関連タグを簡潔に生成してください。';
+      const fullPrompt = `${systemInstruction}\n\n参照情報（Wikipedia HTML）:\n\n${input.wikipediaContent}\n\n${instructionPrompt}`;
+      
       const response = await this.ai.run(AI_MODEL, {
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。与えられた情報から、タグの説明と関連タグを簡潔に生成してください。'
-          },
-          {
-            role: 'user',
-            content: `参照情報（Wikipedia HTML）:\n\n${input.wikipediaContent}`
-          },
-          {
-            role: 'user',
-            content: instructionPrompt
-          }
-        ],
-        stream: false
+        prompt: fullPrompt
       });
 
       console.log('[AiService] AI response received:', {

@@ -10,7 +10,7 @@ ALTER TABLE tag_associations ADD COLUMN association_order INTEGER NOT NULL DEFAU
 -- association_order: order of appearance in the log content
 -- created_at: timestamp for sorting reverse references
 ALTER TABLE log_tag_associations ADD COLUMN association_order INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE log_tag_associations ADD COLUMN created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE log_tag_associations ADD COLUMN created_at TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z';
 
 -- Update schema migrations
 INSERT INTO schema_migrations (version, description) 

@@ -45,7 +45,7 @@ export class AiService {
     try {
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
       const response = await this.ai.run(AI_MODEL, {
-        messages: [
+        input: [
           {
             role: 'system',
             content: 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。与えられた情報から、タグの説明と関連タグを簡潔に生成してください。'
@@ -59,7 +59,6 @@ export class AiService {
             content: instructionPrompt
           }
         ],
-        stream: false
       });
 
       console.log('[AiService] AI response received:', {
@@ -142,18 +141,18 @@ export class AiService {
     console.log('[AiService] parseAiResponse called with:', {
       tagName,
       responseType: typeof response,
-      hasResponse: !!response?.response,
-      hasResult: !!response?.result
+      response: JSON.stringify(response),
     });
 
-    // Cloudflare Workers AIのレスポンス形式に対応
+    // gpt-oss-120bのレスポンス形式に対応
     let content = '';
-    if (response.response) {
-      content = response.response;
-    } else if (response.result && response.result.response) {
-      content = response.result.response;
-    } else if (typeof response === 'string') {
-      content = response;
+    if (response.output) {
+      content = response.output
+        .filter((item: any) => item.type == 'message')
+        .flatMap((item: any) => item.content || [])
+        .map((content: any) => content.text || "")
+        .join("\n\n")
+        .trim();
     } else {
       console.error('[AiService] Unexpected AI response format:', response);
       throw new Error('Unexpected AI response format');

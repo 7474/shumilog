@@ -447,7 +447,7 @@ export class TagService {
    * Extract hashtag patterns from content (#{tagName} and #tagName formats)
    */
   private extractHashtagsFromContent(content: string): string[] {
-    const matches: string[] = [];
+    const hashtagsWithPositions: { position: number; name: string }[] = [];
     
     // Pattern 1: #{tagName} - extended format (for tags with whitespace)
     const extendedPattern = /#\{([^}]+)\}/g;
@@ -455,8 +455,8 @@ export class TagService {
     
     while ((match = extendedPattern.exec(content)) !== null) {
       const tagName = match[1].trim();
-      if (tagName && !matches.includes(tagName)) {
-        matches.push(tagName);
+      if (tagName) {
+        hashtagsWithPositions.push({ position: match.index, name: tagName });
       }
     }
     
@@ -465,12 +465,22 @@ export class TagService {
     
     while ((match = simplePattern.exec(content)) !== null) {
       const tagName = match[1].trim();
-      if (tagName && !matches.includes(tagName)) {
-        matches.push(tagName);
+      if (tagName) {
+        hashtagsWithPositions.push({ position: match.index, name: tagName });
       }
     }
     
-    return matches;
+    // Sort by position to maintain order of appearance, then remove duplicates
+    hashtagsWithPositions.sort((a, b) => a.position - b.position);
+    
+    const uniqueMatches: string[] = [];
+    for (const item of hashtagsWithPositions) {
+      if (!uniqueMatches.includes(item.name)) {
+        uniqueMatches.push(item.name);
+      }
+    }
+    
+    return uniqueMatches;
   }
 
   /**

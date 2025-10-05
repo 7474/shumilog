@@ -23,15 +23,15 @@ VALUES
   ('tag_shonen', 'Shonen', 'Shonen manga/anime', '{"category": "genre"}', 'user_alice', '2023-01-01T00:00:00Z', '2023-01-01T00:00:00Z');
 
 -- タグ関連付け（関連するタグ同士を紐付け）
-INSERT OR IGNORE INTO tag_associations (tag_id, associated_tag_id, created_at)
+INSERT OR IGNORE INTO tag_associations (tag_id, associated_tag_id, created_at, association_order)
 VALUES 
-  ('tag_anime', 'tag_manga', '2023-01-01T00:00:00Z'),
-  ('tag_attack_on_titan', 'tag_anime', '2023-01-01T00:00:00Z'),
-  ('tag_attack_on_titan', 'tag_manga', '2023-01-01T00:00:00Z'),
-  ('tag_shonen', 'tag_anime', '2023-01-01T00:00:00Z'),
-  ('tag_shonen', 'tag_manga', '2023-01-01T00:00:00Z'),
-  ('tag_rpg', 'tag_gaming', '2023-01-01T00:00:00Z'),
-  ('tag_jpop', 'tag_music', '2023-01-01T00:00:00Z');
+  ('tag_anime', 'tag_manga', '2023-01-01T00:00:00Z', 0),
+  ('tag_attack_on_titan', 'tag_anime', '2023-01-01T00:00:00Z', 0),
+  ('tag_attack_on_titan', 'tag_manga', '2023-01-01T00:00:00Z', 1),
+  ('tag_shonen', 'tag_anime', '2023-01-01T00:00:00Z', 0),
+  ('tag_shonen', 'tag_manga', '2023-01-01T00:00:00Z', 1),
+  ('tag_rpg', 'tag_gaming', '2023-01-01T00:00:00Z', 0),
+  ('tag_jpop', 'tag_music', '2023-01-01T00:00:00Z', 0);
 
 -- ログデータ（公開・非公開、複数ユーザー）
 INSERT OR IGNORE INTO logs (id, user_id, title, content_md, is_public, created_at, updated_at)
@@ -92,29 +92,29 @@ VALUES
 ギア5の戦闘シーンは圧巻。', 1, '2023-01-11T19:00:00Z', '2023-01-11T19:00:00Z');
 
 -- ログとタグの関連付け
-INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id)
+INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id, association_order, created_at)
 VALUES 
   -- Alice のログとタグ
-  ('log_alice_1', 'tag_anime'),
-  ('log_alice_1', 'tag_attack_on_titan'),
-  ('log_alice_1', 'tag_shonen'),
-  ('log_alice_2', 'tag_anime'),
+  ('log_alice_1', 'tag_anime', 0, '2023-01-05T10:30:00Z'),
+  ('log_alice_1', 'tag_attack_on_titan', 1, '2023-01-05T10:30:00Z'),
+  ('log_alice_1', 'tag_shonen', 2, '2023-01-05T10:30:00Z'),
+  ('log_alice_2', 'tag_anime', 0, '2023-01-03T14:20:00Z'),
   
   -- Bob のログとタグ
-  ('log_bob_1', 'tag_gaming'),
-  ('log_bob_1', 'tag_rpg'),
-  ('log_bob_2', 'tag_gaming'),
-  ('log_bob_2', 'tag_rpg'),
+  ('log_bob_1', 'tag_gaming', 0, '2023-01-06T20:45:00Z'),
+  ('log_bob_1', 'tag_rpg', 1, '2023-01-06T20:45:00Z'),
+  ('log_bob_2', 'tag_gaming', 0, '2023-01-07T18:30:00Z'),
+  ('log_bob_2', 'tag_rpg', 1, '2023-01-07T18:30:00Z'),
   
   -- Carol のログとタグ
-  ('log_carol_1', 'tag_music'),
-  ('log_carol_1', 'tag_jpop'),
-  ('log_carol_2', 'tag_music'),
+  ('log_carol_1', 'tag_music', 0, '2023-01-08T15:00:00Z'),
+  ('log_carol_1', 'tag_jpop', 1, '2023-01-08T15:00:00Z'),
+  ('log_carol_2', 'tag_music', 0, '2023-01-02T12:00:00Z'),
   
   -- Dave のログとタグ
-  ('log_dave_1', 'tag_manga'),
-  ('log_dave_1', 'tag_attack_on_titan'),
-  ('log_dave_3', 'tag_manga'),
-  ('log_dave_3', 'tag_shonen');
+  ('log_dave_1', 'tag_manga', 0, '2023-01-09T11:20:00Z'),
+  ('log_dave_1', 'tag_attack_on_titan', 1, '2023-01-09T11:20:00Z'),
+  ('log_dave_3', 'tag_manga', 0, '2023-01-11T19:00:00Z'),
+  ('log_dave_3', 'tag_shonen', 1, '2023-01-11T19:00:00Z');
 
 COMMIT;

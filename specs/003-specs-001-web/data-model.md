@@ -42,9 +42,14 @@ Focus: Preserve only the entities needed to satisfy the Hobby Content Log API wh
   - `tag_id` (TEXT, FK → `tags.id`)
   - `associated_tag_id` (TEXT, FK → `tags.id`)
   - `created_at` (TIMESTAMP)
+  - `association_order` (INTEGER, default 0) — order of appearance in tag description
 - **Indexes**:
   - `idx_tag_assoc_associated_tag_id` for reverse lookups.
-- **Notes**: Enforce `tag_id != associated_tag_id` via CHECK constraint in SQL migration.
+- **Notes**: 
+  - Enforce `tag_id != associated_tag_id` via CHECK constraint in SQL migration.
+  - `association_order` maintains the order hashtags appear in the tag description
+  - When displaying associations: ORDER BY `association_order` ASC
+  - When displaying reverse references: ORDER BY `created_at` DESC
 
 ## logs
 - **Primary Key**: `id` (TEXT, ULID)
@@ -65,9 +70,15 @@ Focus: Preserve only the entities needed to satisfy the Hobby Content Log API wh
 - **Fields**:
   - `log_id` (TEXT, FK → `logs.id`)
   - `tag_id` (TEXT, FK → `tags.id`)
+  - `association_order` (INTEGER, default 0) — order of appearance in log content
+  - `created_at` (TIMESTAMP) — timestamp when association was created
 - **Indexes**:
   - `idx_log_tag_assoc_tag_id` for tag→log browsing.
-- **Notes**: No extra fields to keep payload lean; ordering handled at query level.
+- **Notes**: 
+  - `association_order` maintains the order hashtags appear in log content
+  - `created_at` enables sorting by association recency for reverse lookups
+  - When displaying log's tags: ORDER BY `association_order` ASC
+  - When displaying tag's logs: ORDER BY `created_at` DESC (newest first)
 
 ## Derived Views / Helpers
 - **recent_public_logs** (virtual view): Select top N public logs with author + tag joins for `/logs` endpoint.

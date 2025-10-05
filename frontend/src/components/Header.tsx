@@ -43,30 +43,28 @@ export function Header() {
           </Link>
           
           <nav className="flex items-center space-x-2">
+            <Link to="/logs">
+              <Button variant="ghost" size="sm" className="text-gray-700 hover:text-fresh-600">
+                <span className="hidden sm:inline">Logs</span>
+                <span className="sm:hidden">📝</span>
+              </Button>
+            </Link>
+            <Link to="/tags">
+              <Button variant="ghost" size="sm" className="text-gray-700 hover:text-sky-600">
+                <span className="hidden sm:inline">Tags</span>
+                <span className="sm:hidden">🏷️</span>
+              </Button>
+            </Link>
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2">
-                <Link to="/logs">
-                  <Button variant="ghost" size="sm" className="text-gray-700 hover:text-fresh-600">
-                    <span className="hidden sm:inline">Logs</span>
-                    <span className="sm:hidden">📝</span>
-                  </Button>
-                </Link>
-                <Link to="/tags">
-                  <Button variant="ghost" size="sm" className="text-gray-700 hover:text-sky-600">
-                    <span className="hidden sm:inline">Tags</span>
-                    <span className="sm:hidden">🏷️</span>
-                  </Button>
-                </Link>
-                <Button 
-                  onClick={handleLogout}
-                  variant="outline" 
-                  size="sm"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  <span className="hidden sm:inline">Logout</span>
-                  <span className="sm:hidden">🚪</span>
-                </Button>
-              </div>
+              <Button 
+                onClick={handleLogout}
+                variant="outline" 
+                size="sm"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">🚪</span>
+              </Button>
             ) : (
               <Link to="/login">
                 <Button className="btn-fresh">

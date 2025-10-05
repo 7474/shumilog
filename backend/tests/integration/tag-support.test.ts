@@ -1,8 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { app, clearTestData, setupTestEnvironment } from '../helpers/app';
 
-// Mock Wikipedia API responses for testing
-const mockWikipediaResponse = {
+// Mock Wikipedia HTML content for testing
+const mockWikipediaHtml = `
+<!DOCTYPE html>
+<html>
+<head><title>アニメ - Wikipedia</title></head>
+<body>
+  <h1>アニメ</h1>
+  <p>アニメは、日本で制作されたアニメーション作品の総称です。</p>
+  <h2>概要</h2>
+  <p>日本のアニメーション文化は世界的に人気があります。</p>
+  <ul>
+    <li><a href="/wiki/マンガ">マンガ</a></li>
+    <li><a href="/wiki/ゲーム">ゲーム</a></li>
+  </ul>
+</body>
+</html>
+`;
+
+// Mock Wikipedia JSON summary for testing
+const mockWikipediaSummary = {
   extract: 'アニメは、日本で制作されたアニメーションの総称です。',
   content_urls: {
     desktop: {
@@ -25,13 +43,15 @@ describe('Integration: Tag Support Feature', () => {
           return Promise.resolve({
             ok: false,
             status: 404,
+            text: async () => '',
             json: async () => ({ error: 'Not found' })
           } as Response);
         }
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: async () => mockWikipediaResponse
+          text: async () => mockWikipediaHtml,
+          json: async () => mockWikipediaSummary
         } as Response);
       }
       return Promise.reject(new Error('Unexpected fetch call'));

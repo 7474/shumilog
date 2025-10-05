@@ -33,7 +33,7 @@ export class AiService {
       wikipediaContentLength: input.wikipediaContent.length
     });
 
-    const prompt = this.buildPrompt(input);
+    const instructionPrompt = this.buildInstructionPrompt(input.tagName);
     
     try {
       console.log('[AiService] Sending request to AI model: @cf/meta/llama-3.2-3b-instruct');
@@ -45,7 +45,11 @@ export class AiService {
           },
           {
             role: 'user',
-            content: prompt
+            content: `参照情報（Wikipedia HTML）:\n\n${input.wikipediaContent}`
+          },
+          {
+            role: 'user',
+            content: instructionPrompt
           }
         ],
         stream: false
@@ -70,18 +74,15 @@ export class AiService {
   }
 
   /**
-   * プロンプトを構築
+   * 指示プロンプトを構築（Wikipedia内容は含めない）
    * 
    * 【重要】連載・シリーズ作品のサブタイトル情報の抽出は重要要素です。
    * AIに対して、シーズン、期、章、巻、エピソード、各話タイトルなどの
    * サブタイトル情報を省略せず、すべて列挙するよう明示的に指示しています。
    * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
-  private buildPrompt(input: AiEnhancedTagInput): string {
-    const prompt = `以下のWikipedia情報を基に、タグ「${input.tagName}」の説明をMarkdown形式で生成してください。
-
-Wikipedia内容：
-${input.wikipediaContent}
+  private buildInstructionPrompt(tagName: string): string {
+    const prompt = `上記の参照情報（Wikipedia HTML）を基に、タグ「${tagName}」の説明をMarkdown形式で生成してください。
 
 【重要】必ずMarkdown形式で出力してください：
 
@@ -115,8 +116,8 @@ ${input.wikipediaContent}
 
 この形式を厳密に守ってMarkdownで出力してください。特に連載・シリーズのサブタイトル情報（各話・エピソードタイトルを含む）は省略しないでください。`;
 
-    console.log('[AiService] buildPrompt called:', {
-      tagName: input.tagName,
+    console.log('[AiService] buildInstructionPrompt called:', {
+      tagName: tagName,
       promptLength: prompt.length,
       promptPreview: prompt.substring(0, 200) + '...'
     });

@@ -666,24 +666,10 @@ export class TagService {
         throw new Error(`Wikipedia API error: ${response.status}`);
       }
 
-      // HTMLをテキストとして取得
+      // HTMLコンテンツをそのまま取得
       const htmlContent = await response.text();
       
-      // HTMLタグを除去してプレーンテキストに変換
-      let fullContent = htmlContent
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // スクリプトタグを削除
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')   // スタイルタグを削除
-        .replace(/<[^>]*>/g, ' ')  // HTMLタグを削除
-        .replace(/&nbsp;/g, ' ')   // &nbsp;を空白に変換
-        .replace(/&lt;/g, '<')     // HTMLエンティティをデコード
-        .replace(/&gt;/g, '>')
-        .replace(/&amp;/g, '&')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\s+/g, ' ')      // 連続する空白を1つに
-        .trim();
-      
-      if (!fullContent) {
+      if (!htmlContent) {
         throw new Error('No content available');
       }
 
@@ -693,7 +679,7 @@ export class TagService {
       // AIサービスを使用して編集サポート内容を生成
       const aiOutput = await this.aiService.generateEnhancedTagContent({
         tagName,
-        wikipediaContent: fullContent,
+        wikipediaContent: htmlContent,
         wikipediaUrl
       });
 

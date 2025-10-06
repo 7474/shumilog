@@ -5,7 +5,8 @@ import { Context, Next } from 'hono';
  * GETリクエストで認証不要のエンドポイントに対して、Cloudflare Workers CDNにキャッシュされるように設定する
  * 
  * 戦略:
- * - Cache-Control: max-age=300（5分間キャッシュ）
+ * - Cache-Control: max-age=300（ブラウザキャッシュ：5分間）
+ * - s-maxage=300（CDN等の共有キャッシュ：5分間）
  * - stale-while-revalidate=60（再検証中に古いコンテンツを提供可能）
  * - Vary: Origin（CORS以外の条件では同じ応答）
  */
@@ -34,7 +35,7 @@ export const cacheControl = () => {
 
     // 公開エンドポイントに対してキャッシュヘッダを設定
     // 5分間キャッシュ、再検証中は古いコンテンツを60秒間提供可能
-    c.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+    c.header('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=60');
     
     // CORS以外のリクエスト条件では応答内容は変化しない
     c.header('Vary', 'Origin');

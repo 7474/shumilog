@@ -34,7 +34,7 @@ export class TwitterService {
   /**
    * Generate OAuth authorization URL
    */
-  async getAuthUrl(redirectUri: string): Promise<{ authUrl: string; state: string }> {
+  async getAuthUrl(redirectUri: string): Promise<{ authUrl: string; state: string; codeVerifier: string }> {
     const state = this.generateState();
     const codeVerifier = this.generateCodeVerifier();
     const codeChallenge = await this.generateCodeChallenge(codeVerifier);
@@ -58,7 +58,7 @@ export class TwitterService {
 
     const authUrl = `https://x.com/i/oauth2/authorize?${params.toString()}`;
 
-    return { authUrl, state };
+    return { authUrl, state, codeVerifier };
   }
 
   /**
@@ -82,11 +82,23 @@ export class TwitterService {
 
   /**
    * Exchange authorization code for access tokens
+   * @param codeVerifier - Optional code verifier. If not provided, will look up from in-memory state
    */
-  async exchangeCodeForTokens(code: string, redirectUri: string, state: string): Promise<TwitterOAuthTokens> {
-    const storedState = this.oauthStates.get(state);
-    if (!storedState) {
-      throw new Error('Invalid state parameter');
+  async exchangeCodeForTokens(code: string, redirectUri: string, state: string, codeVerifier?: string): Promise<TwitterOAuthTokens> {
+    let verifier: string;
+    
+    if (codeVerifier) {
+      // Use provided code verifier (from cookie in production)
+      verifier = codeVerifier;
+    } else {
+      // Fall back to in-memory state (for offline/test mode)
+      const storedState = this.oauthStates.get(state);
+      if (!storedState) {
+        throw new Error('Invalid state parameter');
+      }
+      verifier = storedState.codeVerifier;
+      // Clean up state
+      this.oauthStates.delete(state);
     }
 
     const tokenUrl = 'https://api.x.com/2/oauth2/token';
@@ -96,7 +108,7 @@ export class TwitterService {
       client_id: this.clientId,
       redirect_uri: redirectUri,
       code,
-      code_verifier: storedState.codeVerifier
+      code_verifier: verifier
     });
 
     const response = await fetch(tokenUrl, {
@@ -114,9 +126,6 @@ export class TwitterService {
     }
 
     const data = await response.json() as any;
-
-    // Clean up state
-    this.oauthStates.delete(state);
 
     return {
       accessToken: data.access_token,

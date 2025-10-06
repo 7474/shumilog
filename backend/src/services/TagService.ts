@@ -1,6 +1,7 @@
 import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
 import { Database, PaginatedResult } from '../db/database.js';
 import { AiService } from './AiService.js';
+import { cachedFetch } from '../utils/fetchCache.js';
 
 export interface TagUsageStats {
   tagId: string;
@@ -576,11 +577,15 @@ export class TagService {
       // Wikipedia API endpoint - using Japanese Wikipedia
       const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tagName)}`;
       
-      const response = await fetch(apiUrl, {
+      // Wikipedia コンテンツは頻繁に変更されないため24時間キャッシュ
+      const response = await cachedFetch(apiUrl, {
         headers: {
           'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
           'Accept': 'application/json'
         }
+      }, {
+        ttl: 86400, // 24時間
+        cacheKey: `wikipedia:summary:${tagName}`
       });
 
       if (!response.ok) {
@@ -673,11 +678,15 @@ export class TagService {
       // まずWikipediaから全文を取得（HTMLエンドポイントを使用）
       const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(tagName)}`;
       
-      const response = await fetch(apiUrl, {
+      // Wikipedia コンテンツは頻繁に変更されないため24時間キャッシュ
+      const response = await cachedFetch(apiUrl, {
         headers: {
           'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
           'Accept': 'text/html; charset=utf-8; profile="https://www.mediawiki.org/wiki/Specs/HTML/2.1.0"'
         }
+      }, {
+        ttl: 86400, // 24時間
+        cacheKey: `wikipedia:html:${tagName}`
       });
 
       if (!response.ok) {

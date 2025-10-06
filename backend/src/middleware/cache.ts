@@ -25,6 +25,13 @@ export const cacheControl = () => {
       return;
     }
 
+    // 非公開データを含むレスポンスはキャッシュしない
+    const hasPrivateData = c.get('hasPrivateData');
+    if (hasPrivateData) {
+      c.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      return;
+    }
+
     // 成功レスポンス（2xx）のみキャッシュ対象
     const status = c.res.status;
     if (status < 200 || status >= 300) {

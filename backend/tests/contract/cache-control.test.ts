@@ -52,6 +52,21 @@ describe('Contract Test: Cache Control Headers', () => {
       expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, stale-while-revalidate=60');
       expect(response.headers.get('Vary')).toBe('Origin');
     });
+
+    it('GET /logs/:id（非公開ログ・オーナー）- キャッシュされない', async () => {
+      const { privateLogId, ownerId } = await seedTestLogs();
+      const sessionToken = await createTestSession(ownerId);
+      
+      const response = await app.request(`/logs/${privateLogId}`, {
+        method: 'GET',
+        headers: {
+          Cookie: `session=${sessionToken}`
+        }
+      });
+      
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Cache-Control')).toBe('private, no-cache, no-store, must-revalidate');
+    });
   });
 
   describe('認証必要エンドポイント', () => {

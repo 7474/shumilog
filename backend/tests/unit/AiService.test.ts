@@ -6,7 +6,12 @@ describe('AiService', () => {
     it('should generate enhanced content from AI response in markdown format', async () => {
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
-          response: `人類と巨人の戦いを描くダークファンタジー作品。連載作品として大きな人気を博しました。
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `人類と巨人の戦いを描くダークファンタジー作品。連載作品として大きな人気を博しました。
 
 **関連タグ**: #マンガ #アニメ #ダークファンタジー #バトル #諫山創
 
@@ -20,6 +25,10 @@ describe('AiService', () => {
 - #調査兵団
 - #駐屯兵団
 - #憲兵団`
+                }
+              ]
+            }
+          ]
         })
       };
 
@@ -42,12 +51,21 @@ describe('AiService', () => {
     it('should generate enhanced content with requested tag name in prompt', async () => {
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
-          response: `イギリスに関する情報です。
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `イギリスに関する情報です。
 
 **関連タグ**: #ヨーロッパ #連合王国 #イングランド
 
 ### 概要
 - イギリスは正式には連合王国です`
+                }
+              ]
+            }
+          ]
         })
       };
 
@@ -66,7 +84,7 @@ describe('AiService', () => {
       expect(mockAi.run).toHaveBeenCalledWith(
         '@cf/openai/gpt-oss-120b',
         expect.objectContaining({
-          messages: expect.arrayContaining([
+          input: expect.arrayContaining([
             expect.objectContaining({
               role: 'user',
               content: expect.stringContaining('UK')
@@ -83,9 +101,18 @@ describe('AiService', () => {
     it('should handle AI response without subsections', async () => {
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
-          response: `シンプルな説明文です。
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `シンプルな説明文です。
 
 **関連タグ**: #タグ1 #タグ2`
+                }
+              ]
+            }
+          ]
         })
       };
 

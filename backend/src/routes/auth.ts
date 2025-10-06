@@ -131,14 +131,21 @@ auth.get('/callback', async (c) => {
   const stateCookie = getCookie(c, OAUTH_STATE_COOKIE);
   const isOfflineMode = config.nodeEnv !== 'production';
 
-  if (stateCookie && stateCookie !== state) {
-    clearOAuthStateCookie(c);
-    throw new HTTPException(401, { message: 'Invalid OAuth state' });
-  }
-
-  if (!isOfflineMode && !twitterService.verifyState(state)) {
-    clearOAuthStateCookie(c);
-    throw new HTTPException(401, { message: 'Invalid OAuth state' });
+  // State verification strategy:
+  // - Production: Use cookie-based state verification only (CSRF protection)
+  //   Cookie is HttpOnly, Secure, and sufficient for security
+  //   Avoids relying on in-memory state which is unreliable in Cloudflare Workers
+  //   (different Worker instances may handle OAuth init vs callback)
+  // - Offline/Test: Skip cookie validation for testing convenience
+  if (!isOfflineMode) {
+    if (!stateCookie) {
+      clearOAuthStateCookie(c);
+      throw new HTTPException(401, { message: 'Invalid OAuth state' });
+    }
+    if (stateCookie !== state) {
+      clearOAuthStateCookie(c);
+      throw new HTTPException(401, { message: 'Invalid OAuth state' });
+    }
   }
 
   try {

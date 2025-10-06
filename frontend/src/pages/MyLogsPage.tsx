@@ -25,14 +25,6 @@ export function MyLogsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState(''); 
 
-  useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-  }, [isAuthenticated, navigate]);
-
   const fetchLogs = async (search?: string, isInitialLoad = false) => {
     try {
       if (isInitialLoad) {
@@ -43,6 +35,11 @@ export function MyLogsPage() {
       const query = search ? { search } : {};
       const response = await api.users.me.logs.$get({ query });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Not authenticated, redirect to login
+          navigate('/login');
+          return;
+        }
         throw new Error('Failed to fetch logs');
       }
       const data = await response.json();
@@ -59,10 +56,8 @@ export function MyLogsPage() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchLogs(undefined, true);
-    }
-  }, [isAuthenticated]);
+    fetchLogs(undefined, true);
+  }, []);
 
   const handleSuccess = () => {
     setShowForm(false);

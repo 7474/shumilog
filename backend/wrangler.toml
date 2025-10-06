@@ -38,9 +38,9 @@ binding = "AI"
 
 [env.development.vars]
 ENVIRONMENT = "development"
-APP_BASE_URL = "https://master.shumilog.pages.dev"
-APP_LOGIN_URL = "https://master.shumilog.pages.dev/login"
-TWITTER_REDIRECT_URI = "https://master-shumilog-backend.koudenpa.workers.dev/api/auth/callback"
+APP_BASE_URL = "https://shumilog.dev"
+APP_LOGIN_URL = "https://shumilog.dev/login"
+TWITTER_REDIRECT_URI = "https://api.shumilog.dev/api/auth/callback"
 
 [env.production]
 name = "shumilog-backend"
@@ -56,9 +56,9 @@ binding = "AI"
 
 [env.production.vars]
 ENVIRONMENT = "production"
-APP_BASE_URL = "https://shumilog.pages.dev"
-APP_LOGIN_URL = "https://shumilog.pages.dev/login"
-TWITTER_REDIRECT_URI = "https://shumilog-backend.koudenpa.workers.dev/api/auth/callback"
+APP_BASE_URL = "https://shumilog.dev"
+APP_LOGIN_URL = "https://shumilog.dev/login"
+TWITTER_REDIRECT_URI = "https://api.shumilog.dev/api/auth/callback"
 
 # Secrets (configured via wrangler secret put)
 # TWITTER_CLIENT_ID

@@ -3,6 +3,27 @@
  * 
  * Cloudflare Workers Cache APIを使用して外部APIへのfetchリクエストをキャッシュします。
  * Ref: https://developers.cloudflare.com/workers/examples/cache-using-fetch/
+ * 
+ * ## 使用例
+ * 
+ * ```typescript
+ * // 基本的な使い方（デフォルト1時間キャッシュ）
+ * const response = await cachedFetch('https://api.example.com/data');
+ * 
+ * // カスタムTTLとキャッシュキーを指定
+ * const response = await cachedFetch(
+ *   'https://ja.wikipedia.org/api/rest_v1/page/summary/アニメ',
+ *   { headers: { 'User-Agent': 'MyApp/1.0' } },
+ *   { ttl: 86400, cacheKey: 'wikipedia:summary:アニメ' }
+ * );
+ * ```
+ * 
+ * ## 動作
+ * 
+ * - キャッシュヒット: キャッシュにデータが存在する場合、即座に返却
+ * - キャッシュミス: 実際のAPIを呼び出し、成功時は自動的にキャッシュに保存
+ * - エラー処理: 2xx以外のレスポンスはキャッシュされない
+ * - フォールバック: Cache APIが利用できない環境では通常のfetchにフォールバック
  */
 
 export interface FetchCacheOptions {

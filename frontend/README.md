@@ -7,7 +7,7 @@
 - **React 19** - 最新のUIライブラリ
 - **TypeScript 5.9+** - 型安全な開発
 - **Vite 7+** - 高速ビルドツール
-- **Tailwind CSS 3.4+** - ユーティリティファーストCSSフレームワーク
+- **Tailwind CSS 4.1+** - ユーティリティファーストCSSフレームワーク
 - **shadcn/ui** - アクセシブルなUIコンポーネントライブラリ
 - **React Router v7** - クライアントサイドルーティング
 - **React Hook Form** - フォーム状態管理
@@ -81,10 +81,8 @@ npm run test:smoke
 
 ## 設定ファイル
 
-- `tailwind.config.cjs` - Tailwind CSS設定
+- `vite.config.ts` - Vite設定（@tailwindcss/viteプラグインを含む）
 - `components.json` - shadcn/ui設定
-- `postcss.config.cjs` - PostCSS設定
-- `vite.config.ts` - Vite設定
 
 ## APIプロキシ
 

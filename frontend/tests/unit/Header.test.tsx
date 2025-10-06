@@ -46,9 +46,12 @@ describe('Header Component', () => {
     
     // ログとタグのナビゲーションリンクが表示されていることを確認
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: /Logs|📝/ })).toBeInTheDocument();
+      expect(screen.getAllByRole('link', { name: /Logs|📝/ }).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByRole('link', { name: /Tags|🏷️/ })).toBeInTheDocument();
     });
+    
+    // My Logsリンクが表示されていることを確認（認証時のみ）
+    expect(screen.getByRole('link', { name: /My Logs|📚/ })).toBeInTheDocument();
     
     // ログアウトボタンが表示されていることを確認
     expect(screen.getByRole('button', { name: /Logout|🚪/ })).toBeInTheDocument();
@@ -63,7 +66,8 @@ describe('Header Component', () => {
     const { rerender } = renderWithRouter();
     
     await waitFor(() => {
-      const logsLink = screen.getByRole('link', { name: /Logs|📝/ });
+      const logsLinks = screen.getAllByRole('link', { name: /Logs|📝/ });
+      const logsLink = logsLinks.find((link) => link.getAttribute('href') === '/logs');
       expect(logsLink).toBeInTheDocument();
       expect(logsLink).toHaveAttribute('href', '/logs');
     });
@@ -79,7 +83,8 @@ describe('Header Component', () => {
     );
     
     await waitFor(() => {
-      const logsLink = screen.getByRole('link', { name: /Logs|📝/ });
+      const logsLinks = screen.getAllByRole('link', { name: /Logs|📝/ });
+      const logsLink = logsLinks.find((link) => link.getAttribute('href') === '/logs');
       expect(logsLink).toBeInTheDocument();
       expect(logsLink).toHaveAttribute('href', '/logs');
     });
@@ -110,6 +115,32 @@ describe('Header Component', () => {
       const tagsLink = screen.getByRole('link', { name: /Tags|🏷️/ });
       expect(tagsLink).toBeInTheDocument();
       expect(tagsLink).toHaveAttribute('href', '/tags');
+    });
+  });
+
+  it('should show My Logs link only when authenticated', async () => {
+    // 未ログイン時は表示されない
+    mockUseAuth.isAuthenticated = false;
+    const { rerender } = renderWithRouter();
+    
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: /My Logs|📚/ })).not.toBeInTheDocument();
+    });
+    
+    // ログイン時は表示される
+    mockUseAuth.isAuthenticated = true;
+    mockUseAuth.user = { id: '1', name: 'Test User' };
+    
+    rerender(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+    
+    await waitFor(() => {
+      const myLogsLink = screen.getByRole('link', { name: /My Logs|📚/ });
+      expect(myLogsLink).toBeInTheDocument();
+      expect(myLogsLink).toHaveAttribute('href', '/my/logs');
     });
   });
 });

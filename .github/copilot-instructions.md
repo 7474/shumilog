@@ -19,9 +19,8 @@ Auto-generated from all feature plans. Last updated: 2025-01-08
 - Cloudflare D1 (SQLiteベースデータベース)
 - React 19 (フロントエンドライブラリ)
 - Vite 7+ (フロントエンドビルドツール)
-- Tailwind CSS 3.4+ (ユーティリティファーストCSSフレームワーク)
+- Tailwind CSS 4.1+ (ユーティリティファーストCSSフレームワーク)
 - shadcn/ui (アクセシブルUIコンポーネントライブラリ)
-- PostCSS + Autoprefixer (CSS処理)
 - Vitest (テストフレームワーク)
 - Wrangler CLI (Cloudflare開発ツール)
 - ESLint + Prettier (コード品質)
@@ -165,7 +164,7 @@ const response = await app.request('/logs', {
 - 2025-01-08: Copilotインストラクション見直し - 日本語応答・npmパッケージ管理・LTS優先の必須指針追加
 - Node.js 22 LTS + npm 10+への統一（.nvmrc: 22.20.0）
 - TypeScript 5.9+、React 19、Vite 7+への更新
-- Tailwind CSS 3.4+ + shadcn/ui導入によるレスポンシブデザイン実装
+- Tailwind CSS 4.1+ + shadcn/ui導入によるレスポンシブデザイン実装
 - スマートフォンファーストのライトテーマUIコンポーネント体系構築
 
 <!-- MANUAL ADDITIONS START -->

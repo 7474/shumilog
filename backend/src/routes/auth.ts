@@ -9,6 +9,7 @@ import { clearSessionCookie, setSessionCookie } from '../middleware/auth.js';
 const auth = new Hono();
 
 const OAUTH_STATE_COOKIE = 'oauth_state';
+const OAUTH_VERIFIER_COOKIE = 'oauth_verifier';
 
 type RuntimeConfig = {
   nodeEnv: string;
@@ -70,6 +71,13 @@ const clearOAuthStateCookie = (c: any) => {
     path: '/',
     maxAge: 0
   });
+  setCookie(c, OAUTH_VERIFIER_COOKIE, '', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+    path: '/',
+    maxAge: 0
+  });
 };
 
 // GET /auth/twitter - Initiate Twitter OAuth flow
@@ -88,7 +96,7 @@ auth.get('/twitter', async (c) => {
   }
 
   try {
-    const { authUrl, state } = await twitterService.getAuthUrl(redirectUri);
+    const { authUrl, state, codeVerifier } = await twitterService.getAuthUrl(redirectUri);
     const parsedUrl = new URL(authUrl);
 
     if (config.twitterClientId) {
@@ -96,6 +104,14 @@ auth.get('/twitter', async (c) => {
     }
 
     setCookie(c, OAUTH_STATE_COOKIE, state, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      path: '/',
+      maxAge: 60 * 5 // 5 minutes
+    });
+
+    setCookie(c, OAUTH_VERIFIER_COOKIE, codeVerifier, {
       httpOnly: true,
       secure: true,
       sameSite: 'Lax',
@@ -129,6 +145,7 @@ auth.get('/callback', async (c) => {
   }
 
   const stateCookie = getCookie(c, OAUTH_STATE_COOKIE);
+  const verifierCookie = getCookie(c, OAUTH_VERIFIER_COOKIE);
   const isOfflineMode = config.nodeEnv !== 'production';
 
   // State verification strategy:
@@ -146,6 +163,10 @@ auth.get('/callback', async (c) => {
       clearOAuthStateCookie(c);
       throw new HTTPException(401, { message: 'Invalid OAuth state' });
     }
+    if (!verifierCookie) {
+      clearOAuthStateCookie(c);
+      throw new HTTPException(401, { message: 'Invalid OAuth state' });
+    }
   }
 
   try {
@@ -158,7 +179,8 @@ auth.get('/callback', async (c) => {
 
       profile = buildMockProfile(state);
     } else {
-      const tokens = await twitterService.exchangeCodeForTokens(code, config.twitterRedirectUri, state);
+      // In production, use codeVerifier from cookie
+      const tokens = await twitterService.exchangeCodeForTokens(code, config.twitterRedirectUri, state, verifierCookie);
       profile = await twitterService.getUserProfile(tokens.accessToken);
     }
 

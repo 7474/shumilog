@@ -1,19 +1,22 @@
 /**
- * Image model for log attachments
+ * Image model for user-owned images
  */
 
-export interface LogImage {
+export interface Image {
   id: string;
-  log_id: string;
+  user_id: string;
   r2_key: string;
   file_name: string;
   content_type: string;
   file_size: number;
   width?: number;
   height?: number;
-  display_order: number;
   created_at: string;
   url?: string; // Public URL for accessing the image
+}
+
+export interface LogImage extends Image {
+  display_order: number; // From log_image_associations
 }
 
 export interface CreateImageData {
@@ -22,22 +25,27 @@ export interface CreateImageData {
   file_size: number;
   width?: number;
   height?: number;
-  display_order?: number;
 }
 
 export class ImageModel {
-  static fromRow(row: any): LogImage {
+  static fromRow(row: any): Image {
     return {
       id: row.id,
-      log_id: row.log_id,
+      user_id: row.user_id,
       r2_key: row.r2_key,
       file_name: row.file_name,
       content_type: row.content_type,
       file_size: row.file_size,
       width: row.width,
       height: row.height,
-      display_order: row.display_order,
       created_at: row.created_at,
+    };
+  }
+
+  static fromRowWithDisplayOrder(row: any): LogImage {
+    return {
+      ...ImageModel.fromRow(row),
+      display_order: row.display_order || 0,
     };
   }
 

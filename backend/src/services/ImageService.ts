@@ -1,11 +1,11 @@
 /**
- * Service for managing log images with R2 storage
+ * Service for managing user-owned images with R2 storage
  */
 
 import type { R2Bucket, R2ObjectBody } from '@cloudflare/workers-types';
 import { v4 as uuidv4 } from 'uuid';
 import type { Database } from '../db/database.js';
-import { ImageModel, type LogImage, type CreateImageData } from '../models/Image.js';
+import { ImageModel, type Image, type LogImage, type CreateImageData } from '../models/Image.js';
 
 export class ImageService {
   constructor(
@@ -14,13 +14,15 @@ export class ImageService {
   ) {}
 
   /**
-   * Upload an image and associate it with a log
+   * Upload an image for a user and optionally associate with a log
    */
   async uploadImage(
-    logId: string,
+    userId: string,
+    logId: string | null,
     file: File | Blob,
     metadata: CreateImageData,
-  ): Promise<LogImage> {
+    displayOrder?: number,
+  ): Promise<Image> {
     if (!this.imagesBucket) {
       throw new Error('R2 bucket not configured');
     }
@@ -33,7 +35,7 @@ export class ImageService {
     // Generate unique ID and R2 key
     const imageId = uuidv4();
     const extension = ImageModel.getFileExtension(metadata.content_type);
-    const r2Key = `logs/${logId}/${imageId}.${extension}`;
+    const r2Key = `users/${userId}/${imageId}.${extension}`;
 
     // Upload to R2
     await this.imagesBucket.put(r2Key, file, {
@@ -41,7 +43,7 @@ export class ImageService {
         contentType: metadata.content_type,
       },
       customMetadata: {
-        logId,
+        userId,
         imageId,
         fileName: metadata.file_name,
       },
@@ -50,26 +52,30 @@ export class ImageService {
     // Save metadata to database
     const now = new Date().toISOString();
     const stmt = this.db.prepare(
-      `INSERT INTO log_images (id, log_id, r2_key, file_name, content_type, file_size, width, height, display_order, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO images (id, user_id, r2_key, file_name, content_type, file_size, width, height, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     
     await stmt.run([
       imageId,
-      logId,
+      userId,
       r2Key,
       metadata.file_name,
       metadata.content_type,
       metadata.file_size,
       metadata.width || null,
       metadata.height || null,
-      metadata.display_order || 0,
       now,
     ]);
 
+    // If logId is provided, create association
+    if (logId) {
+      await this.associateImageWithLog(imageId, logId, displayOrder || 0);
+    }
+
     // Get the created image
     const imageRow = await this.db.queryFirst(
-      'SELECT * FROM log_images WHERE id = ?',
+      'SELECT * FROM images WHERE id = ?',
       [imageId],
     );
 
@@ -81,12 +87,50 @@ export class ImageService {
   }
 
   /**
+   * Associate an image with a log
+   */
+  async associateImageWithLog(imageId: string, logId: string, displayOrder: number = 0): Promise<void> {
+    const now = new Date().toISOString();
+    const stmt = this.db.prepare(
+      `INSERT INTO log_image_associations (log_id, image_id, display_order, created_at)
+       VALUES (?, ?, ?, ?)`,
+    );
+    
+    await stmt.run([logId, imageId, displayOrder, now]);
+  }
+
+  /**
+   * Remove association between an image and a log
+   */
+  async dissociateImageFromLog(imageId: string, logId: string): Promise<void> {
+    const stmt = this.db.prepare(
+      'DELETE FROM log_image_associations WHERE log_id = ? AND image_id = ?',
+    );
+    await stmt.run([logId, imageId]);
+  }
+
+  /**
    * Get all images for a log
    */
   async getLogImages(logId: string): Promise<LogImage[]> {
+    const rows = await this.db.query(`
+      SELECT i.*, lia.display_order
+      FROM images i
+      JOIN log_image_associations lia ON i.id = lia.image_id
+      WHERE lia.log_id = ?
+      ORDER BY lia.display_order ASC, i.created_at ASC
+    `, [logId]);
+
+    return rows.map((row) => ImageModel.fromRowWithDisplayOrder(row));
+  }
+
+  /**
+   * Get all images owned by a user
+   */
+  async getUserImages(userId: string): Promise<Image[]> {
     const rows = await this.db.query(
-      'SELECT * FROM log_images WHERE log_id = ? ORDER BY display_order ASC, created_at ASC',
-      [logId],
+      'SELECT * FROM images WHERE user_id = ? ORDER BY created_at DESC',
+      [userId],
     );
 
     return rows.map((row) => ImageModel.fromRow(row));
@@ -95,9 +139,9 @@ export class ImageService {
   /**
    * Get a specific image
    */
-  async getImage(imageId: string): Promise<LogImage | null> {
+  async getImage(imageId: string): Promise<Image | null> {
     const row = await this.db.queryFirst(
-      'SELECT * FROM log_images WHERE id = ?',
+      'SELECT * FROM images WHERE id = ?',
       [imageId],
     );
 
@@ -120,7 +164,7 @@ export class ImageService {
   }
 
   /**
-   * Delete an image
+   * Delete an image (and all its associations)
    */
   async deleteImage(imageId: string): Promise<void> {
     // Get image metadata
@@ -134,36 +178,38 @@ export class ImageService {
       await this.imagesBucket.delete(image.r2_key);
     }
 
-    // Delete from database
-    const stmt = this.db.prepare('DELETE FROM log_images WHERE id = ?');
+    // Delete from database (associations will cascade)
+    const stmt = this.db.prepare('DELETE FROM images WHERE id = ?');
     await stmt.run([imageId]);
   }
 
   /**
-   * Delete all images for a log
+   * Delete all associations for a log
    */
-  async deleteLogImages(logId: string): Promise<void> {
-    const images = await this.getLogImages(logId);
-
-    // Delete from R2
-    if (this.imagesBucket) {
-      for (const image of images) {
-        await this.imagesBucket.delete(image.r2_key);
-      }
-    }
-
-    // Delete from database
-    const stmt = this.db.prepare('DELETE FROM log_images WHERE log_id = ?');
+  async deleteLogImageAssociations(logId: string): Promise<void> {
+    const stmt = this.db.prepare('DELETE FROM log_image_associations WHERE log_id = ?');
     await stmt.run([logId]);
   }
 
   /**
-   * Update display order of images
+   * Update display order of an image in a log
    */
-  async updateImageOrder(imageId: string, displayOrder: number): Promise<void> {
+  async updateImageOrder(imageId: string, logId: string, displayOrder: number): Promise<void> {
     const stmt = this.db.prepare(
-      'UPDATE log_images SET display_order = ? WHERE id = ?',
+      'UPDATE log_image_associations SET display_order = ? WHERE log_id = ? AND image_id = ?',
     );
-    await stmt.run([displayOrder, imageId]);
+    await stmt.run([displayOrder, logId, imageId]);
+  }
+
+  /**
+   * Verify user owns an image
+   */
+  async verifyImageOwnership(imageId: string, userId: string): Promise<boolean> {
+    const result = await this.db.queryFirst<{ count: number }>(
+      'SELECT COUNT(*) as count FROM images WHERE id = ? AND user_id = ?',
+      [imageId, userId],
+    );
+    
+    return (result?.count || 0) > 0;
   }
 }

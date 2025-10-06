@@ -192,11 +192,14 @@ export class LogService {
     const tags: Tag[] = tagRows.map(row => TagModel.fromRow(row));
     
     // Get images for the log
-    const imageRows = await this.db.query(
-      'SELECT * FROM log_images WHERE log_id = ? ORDER BY display_order ASC, created_at ASC',
-      [id]
-    );
-    const images: LogImage[] = imageRows.map(row => ImageModel.fromRow(row));
+    const imageRows = await this.db.query(`
+      SELECT i.*, lia.display_order
+      FROM images i
+      JOIN log_image_associations lia ON i.id = lia.image_id
+      WHERE lia.log_id = ?
+      ORDER BY lia.display_order ASC, i.created_at ASC
+    `, [id]);
+    const images: LogImage[] = imageRows.map(row => ImageModel.fromRowWithDisplayOrder(row));
     
     return LogModel.fromRowWithVisibility(logRow, user, tags, images);
   }
@@ -656,10 +659,11 @@ export class LogService {
     
     // Get all images for these logs in one query
     const imageRows = await this.db.query(`
-      SELECT *
-      FROM log_images
-      WHERE log_id IN (${placeholders})
-      ORDER BY log_id, display_order ASC, created_at ASC
+      SELECT i.*, lia.log_id, lia.display_order
+      FROM images i
+      JOIN log_image_associations lia ON i.id = lia.image_id
+      WHERE lia.log_id IN (${placeholders})
+      ORDER BY lia.log_id, lia.display_order ASC, i.created_at ASC
     `, logIds);
     
     // Group tags by log_id
@@ -682,7 +686,7 @@ export class LogService {
       if (!imagesByLogId.has(logId)) {
         imagesByLogId.set(logId, []);
       }
-      imagesByLogId.get(logId)!.push(ImageModel.fromRow(imageRow));
+      imagesByLogId.get(logId)!.push(ImageModel.fromRowWithDisplayOrder(imageRow));
     }
     
     // Build log objects

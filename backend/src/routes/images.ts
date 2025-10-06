@@ -89,16 +89,21 @@ images.post('/:logId/images', async (c) => {
   const width = formData.get('width');
   const height = formData.get('height');
 
-  // Upload image
+  // Upload image (owned by user, associated with log)
   try {
-    const image = await imageService.uploadImage(logId, fileBlob, {
-      file_name: fileName,
-      content_type: fileType,
-      file_size: fileSize,
-      width: width ? parseInt(width.toString()) : undefined,
-      height: height ? parseInt(height.toString()) : undefined,
-      display_order: displayOrder ? parseInt(displayOrder.toString()) : 0,
-    });
+    const image = await imageService.uploadImage(
+      user.id,
+      logId,
+      fileBlob,
+      {
+        file_name: fileName,
+        content_type: fileType,
+        file_size: fileSize,
+        width: width ? parseInt(width.toString()) : undefined,
+        height: height ? parseInt(height.toString()) : undefined,
+      },
+      displayOrder ? parseInt(displayOrder.toString()) : 0,
+    );
 
     return c.json(image, 201);
   } catch (error) {
@@ -152,7 +157,7 @@ images.get('/:logId/images/:imageId', async (c) => {
   });
 });
 
-// DELETE /logs/:logId/images/:imageId - Delete image
+// DELETE /logs/:logId/images/:imageId - Delete image or remove association
 images.delete('/:logId/images/:imageId', async (c) => {
   const logId = c.req.param('logId');
   const imageId = c.req.param('imageId');
@@ -170,23 +175,25 @@ images.delete('/:logId/images/:imageId', async (c) => {
     throw new HTTPException(403, { message: 'Not log owner' });
   }
 
-  // Verify image belongs to this log
+  // Verify image exists
   const image = await imageService.getImage(imageId);
   if (!image) {
     throw new HTTPException(404, { message: 'Image not found' });
   }
 
-  if (image.log_id !== logId) {
-    throw new HTTPException(400, { message: 'Image does not belong to this log' });
+  // Verify user owns the image
+  const ownsImage = await imageService.verifyImageOwnership(imageId, user.id);
+  if (!ownsImage) {
+    throw new HTTPException(403, { message: 'Not image owner' });
   }
 
-  // Delete image
+  // Remove association (or delete image if desired - for now just dissociate)
   try {
-    await imageService.deleteImage(imageId);
+    await imageService.dissociateImageFromLog(imageId, logId);
     return c.body(null, 204);
   } catch (error) {
-    console.error('Error deleting image:', error);
-    throw new HTTPException(500, { message: 'Failed to delete image' });
+    console.error('Error removing image association:', error);
+    throw new HTTPException(500, { message: 'Failed to remove image from log' });
   }
 });
 

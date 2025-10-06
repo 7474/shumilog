@@ -64,7 +64,7 @@ function createSession() {
         `NO_D1_WARNING=true wrangler d1 execute shumilog-db-dev --local --file ${tempCheckFile}`,
         { encoding: 'utf8', stdio: 'pipe' }
       );
-    } catch (error: any) {
+    } catch (_error: any) {
       console.error('エラー: データベースへのアクセスに失敗しました');
       console.error('');
       console.error('以下を確認してください:');

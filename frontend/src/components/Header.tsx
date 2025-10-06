@@ -49,6 +49,14 @@ export function Header() {
                 <span className="sm:hidden">📝</span>
               </Button>
             </Link>
+            {isAuthenticated && (
+              <Link to="/my/logs">
+                <Button variant="ghost" size="sm" className="text-gray-700 hover:text-fresh-600">
+                  <span className="hidden sm:inline">My Logs</span>
+                  <span className="sm:hidden">📚</span>
+                </Button>
+              </Link>
+            )}
             <Link to="/tags">
               <Button variant="ghost" size="sm" className="text-gray-700 hover:text-sky-600">
                 <span className="hidden sm:inline">Tags</span>

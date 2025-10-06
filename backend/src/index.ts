@@ -48,7 +48,7 @@ interface RuntimeConfig {
   appLoginUrl: string;
 }
 
-type AppBindings = {
+export type AppBindings = {
   Bindings: RuntimeEnv;
   Variables: {
     database: Database;
@@ -59,6 +59,18 @@ type AppBindings = {
     twitterService: TwitterService;
     aiService?: AiService;
     config: RuntimeConfig;
+    auth?: {
+      user: {
+        id: string;
+        twitter_username: string;
+        display_name: string;
+        avatar_url?: string;
+        role: 'user' | 'admin';
+        created_at: string;
+      };
+      sessionId: string;
+    };
+    hasPrivateData?: boolean;
   };
 };
 

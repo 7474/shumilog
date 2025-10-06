@@ -6,6 +6,7 @@ import { SessionService } from '../services/SessionService.js';
 import { UserService } from '../services/UserService.js';
 import { Log } from '../models/Log.js';
 import { getAuthUser, getOptionalAuthUser, optionalAuthMiddleware } from '../middleware/auth.js';
+import type { AppBindings } from '../index.js';
 
 const MAX_LIMIT = 100;
 
@@ -140,7 +141,7 @@ const toLogResponse = (log: Log) => ({
   }))
 });
 
-const logs = new Hono();
+const logs = new Hono<AppBindings>();
 
 logs.use('*', async (c, next) => {
   const sessionService = getSessionService(c);
@@ -308,6 +309,11 @@ logs.get('/:logId', async (c) => {
     
     if (!isPublic && !isOwner) {
       throw new HTTPException(403, { message: 'Access denied' });
+    }
+
+    // 非公開ログの場合、キャッシュしないようにフラグを設定
+    if (!isPublic) {
+      c.set('hasPrivateData', true);
     }
 
     return c.json(toLogResponse(log));

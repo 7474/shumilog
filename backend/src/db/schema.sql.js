@@ -90,7 +90,7 @@ export const DATABASE_SCHEMAS = [
   CREATE INDEX idx_log_tag_assoc_tag_id ON log_tag_associations(tag_id);`,
 
   `-- Log images table
-  CREATE TABLE log_images (
+  CREATE TABLE IF NOT EXISTS log_images (
     id TEXT PRIMARY KEY,
     log_id TEXT NOT NULL,
     r2_key TEXT NOT NULL,
@@ -105,8 +105,8 @@ export const DATABASE_SCHEMAS = [
     FOREIGN KEY (log_id) REFERENCES logs(id) ON DELETE CASCADE
   );
 
-  CREATE INDEX idx_log_images_log_id ON log_images(log_id);
-  CREATE INDEX idx_log_images_display_order ON log_images(log_id, display_order);`,
+  CREATE INDEX IF NOT EXISTS idx_log_images_log_id ON log_images(log_id);
+  CREATE INDEX IF NOT EXISTS idx_log_images_display_order ON log_images(log_id, display_order);`,
 
   `-- Schema migrations tracking
   CREATE TABLE schema_migrations (

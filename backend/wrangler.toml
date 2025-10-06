@@ -43,7 +43,7 @@ APP_LOGIN_URL = "https://master.shumilog.pages.dev/login"
 TWITTER_REDIRECT_URI = "https://master-shumilog-backend.koudenpa.workers.dev/api/auth/callback"
 
 [env.production]
-name = "shumilog-backend"
+name = "shumilog-dev-backend"
 
 [[env.production.d1_databases]]
 binding = "DB"

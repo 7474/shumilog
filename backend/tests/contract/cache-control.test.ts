@@ -11,7 +11,7 @@ import {
  * Contract Test: Cache Control Headers
  * 
  * キャッシュ制御ヘッダが正しく設定されることを検証する
- * - GETリクエストで認証不要のエンドポイントは5分間キャッシュ
+ * - GETリクエストで認証不要のエンドポイントは5分間キャッシュ（ブラウザ・CDN両方）
  * - 認証必要エンドポイントはキャッシュしない
  * - Varyヘッダで CORS 以外の条件では同じ応答を返すことを示す
  */
@@ -29,7 +29,7 @@ describe('Contract Test: Cache Control Headers', () => {
       const response = await app.request('/health', { method: 'GET' });
       
       expect(response.status).toBe(200);
-      expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, stale-while-revalidate=60');
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, s-maxage=300, stale-while-revalidate=60');
       expect(response.headers.get('Vary')).toBe('Origin');
     });
 
@@ -39,7 +39,7 @@ describe('Contract Test: Cache Control Headers', () => {
       const response = await app.request('/logs', { method: 'GET' });
       
       expect(response.status).toBe(200);
-      expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, stale-while-revalidate=60');
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, s-maxage=300, stale-while-revalidate=60');
       expect(response.headers.get('Vary')).toBe('Origin');
     });
 
@@ -49,7 +49,7 @@ describe('Contract Test: Cache Control Headers', () => {
       const response = await app.request(`/logs/${publicLogId}`, { method: 'GET' });
       
       expect(response.status).toBe(200);
-      expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, stale-while-revalidate=60');
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, s-maxage=300, stale-while-revalidate=60');
       expect(response.headers.get('Vary')).toBe('Origin');
     });
 

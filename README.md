@@ -4,7 +4,7 @@
 
 ## 運用環境
 
-本番環境: **https://shumilog.pages.dev/**
+本番環境: **https://shumilog.dev/**
 
 ## 技術スタック
 

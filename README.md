@@ -11,6 +11,7 @@
 ### バックエンド
 - **Cloudflare Workers + Hono** - サーバーレスAPI
 - **Cloudflare D1** - SQLiteベースマネージドデータベース
+- **Cloudflare R2** - オブジェクトストレージ（画像アップロード用）
 - **TypeScript 5.9+** - 型安全な開発
 
 ### フロントエンド
@@ -58,6 +59,7 @@ npm run db:seed
 - **4人のユーザー**: Alice (アニメ好き), Bob (ゲーマー), Carol (音楽愛好家), Dave (マンガ読者)
 - **8個のタグ**: Anime, Manga, Gaming, Music, Attack on Titan, RPG, J-POP, Shonen
 - **10個のログエントリ**: 公開ログ8個、非公開ログ2個（各種趣味のコンテンツ）
+- **5個の画像メタデータ**: ログに添付された画像のサンプルメタデータ（実際のファイルはR2バケットが必要）
 
 ### 3. ローカル環境でのスタック実行
 
@@ -186,13 +188,13 @@ shumilog/
 ├── backend/                 # Cloudflare Worker + D1ロジック
 │   ├── src/
 │   │   ├── routes/          # Honoルートハンドラー
-│   │   ├── services/        # ドメインサービス
-│   │   ├── models/          # データモデル
+│   │   ├── services/        # ドメインサービス (ImageService含む)
+│   │   ├── models/          # データモデル (Image含む)
 │   │   └── db/              # マイグレーション + シードヘルパー
 │   └── tests/               # コントラクト、統合、ユニットテストスイート
 ├── frontend/                # React + Tailwind CSSフロントエンド
 │   ├── src/
-│   │   ├── components/      # shadcn/ui + カスタムUIコンポーネント
+│   │   ├── components/      # shadcn/ui + カスタムUIコンポーネント (ImageUpload, LogImages含む)
 │   │   ├── pages/           # ページコンポーネント
 │   │   ├── services/        # API クライアント
 │   │   ├── hooks/           # カスタムReactフック
@@ -203,6 +205,31 @@ shumilog/
 ├── tests/                   # リポジトリレベルの統合スモークテスト
 └── README.md                # このファイル
 ```
+
+## 主要機能
+
+### ログ記録
+- Markdown形式でのコンテンツ記録
+- タイトルと本文での詳細な記録
+- 公開/非公開の設定
+- タグによる分類
+
+### 画像添付 (NEW)
+- ログに画像を添付可能（最大10MB）
+- 対応形式: JPEG, PNG, GIF, WebP
+- Cloudflare R2ストレージを使用
+- 画像のプレビューとグリッド表示
+- 画像の並び順カスタマイズ
+
+### タグシステム
+- ハッシュタグ形式でのタグ付け
+- タグ間の関連付け
+- 人気タグの表示
+
+### ユーザー管理
+- Twitter OAuth認証
+- ユーザープロフィール
+- ログの所有権管理
 
 ## コントリビュート
 

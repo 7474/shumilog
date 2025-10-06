@@ -117,4 +117,20 @@ VALUES
   ('log_dave_3', 'tag_manga', 0, '2023-01-11T19:00:00Z'),
   ('log_dave_3', 'tag_shonen', 1, '2023-01-11T19:00:00Z');
 
+-- 画像メタデータ（デモ用）
+-- 注: 実際のR2オブジェクトは存在しないため、これらは表示されませんが、
+-- データ構造とスキーマを示すためのサンプルデータです
+INSERT OR IGNORE INTO log_images (id, log_id, r2_key, file_name, content_type, file_size, width, height, display_order, created_at)
+VALUES 
+  -- Alice のログに画像を追加
+  ('img_alice_1_1', 'log_alice_1', 'logs/log_alice_1/img_alice_1_1.jpg', 'attack_on_titan_scene.jpg', 'image/jpeg', 245678, 1920, 1080, 0, '2023-01-05T10:31:00Z'),
+  ('img_alice_1_2', 'log_alice_1', 'logs/log_alice_1/img_alice_1_2.jpg', 'eren_final_scene.jpg', 'image/jpeg', 189234, 1280, 720, 1, '2023-01-05T10:32:00Z'),
+  
+  -- Bob のゲームログに画像を追加
+  ('img_bob_1_1', 'log_bob_1', 'logs/log_bob_1/img_bob_1_1.png', 'elden_ring_screenshot.png', 'image/png', 512345, 1920, 1080, 0, '2023-01-06T20:46:00Z'),
+  
+  -- Carol の音楽ログに画像を追加
+  ('img_carol_1_1', 'log_carol_1', 'logs/log_carol_1/img_carol_1_1.jpg', 'concert_photo.jpg', 'image/jpeg', 378912, 1600, 1200, 0, '2023-01-08T15:01:00Z'),
+  ('img_carol_1_2', 'log_carol_1', 'logs/log_carol_1/img_carol_1_2.jpg', 'artist_photo.jpg', 'image/jpeg', 298456, 1280, 1280, 1, '2023-01-08T15:02:00Z');
+
 COMMIT;

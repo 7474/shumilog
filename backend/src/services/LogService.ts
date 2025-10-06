@@ -2,6 +2,7 @@ import { Log, LogDetail, LogModel, CreateLogData, UpdateLogData, LogSearchParams
 import { Tag, TagModel } from '../models/Tag.js';
 import { User } from '../models/User.js';
 import { Database } from '../db/database.js';
+import { ImageModel, type LogImage } from '../models/Image.js';
 
 export interface LogSearchResult {
   logs: Log[];
@@ -190,7 +191,14 @@ export class LogService {
     
     const tags: Tag[] = tagRows.map(row => TagModel.fromRow(row));
     
-    return LogModel.fromRowWithVisibility(logRow, user, tags);
+    // Get images for the log
+    const imageRows = await this.db.query(
+      'SELECT * FROM log_images WHERE log_id = ? ORDER BY display_order ASC, created_at ASC',
+      [id]
+    );
+    const images: LogImage[] = imageRows.map(row => ImageModel.fromRow(row));
+    
+    return LogModel.fromRowWithVisibility(logRow, user, tags, images);
   }
 
   /**
@@ -646,6 +654,14 @@ export class LogService {
       ORDER BY t.name
     `, logIds);
     
+    // Get all images for these logs in one query
+    const imageRows = await this.db.query(`
+      SELECT *
+      FROM log_images
+      WHERE log_id IN (${placeholders})
+      ORDER BY log_id, display_order ASC, created_at ASC
+    `, logIds);
+    
     // Group tags by log_id
     const tagsByLogId = new Map<string, Tag[]>();
     for (const tagRow of tagAssociations) {
@@ -657,6 +673,16 @@ export class LogService {
         ...tagRow,
         metadata: typeof tagRow.metadata === 'string' ? tagRow.metadata : JSON.stringify(tagRow.metadata || {})
       }));
+    }
+    
+    // Group images by log_id
+    const imagesByLogId = new Map<string, LogImage[]>();
+    for (const imageRow of imageRows) {
+      const logId = imageRow.log_id;
+      if (!imagesByLogId.has(logId)) {
+        imagesByLogId.set(logId, []);
+      }
+      imagesByLogId.get(logId)!.push(ImageModel.fromRow(imageRow));
     }
     
     // Build log objects
@@ -671,6 +697,7 @@ export class LogService {
       };
 
       const tags = tagsByLogId.get(row.id) || [];
+      const images = imagesByLogId.get(row.id) || [];
 
       return LogModel.fromRow(
         {
@@ -678,7 +705,8 @@ export class LogService {
           is_public: typeof row.is_public === 'number' ? row.is_public : row.is_public ? 1 : 0
         },
         user,
-        tags
+        tags,
+        images
       );
     });
   }

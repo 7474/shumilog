@@ -640,6 +640,145 @@ paths:
         '404':
           description: Log not found
 
+  /logs/{logId}/images:
+    post:
+      summary: Upload image to log
+      description: Upload an image file and attach it to a log
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (JPEG, PNG, GIF, WebP). Max size 10MB.
+                width:
+                  type: integer
+                  description: Image width in pixels
+                height:
+                  type: integer
+                  description: Image height in pixels
+                display_order:
+                  type: integer
+                  description: Display order for the image (lower numbers appear first)
+                  default: 0
+      responses:
+        '201':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogImage'
+        '400':
+          description: Invalid request (missing file, wrong format, file too large)
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not log owner
+        '404':
+          description: Log not found
+
+    get:
+      summary: Get all images for a log
+      description: Retrieve all images attached to a log
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LogImage'
+        '404':
+          description: Log not found
+
+  /logs/{logId}/images/{imageId}:
+    get:
+      summary: Get image data
+      description: Retrieve the actual image file
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image file
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Image not found
+
+    delete:
+      summary: Delete image
+      description: Delete an image attached to a log
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Image deleted successfully
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not log owner
+        '404':
+          description: Image not found
+
 components:
   securitySchemes:
     sessionAuth:
@@ -766,6 +905,11 @@ components:
         content_md:
           type: string
           description: Content in Markdown format
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogImage'
+          description: Images attached to this log
         created_at:
           type: string
           format: date-time
@@ -835,3 +979,39 @@ components:
             is_public:
               type: boolean
               description: Whether this log is publicly visible
+
+    LogImage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique image identifier
+        log_id:
+          type: string
+          description: ID of the log this image is attached to
+        r2_key:
+          type: string
+          description: R2 storage key for the image
+        file_name:
+          type: string
+          description: Original filename
+        content_type:
+          type: string
+          description: MIME type of the image
+          example: image/jpeg
+        file_size:
+          type: integer
+          description: File size in bytes
+        width:
+          type: integer
+          description: Image width in pixels
+        height:
+          type: integer
+          description: Image height in pixels
+        display_order:
+          type: integer
+          description: Display order (lower numbers appear first)
+        created_at:
+          type: string
+          format: date-time
+          description: When the image was uploaded

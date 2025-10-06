@@ -1,3 +1,25 @@
+/**
+ * CDNキャッシュ制御ミドルウェア
+ * GETかつ認証不要APIの応答にCache-Control, SWRヘッダを付与
+ * Cloudflare Workers組み込みCDNで5分キャッシュ、SWR対応
+ */
+export const cdnCacheControl = () => {
+  return async (c: Context, next: Next) => {
+    await next();
+    // GETかつ認証不要APIのみ対象
+    if (c.req.method !== 'GET') return;
+    // 認証クッキーやAuthorizationヘッダが無い場合のみ
+    const hasSession = !!(c.req.header('authorization') || getCookie(c, 'session') || getCookie(c, 'session_id'));
+    if (hasSession) return;
+    // APIパスのみ対象
+    const url = new URL(c.req.url, 'http://dummy');
+    if (!url.pathname.startsWith('/api/')) return;
+    // CDNキャッシュ制御
+    c.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=300, immutable');
+    c.header('CDN-Cache-Control', 'public, max-age=300, stale-while-revalidate=300, immutable');
+    c.header('Vary', 'Accept-Encoding, Origin, Cookie, Authorization');
+  };
+};
 import { Context, Next } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import { HTTPException } from 'hono/http-exception';

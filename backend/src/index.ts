@@ -12,7 +12,7 @@ import { TwitterService } from './services/TwitterService.js';
 import { AiService, type AiBinding } from './services/AiService.js';
 
 import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
-import { securityHeaders, requestLogger, rateLimiter } from './middleware/security.js';
+import { securityHeaders, requestLogger, rateLimiter, cdnCacheControl } from './middleware/security.js';
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
@@ -210,6 +210,8 @@ export function createApp(env: RuntimeEnv = {}) {
   app.route('/health', healthRoutes);
   app.route('/dev', devRoutes);
 
+  // CDNキャッシュ制御ミドルウェアを/api/*に適用
+  app.basePath('/api').use('*', cdnCacheControl());
   registerApiRoutes(app.basePath('/api'), sessionService, userService);
   
   // Also register API routes at root level for backward compatibility with tests

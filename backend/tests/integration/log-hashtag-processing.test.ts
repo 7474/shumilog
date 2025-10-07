@@ -35,13 +35,13 @@ describe('Log Hashtag Processing Integration', () => {
     expect(createdLog.title).toBe('My Anime Review');
     
     // Check that hashtags were extracted and associated with the log
-    expect(createdLog.tags).toBeDefined();
-    expect(createdLog.tags).toHaveLength(3);
-    const tagNames = createdLog.tags.map((t: any) => t.name).sort();
+    expect(createdLog.associated_tags).toBeDefined();
+    expect(createdLog.associated_tags).toHaveLength(3);
+    const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['action scenes', 'anime', 'exciting']);
     
     // Verify that the tags were created with empty descriptions
-    createdLog.tags.forEach((tag: any) => {
+    createdLog.associated_tags.forEach((tag: any) => {
       expect(tag.description).toBe('');
       expect(tag.metadata).toEqual({});
     });
@@ -66,8 +66,8 @@ describe('Log Hashtag Processing Integration', () => {
     const createdLog = await response.json();
     
     // Should have both explicit tags and extracted hashtags
-    expect(createdLog.tags).toHaveLength(4);
-    const tagNames = createdLog.tags.map((t: any) => t.name).sort();
+    expect(createdLog.associated_tags).toHaveLength(4);
+    const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['Final Fantasy', 'gaming', 'rpg', 'weekend']);
   });
   
@@ -105,17 +105,17 @@ describe('Log Hashtag Processing Integration', () => {
     expect(logResponse.status).toBe(201);
     const createdLog = await logResponse.json();
     
-    expect(createdLog.tags).toHaveLength(2);
-    const tagNames = createdLog.tags.map((t: any) => t.name).sort();
+    expect(createdLog.associated_tags).toHaveLength(2);
+    const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['existingTag', 'newTag']);
     
     // Verify the existing tag was linked (not recreated)
-    const linkedExistingTag = createdLog.tags.find((t: any) => t.name === 'existingTag');
+    const linkedExistingTag = createdLog.associated_tags.find((t: any) => t.name === 'existingTag');
     expect(linkedExistingTag.id).toBe(existingTag.id);
     expect(linkedExistingTag.description).toBe('Pre-existing tag with description');
     
     // Verify the new tag was created with empty description
-    const newTag = createdLog.tags.find((t: any) => t.name === 'newTag');
+    const newTag = createdLog.associated_tags.find((t: any) => t.name === 'newTag');
     expect(newTag.description).toBe('');
   });
   
@@ -136,8 +136,8 @@ describe('Log Hashtag Processing Integration', () => {
     expect(response.status).toBe(201);
     const createdLog = await response.json();
     
-    expect(createdLog.tags).toHaveLength(3);
-    const tagNames = createdLog.tags.map((t: any) => t.name).sort();
+    expect(createdLog.associated_tags).toHaveLength(3);
+    const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['アニメ', 'ゲーム', '面白い']);
   });
   
@@ -157,8 +157,8 @@ describe('Log Hashtag Processing Integration', () => {
     });
     
     const createdLog = await createResponse.json();
-    expect(createdLog.tags).toHaveLength(1);
-    expect(createdLog.tags[0].name).toBe('initial');
+    expect(createdLog.associated_tags).toHaveLength(1);
+    expect(createdLog.associated_tags[0].name).toBe('initial');
     
     // Update with new content containing different hashtags
     const updateResponse = await app.request(`/api/logs/${createdLog.id}`, {
@@ -176,8 +176,8 @@ describe('Log Hashtag Processing Integration', () => {
     const updatedLog = await updateResponse.json();
     
     // Should have new hashtags extracted from updated content
-    expect(updatedLog.tags).toHaveLength(2);
-    const tagNames = updatedLog.tags.map((t: any) => t.name).sort();
+    expect(updatedLog.associated_tags).toHaveLength(2);
+    const tagNames = updatedLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['new tag', 'updated']);
   });
   
@@ -216,8 +216,8 @@ describe('Log Hashtag Processing Integration', () => {
     const updatedLog = await updateResponse.json();
     
     // Should have both explicit tags and extracted hashtags
-    expect(updatedLog.tags).toHaveLength(3);
-    const tagNames = updatedLog.tags.map((t: any) => t.name).sort();
+    expect(updatedLog.associated_tags).toHaveLength(3);
+    const tagNames = updatedLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['explicit', 'hashtag', 'tag']);
   });
   
@@ -238,8 +238,8 @@ describe('Log Hashtag Processing Integration', () => {
     expect(response.status).toBe(201);
     const createdLog = await response.json();
     
-    expect(createdLog.tags).toHaveLength(4);
-    const tagNames = createdLog.tags.map((t: any) => t.name).sort();
+    expect(createdLog.associated_tags).toHaveLength(4);
+    const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['anime', 'extended format', 'gaming', 'simple']);
   });
   
@@ -261,7 +261,7 @@ describe('Log Hashtag Processing Integration', () => {
     const createdLog = await response.json();
     
     // Should have no associated tags
-    expect(createdLog.tags).toHaveLength(0);
+    expect(createdLog.associated_tags).toHaveLength(0);
   });
   
   it('should extract hashtags correctly from various formats', async () => {
@@ -282,8 +282,8 @@ describe('Log Hashtag Processing Integration', () => {
     const createdLog = await response.json();
     
     // Should extract all hashtags
-    expect(createdLog.tags).toHaveLength(3);
-    const tagNames = createdLog.tags.map((t: any) => t.name).sort();
+    expect(createdLog.associated_tags).toHaveLength(3);
+    const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['anime series', 'gaming', 'reading']);
   });
 });

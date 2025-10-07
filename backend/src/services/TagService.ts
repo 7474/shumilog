@@ -334,20 +334,22 @@ export class TagService {
       enrichedLogs.push({
         id: row.id,
         user_id: row.user_id,
-        title: row.title,
+        title: row.title ?? null,
         content_md: row.content_md,
         is_public: row.is_public === 1,
         privacy: row.is_public === 1 ? 'public' : 'private',
         created_at: row.created_at,
         updated_at: row.updated_at,
-        author: {
+        user: {
           id: row.user_id,
-          twitter_username: row.twitter_username,
+          twitter_username: row.twitter_username ?? '',
           display_name: row.display_name,
-          avatar_url: row.avatar_url,
+          avatar_url: row.avatar_url ?? null,
+          role: 'user',
           created_at: row.user_created_at
         },
-        tags: tags
+        associated_tags: tags,
+        images: []
       });
     }
     

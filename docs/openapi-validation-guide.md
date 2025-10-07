@@ -204,7 +204,17 @@ return c.json({
 - 列挙値は `enum` で制約
 - 制約条件（minLength、maxLength等）を活用
 
-### 4. 仕様の継続的な更新
+### 4. フィールド必須化ポリシーの遵守
+
+このプロジェクトでは、以下のフィールド必須化ポリシーを採用しています：
+
+1. **原則必須（Required by Default）**: すべてのフィールドは原則として`required`配列に含めます
+2. **Nullable条件の明示（Explicit Nullable Conditions）**: やむを得ずnullableなフィールドとする場合は、`nullable: true`を指定し、descriptionにnullとなる条件を明示します
+3. **リストフィールドは必須（Arrays Always Required）**: いかなる場合もリストフィールドは必須とします。要素がない場合は空のリスト`[]`を返します
+
+詳細は `/api/README.md` の "Field Definition Policy" セクションを参照してください。
+
+### 5. 仕様の継続的な更新
 
 API変更時は必ず仕様書を更新し、テストで検証しましょう。
 

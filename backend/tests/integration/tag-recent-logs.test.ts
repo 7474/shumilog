@@ -49,15 +49,15 @@ describe('Integration: Tag Recent Logs', () => {
       expect(log).toHaveProperty('content_md');
       expect(log).toHaveProperty('created_at');
       expect(log).toHaveProperty('updated_at');
-      expect(log).toHaveProperty('author');
-      expect(log).toHaveProperty('tags');
+      expect(log).toHaveProperty('user');
+      expect(log).toHaveProperty('associated_tags');
       
-      // Verify author structure
-      expect(log.author).toHaveProperty('id');
-      expect(log.author).toHaveProperty('display_name');
+      // Verify user structure
+      expect(log.user).toHaveProperty('id');
+      expect(log.user).toHaveProperty('display_name');
       
       // Verify tags array
-      expect(Array.isArray(log.tags)).toBe(true);
+      expect(Array.isArray(log.associated_tags)).toBe(true);
     }
   });
 

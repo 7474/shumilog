@@ -49,10 +49,10 @@ describe.skip('Integration: Content Discovery', () => {
     
     const logData = await logResponse.json();
     expect(logData).toHaveProperty('tags');
-    expect(Array.isArray(logData.tags)).toBe(true);
+    expect(Array.isArray(logData.associated_tags)).toBe(true);
 
     // Use the tags to find related content
-    const relatedResponse = await app.request(`/logs?tag_ids=${logData.tags.map((t: any) => t.id).join(',')}`, {
+    const relatedResponse = await app.request(`/logs?tag_ids=${logData.associated_tags.map((t: any) => t.id).join(',')}`, {
       method: 'GET'
     });
     expect(relatedResponse.status).toBe(200);

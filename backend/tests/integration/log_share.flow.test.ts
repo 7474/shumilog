@@ -54,13 +54,13 @@ describe('Integration: Log share flow', () => {
     expect(createdLog).toMatchObject({
       title: 'Integration share flow',
       is_public: true,
-      author: {
+      user: {
         id: TEST_USER_ID,
         twitter_username: TEST_USERNAME
       }
     });
-    expect(Array.isArray(createdLog.tags)).toBe(true);
-    expect(createdLog.tags.map((tag: any) => tag.id)).toEqual(
+    expect(Array.isArray(createdLog.associated_tags)).toBe(true);
+    expect(createdLog.associated_tags.map((tag: any) => tag.id)).toEqual(
       expect.arrayContaining(['tag_anime', 'tag_manga'])
     );
 
@@ -80,12 +80,12 @@ describe('Integration: Log share flow', () => {
     expect(detailPayload).toMatchObject({
       id: logId,
       is_public: true,
-      author: {
+      user: {
         id: TEST_USER_ID
       }
     });
-    expect(Array.isArray(detailPayload.tags)).toBe(true);
-    expect(detailPayload.tags.map((tag: any) => tag.id)).toEqual(
+    expect(Array.isArray(detailPayload.associated_tags)).toBe(true);
+    expect(detailPayload.associated_tags.map((tag: any) => tag.id)).toEqual(
       expect.arrayContaining(['tag_anime', 'tag_manga'])
     );
 

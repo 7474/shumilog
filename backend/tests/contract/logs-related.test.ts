@@ -29,7 +29,7 @@ describe('Contract: GET /logs/{logId}/related', () => {
     expect(logsResponse.status).toBe(200);
     
     const logsData = await logsResponse.json();
-    const targetLog = logsData.items.find((log: any) => log.tags && log.tags.length > 0);
+    const targetLog = logsData.items.find((log: any) => log.associated_tags && log.associated_tags.length > 0);
     expect(targetLog).toBeDefined();
 
     // Get related logs
@@ -58,8 +58,8 @@ describe('Contract: GET /logs/{logId}/related', () => {
         content_md: expect.any(String),
         created_at: expect.any(String),
         updated_at: expect.any(String),
-        author: expect.any(Object),
-        tags: expect.any(Array)
+        user: expect.any(Object),
+        associated_tags: expect.any(Array)
       });
     });
   });
@@ -109,7 +109,7 @@ describe('Contract: GET /logs/{logId}/related', () => {
 
     const logsResponse = await app.request('/logs', { method: 'GET' });
     const logsData = await logsResponse.json();
-    const targetLog = logsData.items.find((log: any) => log.tags && log.tags.length > 0);
+    const targetLog = logsData.items.find((log: any) => log.associated_tags && log.associated_tags.length > 0);
 
     const response = await app.request(`/logs/${targetLog.id}/related?limit=2`, {
       method: 'GET'

@@ -20,15 +20,15 @@ interface ShareToXButtonProps {
 function normalizeHashtag(tag: string): string {
   // 先頭の # を削除
   let normalized = tag.replace(/^#+/, '');
-  
+
   // 空白を含む場合は CamelCase に変換
   if (normalized.includes(' ')) {
     normalized = normalized
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join('');
   }
-  
+
   return normalized;
 }
 
@@ -36,35 +36,35 @@ function normalizeHashtag(tag: string): string {
  * Xへの共有ボタンコンポーネント
  * クライアントサイドでX (Twitter) の投稿画面を開きます
  */
-export function ShareToXButton({ 
-  text, 
-  url, 
-  hashtags = [], 
+export function ShareToXButton({
+  text,
+  url,
+  hashtags = [],
   className = '',
   size = 'default',
   variant = 'outline',
-  disabled = false
+  disabled = false,
 }: ShareToXButtonProps) {
   const handleShare = () => {
     // X (Twitter) の投稿インテントURLを生成
     const params = new URLSearchParams();
-    
+
     // テキストをエンコード
     let shareText = text;
     if (url) {
       shareText += `\n${url}`;
     }
-    
+
     // タグは最大3つまでに制限し、正規化してハッシュタグに変換
     if (hashtags.length > 0) {
       const normalizedHashtags = hashtags
-        .slice(0, 3)  // 最大3つまで
-        .map(tag => `#${normalizeHashtag(tag)}`);
+        .slice(0, 3) // 最大3つまで
+        .map((tag) => `#${normalizeHashtag(tag)}`);
       shareText += '\n' + normalizedHashtags.join(' ');
     }
-    
+
     params.append('text', shareText);
-    
+
     // 新しいウィンドウでXの投稿画面を開く
     const shareUrl = `https://x.com/intent/post?${params.toString()}`;
     window.open(shareUrl, '_blank', 'width=550,height=420');

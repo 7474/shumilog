@@ -71,12 +71,12 @@ describe('Login Flow Integration Test', () => {
   it('should call login function on button click', async () => {
     const user = userEvent.setup();
     mockUseAuth.isAuthenticated = false;
-    
+
     // Mock window.location.href
     const originalLocation = window.location;
     delete (window as any).location;
     window.location = { ...originalLocation, href: '' };
-    
+
     renderWithRouter(['/login']);
 
     const loginButton = await screen.findByRole('button', { name: /X \(Twitter\) でログイン/i });
@@ -85,7 +85,7 @@ describe('Login Flow Integration Test', () => {
     await waitFor(() => {
       expect(window.location.href).toContain('/api/auth/twitter');
     });
-    
+
     // Restore original location
     window.location = originalLocation;
   });

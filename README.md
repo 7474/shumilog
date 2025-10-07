@@ -160,6 +160,10 @@ npm run build
 # バックエンドソースのリント
 cd backend
 npm run lint
+
+# フロントエンドソースのリント
+cd frontend
+npm run lint
 ```
 
 バックエンドはOpenAPI仕様に対する自動検証を実装しており、フロントエンドはOpenAPI仕様からTypeScript型定義を自動生成することで、API実装とクライアントコードが常に仕様と一致していることを保証します。

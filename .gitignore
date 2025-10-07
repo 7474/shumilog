@@ -1,6 +1,9 @@
 node_modules/
 .wrangler/
 
+# ESLint cache
+.eslintcache
+
 # Legacy directories intentionally pruned
 backend/docs/
 specs/002-docker-compose-up/

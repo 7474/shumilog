@@ -17,15 +17,15 @@ export function RelatedLogs({ logId }: RelatedLogsProps) {
     const fetchRelatedLogs = async () => {
       try {
         setLoading(true);
-        const response = await api.logs[':logId'].related.$get({ 
+        const response = await api.logs[':logId'].related.$get({
           param: { logId },
-          query: { limit: '10' }
+          query: { limit: '10' },
         });
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch related logs');
         }
-        
+
         const result = await response.json();
         setRelatedLogs(result.items);
       } catch (err) {
@@ -65,12 +65,8 @@ export function RelatedLogs({ logId }: RelatedLogsProps) {
   return (
     <Card className="card-fresh">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-gray-900">
-          関連するログ
-        </CardTitle>
-        <p className="text-sm text-gray-600 mt-2">
-          共通のタグを持つ他のログ
-        </p>
+        <CardTitle className="text-xl font-bold text-gray-900">関連するログ</CardTitle>
+        <p className="text-sm text-gray-600 mt-2">共通のタグを持つ他のログ</p>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 sm:grid-cols-2">

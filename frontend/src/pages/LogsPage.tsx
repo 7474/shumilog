@@ -6,12 +6,7 @@ import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,7 +19,7 @@ export function LogsPage() {
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState(''); 
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchLogs = async (search?: string, isInitialLoad = false) => {
     try {
@@ -108,9 +103,9 @@ export function LogsPage() {
           <h1 className="text-3xl font-bold text-gray-900">趣味ログ</h1>
           <p className="text-gray-600 mt-1">あなたの趣味活動を記録しましょう</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowForm(!showForm)}
-          className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+          className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
           disabled={!isAuthenticated}
         >
           {!isAuthenticated ? (
@@ -147,20 +142,12 @@ export function LogsPage() {
               検索
             </Button>
             {searchQuery && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleClearSearch}
-              >
+              <Button type="button" variant="outline" onClick={handleClearSearch}>
                 クリア
               </Button>
             )}
           </form>
-          {searchQuery && (
-            <p className="text-sm text-gray-600 mt-2">
-              「{searchQuery}」で検索中
-            </p>
-          )}
+          {searchQuery && <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中</p>}
         </CardContent>
       </Card>
 
@@ -174,11 +161,7 @@ export function LogsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <LogForm
-              log={selectedLog}
-              onSuccess={handleSuccess}
-              onCancel={handleCancel}
-            />
+            <LogForm log={selectedLog} onSuccess={handleSuccess} onCancel={handleCancel} />
           </CardContent>
         </Card>
       )}

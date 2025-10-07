@@ -17,19 +17,22 @@ function createHashtagRenderer() {
 
   renderer.text = (textToken) => {
     let text = typeof textToken === 'string' ? textToken : textToken.text;
-    
+
     // Pattern 1: #{tagName} - 拡張形式（空白を含むタグ名）
     text = text.replace(/#\{([^}]+)\}/g, (match, tagName) => {
       const trimmedName = tagName.trim();
       return `<a href="/tags/${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
     });
-    
+
     // Pattern 2: #tagName - シンプル形式（空白なし）
-    text = text.replace(/#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_-]+)/g, (match, tagName) => {
-      const trimmedName = tagName.trim();
-      return `<a href="/tags/${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
-    });
-    
+    text = text.replace(
+      /#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_-]+)/g,
+      (match, tagName) => {
+        const trimmedName = tagName.trim();
+        return `<a href="/tags/${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;
+      }
+    );
+
     return text;
   };
 

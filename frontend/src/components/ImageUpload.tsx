@@ -10,7 +10,11 @@ interface ImageUploadProps {
   onDeleteExisting?: (imageId: string) => void;
 }
 
-export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }: ImageUploadProps) {
+export function ImageUpload({
+  onImagesChange,
+  existingImages,
+  onDeleteExisting,
+}: ImageUploadProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,14 +43,12 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
     if (validFiles.length === 0) return;
 
     // 画像を正規化（1MB以上の場合はWebPに変換してリサイズ）
-    const normalizedFiles = await Promise.all(
-      validFiles.map((file) => normalizeImage(file))
-    );
+    const normalizedFiles = await Promise.all(validFiles.map((file) => normalizeImage(file)));
 
     // Create preview URLs
     const newPreviewUrls = normalizedFiles.map((file) => URL.createObjectURL(file));
     setPreviewUrls([...previewUrls, ...newPreviewUrls]);
-    
+
     const newFiles = [...selectedFiles, ...normalizedFiles];
     setSelectedFiles(newFiles);
     onImagesChange(newFiles);
@@ -55,10 +57,10 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
   const handleRemoveFile = (index: number) => {
     // Revoke the preview URL to free memory
     URL.revokeObjectURL(previewUrls[index]);
-    
+
     const newFiles = selectedFiles.filter((_, i) => i !== index);
     const newPreviews = previewUrls.filter((_, i) => i !== index);
-    
+
     setSelectedFiles(newFiles);
     setPreviewUrls(newPreviews);
     onImagesChange(newFiles);
@@ -73,9 +75,7 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm text-gray-600 mb-2">
-          画像を追加（任意）
-        </label>
+        <div className="block text-sm text-gray-600 mb-2">画像を追加（任意）</div>
         <div className="flex items-center gap-2">
           <input
             ref={fileInputRef}
@@ -95,18 +95,14 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
             <Upload className="w-3.5 h-3.5" />
             画像を選択
           </Button>
-          <span className="text-xs text-gray-400">
-            JPEG, PNG, GIF, WebP (最大10MB)
-          </span>
+          <span className="text-xs text-gray-400">JPEG, PNG, GIF, WebP (最大10MB)</span>
         </div>
       </div>
 
       {/* Existing images */}
       {existingImages && existingImages.length > 0 && (
         <div>
-          <label className="block text-sm text-gray-600 mb-2">
-            現在の画像
-          </label>
+          <div className="block text-sm text-gray-600 mb-2">現在の画像</div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {existingImages.map((image) => (
               <div key={image.id} className="relative group">
@@ -123,9 +119,7 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
                 >
                   <X className="w-4 h-4" />
                 </button>
-                <p className="mt-1 text-xs text-gray-500 truncate">
-                  {image.file_name}
-                </p>
+                <p className="mt-1 text-xs text-gray-500 truncate">{image.file_name}</p>
               </div>
             ))}
           </div>
@@ -154,9 +148,7 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
                 >
                   <X className="w-4 h-4" />
                 </button>
-                <p className="mt-1 text-xs text-gray-500 truncate">
-                  {selectedFiles[index].name}
-                </p>
+                <p className="mt-1 text-xs text-gray-500 truncate">{selectedFiles[index].name}</p>
               </div>
             ))}
           </div>

@@ -4,1533 +4,1533 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health check endpoint
-         * @description Returns the health status of the API and its services
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Service is healthy */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /**
-                             * @example healthy
-                             * @enum {string}
-                             */
-                            status: "healthy";
-                            /**
-                             * Format: date-time
-                             * @example 2025-10-03T12:00:00.000Z
-                             */
-                            timestamp: string;
-                            services: {
-                                /**
-                                 * @example connected
-                                 * @enum {string}
-                                 */
-                                database: "connected" | "disconnected" | "unknown";
-                                /**
-                                 * @example running
-                                 * @enum {string}
-                                 */
-                                backend: "running" | "degraded";
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  '/health': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/twitter": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Initiate Twitter OAuth flow
-         * @description Redirects user to Twitter for authentication
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+    /**
+     * Health check endpoint
+     * @description Returns the health status of the API and its services
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Service is healthy */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              /**
+               * @example healthy
+               * @enum {string}
+               */
+              status: 'healthy';
+              /**
+               * Format: date-time
+               * @example 2025-10-03T12:00:00.000Z
+               */
+              timestamp: string;
+              services: {
+                /**
+                 * @example connected
+                 * @enum {string}
+                 */
+                database: 'connected' | 'disconnected' | 'unknown';
+                /**
+                 * @example running
+                 * @enum {string}
+                 */
+                backend: 'running' | 'degraded';
+              };
             };
-            requestBody?: never;
-            responses: {
-                /** @description Redirect to Twitter OAuth */
-                302: {
-                    headers: {
-                        Location?: string;
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Invalid request parameters */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/auth/callback": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Handle Twitter OAuth callback
-         * @description Process OAuth callback and create user session
-         */
-        get: {
-            parameters: {
-                query: {
-                    code: string;
-                    state: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Redirect to application with session */
-                302: {
-                    headers: {
-                        "Set-Cookie"?: string;
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Authentication failed */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/twitter': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /**
+     * Initiate Twitter OAuth flow
+     * @description Redirects user to Twitter for authentication
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Redirect to Twitter OAuth */
+        302: {
+          headers: {
+            Location?: string;
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        get?: never;
-        put?: never;
-        /**
-         * Logout user
-         * @description Invalidate user session
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Successfully logged out */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+        /** @description Invalid request parameters */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/users/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get current user profile */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description User profile */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["User"];
-                    };
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/callback': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/users/me/logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /**
+     * Handle Twitter OAuth callback
+     * @description Process OAuth callback and create user session
+     */
+    get: {
+      parameters: {
+        query: {
+          code: string;
+          state: string;
         };
-        /**
-         * Get current user's logs (both public and private)
-         * @description Returns all logs belonging to the authenticated user, including private logs. Useful for reviewing personal log history.
-         */
-        get: {
-            parameters: {
-                query?: {
-                    limit?: number;
-                    offset?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of user's logs */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: components["schemas"]["Log"][];
-                            total: number;
-                            limit: number;
-                            offset: number;
-                            has_more: boolean;
-                        };
-                    };
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Redirect to application with session */
+        302: {
+          headers: {
+            'Set-Cookie'?: string;
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description Authentication failed */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
     };
-    "/tags": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Search and list tags */
-        get: {
-            parameters: {
-                query?: {
-                    search?: string;
-                    limit?: number;
-                    offset?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of tags */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: components["schemas"]["Tag"][];
-                            total: number;
-                            limit: number;
-                            offset: number;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * Create new tag
-         * @description Create a new tag with automatic hashtag processing.
-         *
-         *     **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`),
-         *     the system will automatically create associations with existing tags or create new tags if they don't exist.
-         *
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["TagCreate"];
-                };
-            };
-            responses: {
-                /** @description Tag created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Tag"];
-                    };
-                };
-                /** @description Invalid tag data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/logout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/tags/{tagId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Logout user
+     * @description Invalidate user session
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Successfully logged out */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        /**
-         * Get tag details
-         * @description Get detailed information about a tag. The `tagId` parameter accepts both:
-         *     - Tag name (user-friendly, URL-encoded if needed)
-         *     - Tag ID (for backward compatibility)
-         *
-         *     The tag name is checked first, then the tag ID if not found by name.
-         *
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Tag name (preferred) or tag ID
-                     * @example Anime
-                     */
-                    tagId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Tag details */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["TagDetail"];
-                    };
-                };
-                /** @description Tag not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        /**
-         * Update tag
-         * @description Update an existing tag with automatic hashtag processing.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
-         *
-         *     **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`),
-         *     the system will automatically create associations with existing tags or create new tags if they don't exist.
-         *
-         */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Tag name (preferred) or tag ID
-                     * @example Anime
-                     */
-                    tagId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["TagUpdate"];
-                };
-            };
-            responses: {
-                /** @description Tag updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Tag"];
-                    };
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not tag owner */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Tag not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        /**
-         * Delete tag
-         * @description Delete a tag. The `tagId` parameter accepts both tag name (preferred) and tag ID.
-         *
-         *     **Admin privileges required**: Only users with the 'admin' role can delete tags.
-         *
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Tag name (preferred) or tag ID
-                     * @example Anime
-                     */
-                    tagId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Tag deleted */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Admin privileges required */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Tag not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/tags/{tagId}/associations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get tags associated with this tag
-         * @description Get all tags associated with the specified tag.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
-         *
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Tag name (preferred) or tag ID
-                     * @example Anime
-                     */
-                    tagId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of associated tags */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Tag"][];
-                    };
-                };
-                /** @description Tag not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        /**
-         * Create association between tags
-         * @description Create an association between two tags.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
-         *
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /**
-                     * @description Tag name (preferred) or tag ID
-                     * @example Anime
-                     */
-                    tagId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @description ID of tag to associate with */
-                        associated_tag_id: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Tag association created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Invalid association data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Tag not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        /**
-         * Remove association between tags
-         * @description Remove an association between two tags.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
-         *
-         */
-        delete: {
-            parameters: {
-                query: {
-                    associated_tag_id: string;
-                };
-                header?: never;
-                path: {
-                    /**
-                     * @description Tag name (preferred) or tag ID
-                     * @example Anime
-                     */
-                    tagId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Tag association removed */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Tag or association not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/users/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/support/tags": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** Get current user profile */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description User profile */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['User'];
+          };
         };
-        get?: never;
-        put?: never;
-        /**
-         * Get content support for tag editing
-         * @description Retrieve supporting content for a tag based on the tag name and support type.
-         *     The content is returned in Markdown format with relevant hashtags.
-         *
-         *     This endpoint can be used when creating new tags or editing existing tags,
-         *     as it only requires the tag name, not an existing tag ID.
-         *
-         *     Currently supported types:
-         *     - `wikipedia_summary`: Fetches a summary from Wikipedia
-         *
-         *     The response includes Markdown-formatted content where relevant terms are converted to hashtags.
-         *
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Name of the tag to get support for
-                         * @example アニメ
-                         */
-                        tag_name: string;
-                        /**
-                         * @description Type of support content to retrieve
-                         * @example wikipedia_summary
-                         * @enum {string}
-                         */
-                        support_type: "wikipedia_summary";
-                    };
-                };
-            };
-            responses: {
-                /** @description Support content retrieved successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /**
-                             * @description Markdown-formatted content with hashtags
-                             * @example アニメ（#anime）は日本の文化を代表するメディアです。#manga や #gaming とともに広く親しまれています。
-                             */
-                            content: string;
-                            /**
-                             * @description The type of support that was used
-                             * @example wikipedia_summary
-                             */
-                            support_type: string;
-                        };
-                    };
-                };
-                /** @description Invalid support type or request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description No content available for the specified tag name */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description External service error or server error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List public logs */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Search logs by title or content (case-insensitive partial match) */
-                    search?: string;
-                    tag_ids?: string[];
-                    user_id?: string;
-                    limit?: number;
-                    offset?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of public logs */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: components["schemas"]["Log"][];
-                            total: number;
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * Create new log
-         * @description Create a new log entry. Hashtags in the content (#{tagName} or #tagName format)
-         *     will be automatically extracted and associated with the log as tags.
-         *     Supports both explicit tag specification and automatic hashtag extraction.
-         *
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["LogCreate"];
-                };
-            };
-            responses: {
-                /** @description Log created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Log"];
-                    };
-                };
-                /** @description Invalid log data */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/users/me/logs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/logs/{logId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /**
+     * Get current user's logs (both public and private)
+     * @description Returns all logs belonging to the authenticated user, including private logs. Useful for reviewing personal log history.
+     */
+    get: {
+      parameters: {
+        query?: {
+          limit?: number;
+          offset?: number;
         };
-        /** Get log details */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of user's logs */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              items: components['schemas']['Log'][];
+              total: number;
+              limit: number;
+              offset: number;
+              has_more: boolean;
             };
-            requestBody?: never;
-            responses: {
-                /** @description Log details */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["LogDetail"];
-                    };
-                };
-                /** @description Log not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+          };
         };
-        /**
-         * Update log
-         * @description Update an existing log entry. When content_md is updated, hashtags in the content
-         *     (#{tagName} or #tagName format) will be automatically extracted and associated with the log as tags.
-         *
-         */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["LogUpdate"];
-                };
-            };
-            responses: {
-                /** @description Log updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Log"];
-                    };
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not log owner */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Log not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        post?: never;
-        /** Delete log */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Log deleted */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not log owner */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Log not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/logs/{logId}/related": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get related logs
-         * @description Get logs that are related to the specified log.
-         *     Relation is determined by shared tags - logs with more common tags are ranked higher.
-         *     Only public logs are returned, excluding the specified log itself.
-         *
-         */
-        get: {
-            parameters: {
-                query?: {
-                    limit?: number;
-                };
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of related logs */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: components["schemas"]["Log"][];
-                            total: number;
-                        };
-                    };
-                };
-                /** @description Log not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tags': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/logs/{logId}/share": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** Search and list tags */
+    get: {
+      parameters: {
+        query?: {
+          search?: string;
+          limit?: number;
+          offset?: number;
         };
-        get?: never;
-        put?: never;
-        /** Share log to Twitter */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of tags */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              items: components['schemas']['Tag'][];
+              total: number;
+              limit: number;
+              offset: number;
             };
-            requestBody?: never;
-            responses: {
-                /** @description Successfully shared to Twitter */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            twitter_post_id: string;
-                        };
-                    };
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not log owner */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Log not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/logs/{logId}/images": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    put?: never;
+    /**
+     * Create new tag
+     * @description Create a new tag with automatic hashtag processing.
+     *
+     *     **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`),
+     *     the system will automatically create associations with existing tags or create new tags if they don't exist.
+     *
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'application/json': components['schemas']['TagCreate'];
         };
-        /**
-         * Get all images for a log
-         * @description Retrieve all images attached to a log
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of images */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: components["schemas"]["LogImage"][];
-                        };
-                    };
-                };
-                /** @description Log not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+      };
+      responses: {
+        /** @description Tag created */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['Tag'];
+          };
         };
-        put?: never;
-        /**
-         * Upload image to log
-         * @description Upload an image file and attach it to a log
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "multipart/form-data": {
-                        /**
-                         * Format: binary
-                         * @description Image file (JPEG, PNG, GIF, WebP). Max size 10MB.
-                         */
-                        file: string;
-                        /** @description Image width in pixels */
-                        width?: number;
-                        /** @description Image height in pixels */
-                        height?: number;
-                        /**
-                         * @description Display order for the image (lower numbers appear first)
-                         * @default 0
-                         */
-                        display_order?: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description Image uploaded successfully */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["LogImage"];
-                    };
-                };
-                /** @description Invalid request (missing file, wrong format, file too large) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not log owner */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Log not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+        /** @description Invalid tag data */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
     };
-    "/logs/{logId}/images/{imageId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get image data
-         * @description Retrieve the actual image file
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                    imageId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Image file */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "image/jpeg": string;
-                        "image/png": string;
-                        "image/gif": string;
-                        "image/webp": string;
-                    };
-                };
-                /** @description Image not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        /**
-         * Delete image
-         * @description Delete an image attached to a log
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    logId: string;
-                    imageId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Image deleted successfully */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not authenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not log owner */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Image not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tags/{tagId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /**
+     * Get tag details
+     * @description Get detailed information about a tag. The `tagId` parameter accepts both:
+     *     - Tag name (user-friendly, URL-encoded if needed)
+     *     - Tag ID (for backward compatibility)
+     *
+     *     The tag name is checked first, then the tag ID if not found by name.
+     *
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /**
+           * @description Tag name (preferred) or tag ID
+           * @example Anime
+           */
+          tagId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Tag details */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['TagDetail'];
+          };
+        };
+        /** @description Tag not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    /**
+     * Update tag
+     * @description Update an existing tag with automatic hashtag processing.
+     *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+     *
+     *     **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`),
+     *     the system will automatically create associations with existing tags or create new tags if they don't exist.
+     *
+     */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /**
+           * @description Tag name (preferred) or tag ID
+           * @example Anime
+           */
+          tagId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'application/json': components['schemas']['TagUpdate'];
+        };
+      };
+      responses: {
+        /** @description Tag updated */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['Tag'];
+          };
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not tag owner */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Tag not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    post?: never;
+    /**
+     * Delete tag
+     * @description Delete a tag. The `tagId` parameter accepts both tag name (preferred) and tag ID.
+     *
+     *     **Admin privileges required**: Only users with the 'admin' role can delete tags.
+     *
+     */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /**
+           * @description Tag name (preferred) or tag ID
+           * @example Anime
+           */
+          tagId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Tag deleted */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Admin privileges required */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Tag not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tags/{tagId}/associations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get tags associated with this tag
+     * @description Get all tags associated with the specified tag.
+     *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+     *
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /**
+           * @description Tag name (preferred) or tag ID
+           * @example Anime
+           */
+          tagId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of associated tags */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['Tag'][];
+          };
+        };
+        /** @description Tag not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    /**
+     * Create association between tags
+     * @description Create an association between two tags.
+     *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+     *
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /**
+           * @description Tag name (preferred) or tag ID
+           * @example Anime
+           */
+          tagId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'application/json': {
+            /** @description ID of tag to associate with */
+            associated_tag_id: string;
+          };
+        };
+      };
+      responses: {
+        /** @description Tag association created */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Invalid association data */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Tag not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    /**
+     * Remove association between tags
+     * @description Remove an association between two tags.
+     *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+     *
+     */
+    delete: {
+      parameters: {
+        query: {
+          associated_tag_id: string;
+        };
+        header?: never;
+        path: {
+          /**
+           * @description Tag name (preferred) or tag ID
+           * @example Anime
+           */
+          tagId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Tag association removed */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Tag or association not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/support/tags': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get content support for tag editing
+     * @description Retrieve supporting content for a tag based on the tag name and support type.
+     *     The content is returned in Markdown format with relevant hashtags.
+     *
+     *     This endpoint can be used when creating new tags or editing existing tags,
+     *     as it only requires the tag name, not an existing tag ID.
+     *
+     *     Currently supported types:
+     *     - `wikipedia_summary`: Fetches a summary from Wikipedia
+     *
+     *     The response includes Markdown-formatted content where relevant terms are converted to hashtags.
+     *
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'application/json': {
+            /**
+             * @description Name of the tag to get support for
+             * @example アニメ
+             */
+            tag_name: string;
+            /**
+             * @description Type of support content to retrieve
+             * @example wikipedia_summary
+             * @enum {string}
+             */
+            support_type: 'wikipedia_summary';
+          };
+        };
+      };
+      responses: {
+        /** @description Support content retrieved successfully */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              /**
+               * @description Markdown-formatted content with hashtags
+               * @example アニメ（#anime）は日本の文化を代表するメディアです。#manga や #gaming とともに広く親しまれています。
+               */
+              content: string;
+              /**
+               * @description The type of support that was used
+               * @example wikipedia_summary
+               */
+              support_type: string;
+            };
+          };
+        };
+        /** @description Invalid support type or request */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description No content available for the specified tag name */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description External service error or server error */
+        500: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List public logs */
+    get: {
+      parameters: {
+        query?: {
+          /** @description Search logs by title or content (case-insensitive partial match) */
+          search?: string;
+          tag_ids?: string[];
+          user_id?: string;
+          limit?: number;
+          offset?: number;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of public logs */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              items: components['schemas']['Log'][];
+              total: number;
+            };
+          };
+        };
+      };
+    };
+    put?: never;
+    /**
+     * Create new log
+     * @description Create a new log entry. Hashtags in the content (#{tagName} or #tagName format)
+     *     will be automatically extracted and associated with the log as tags.
+     *     Supports both explicit tag specification and automatic hashtag extraction.
+     *
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'application/json': components['schemas']['LogCreate'];
+        };
+      };
+      responses: {
+        /** @description Log created */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['Log'];
+          };
+        };
+        /** @description Invalid log data */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logs/{logId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get log details */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Log details */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['LogDetail'];
+          };
+        };
+        /** @description Log not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    /**
+     * Update log
+     * @description Update an existing log entry. When content_md is updated, hashtags in the content
+     *     (#{tagName} or #tagName format) will be automatically extracted and associated with the log as tags.
+     *
+     */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'application/json': components['schemas']['LogUpdate'];
+        };
+      };
+      responses: {
+        /** @description Log updated */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['Log'];
+          };
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not log owner */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Log not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    post?: never;
+    /** Delete log */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Log deleted */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not log owner */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Log not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logs/{logId}/related': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get related logs
+     * @description Get logs that are related to the specified log.
+     *     Relation is determined by shared tags - logs with more common tags are ranked higher.
+     *     Only public logs are returned, excluding the specified log itself.
+     *
+     */
+    get: {
+      parameters: {
+        query?: {
+          limit?: number;
+        };
+        header?: never;
+        path: {
+          logId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of related logs */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              items: components['schemas']['Log'][];
+              total: number;
+            };
+          };
+        };
+        /** @description Log not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logs/{logId}/share': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Share log to Twitter */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Successfully shared to Twitter */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              twitter_post_id: string;
+            };
+          };
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not log owner */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Log not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logs/{logId}/images': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get all images for a log
+     * @description Retrieve all images attached to a log
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of images */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              items: components['schemas']['LogImage'][];
+            };
+          };
+        };
+        /** @description Log not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    /**
+     * Upload image to log
+     * @description Upload an image file and attach it to a log
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          'multipart/form-data': {
+            /**
+             * Format: binary
+             * @description Image file (JPEG, PNG, GIF, WebP). Max size 10MB.
+             */
+            file: string;
+            /** @description Image width in pixels */
+            width?: number;
+            /** @description Image height in pixels */
+            height?: number;
+            /**
+             * @description Display order for the image (lower numbers appear first)
+             * @default 0
+             */
+            display_order?: number;
+          };
+        };
+      };
+      responses: {
+        /** @description Image uploaded successfully */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['LogImage'];
+          };
+        };
+        /** @description Invalid request (missing file, wrong format, file too large) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not log owner */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Log not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logs/{logId}/images/{imageId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get image data
+     * @description Retrieve the actual image file
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+          imageId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Image file */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'image/jpeg': string;
+            'image/png': string;
+            'image/gif': string;
+            'image/webp': string;
+          };
+        };
+        /** @description Image not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    /**
+     * Delete image
+     * @description Delete an image attached to a log
+     */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          logId: string;
+          imageId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Image deleted successfully */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not authenticated */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Not log owner */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Image not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        User: {
-            id: string;
-            twitter_username: string;
-            display_name: string;
-            /** @description User's avatar URL. null when user has no avatar set. */
-            avatar_url: string | null;
-            /**
-             * @description User role for privilege management. 'admin' users can delete any tags.
-             * @default user
-             * @enum {string}
-             */
-            role: "user" | "admin";
-            /** Format: date-time */
-            created_at: string;
-        };
-        Tag: {
-            id: string;
-            name: string;
-            /** @description Optional description for the tag. null when not provided by user. */
-            description: string | null;
-            /** @description Flexible metadata storage */
-            metadata: Record<string, never>;
-            /** @description User ID who created this tag */
-            created_by: string;
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        TagCreate: {
-            name: string;
-            /** @description Optional description for the tag. Supports hashtag patterns in two formats:
-             *     - #{tagName} - Extended format (supports spaces and special characters)
-             *     - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
-             *
-             *     When hashtag patterns are found, the system will automatically:
-             *     1. Look for existing tags with matching names
-             *     2. Create new tags if they don't exist (with empty description and metadata)
-             *     3. Create associations between this tag and the referenced tags
-             *      */
-            description?: string;
-            metadata?: Record<string, never>;
-        };
-        TagUpdate: {
-            name?: string;
-            /** @description Optional description for the tag. Supports hashtag patterns in two formats:
-             *     - #{tagName} - Extended format (supports spaces and special characters)
-             *     - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
-             *
-             *     When hashtag patterns are found, the system will automatically:
-             *     1. Look for existing tags with matching names
-             *     2. Create new tags if they don't exist (with empty description and metadata)
-             *     3. Create associations between this tag and the referenced tags
-             *      */
-            description?: string;
-            metadata?: Record<string, never>;
-        };
-        TagDetail: components["schemas"]["Tag"] & {
-            log_count: number;
-            recent_logs: components["schemas"]["Log"][];
-            /** @description Tags associated with this tag */
-            associated_tags: components["schemas"]["Tag"][];
-        };
-        Log: {
-            id: string;
-            user: components["schemas"]["User"];
-            /** @description Tags associated with this log */
-            associated_tags: components["schemas"]["Tag"][];
-            /** @description Optional title for the log. null when not provided by user. */
-            title: string | null;
-            /** @description Content in Markdown format */
-            content_md: string;
-            /** @description Images attached to this log */
-            images: components["schemas"]["LogImage"][];
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        LogCreate: {
-            /** @description IDs of existing tags to associate with this log */
-            tag_ids?: string[];
-            /** @description Names of tags to associate with this log (will create new tags if they don't exist) */
-            tag_names?: string[];
-            title?: string;
-            /** @description Markdown content of the log. Hashtags in the format #{tagName} or #tagName
-             *     will be automatically extracted and associated with the log as tags.
-             *      */
-            content_md: string;
-            /**
-             * @description Whether the log is publicly visible. Defaults to true (public) when not specified.
-             * @default true
-             */
-            is_public: boolean;
-        };
-        LogUpdate: {
-            /** @description Update the tags associated with this log using existing tag IDs */
-            tag_ids?: string[];
-            /** @description Update the tags associated with this log using tag names (will create new tags if they don't exist) */
-            tag_names?: string[];
-            title?: string;
-            /** @description Markdown content of the log. Hashtags in the format #{tagName} or #tagName
-             *     will be automatically extracted and associated with the log as tags when content is updated.
-             *      */
-            content_md?: string;
-            is_public?: boolean;
-        };
-        LogDetail: components["schemas"]["Log"] & {
-            /** @description Whether this log is publicly visible */
-            is_public: boolean;
-        };
-        LogImage: {
-            /** @description Unique image identifier */
-            id: string;
-            /** @description ID of the log this image is attached to */
-            log_id: string;
-            /** @description R2 storage key for the image */
-            r2_key: string;
-            /** @description Original filename */
-            file_name: string;
-            /**
-             * @description MIME type of the image
-             * @example image/jpeg
-             */
-            content_type: string;
-            /** @description File size in bytes */
-            file_size: number;
-            /** @description Image width in pixels. null when dimension information is not available. */
-            width: number | null;
-            /** @description Image height in pixels. null when dimension information is not available. */
-            height: number | null;
-            /** @description Display order (lower numbers appear first) */
-            display_order: number;
-            /**
-             * Format: date-time
-             * @description When the image was uploaded
-             */
-            created_at: string;
-        };
+  schemas: {
+    User: {
+      id: string;
+      twitter_username: string;
+      display_name: string;
+      /** @description User's avatar URL. null when user has no avatar set. */
+      avatar_url: string | null;
+      /**
+       * @description User role for privilege management. 'admin' users can delete any tags.
+       * @default user
+       * @enum {string}
+       */
+      role: 'user' | 'admin';
+      /** Format: date-time */
+      created_at: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    Tag: {
+      id: string;
+      name: string;
+      /** @description Optional description for the tag. null when not provided by user. */
+      description: string | null;
+      /** @description Flexible metadata storage */
+      metadata: Record<string, never>;
+      /** @description User ID who created this tag */
+      created_by: string;
+      /** Format: date-time */
+      created_at: string;
+      /** Format: date-time */
+      updated_at: string;
+    };
+    TagCreate: {
+      name: string;
+      /** @description Optional description for the tag. Supports hashtag patterns in two formats:
+       *     - #{tagName} - Extended format (supports spaces and special characters)
+       *     - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+       *
+       *     When hashtag patterns are found, the system will automatically:
+       *     1. Look for existing tags with matching names
+       *     2. Create new tags if they don't exist (with empty description and metadata)
+       *     3. Create associations between this tag and the referenced tags
+       *      */
+      description?: string;
+      metadata?: Record<string, never>;
+    };
+    TagUpdate: {
+      name?: string;
+      /** @description Optional description for the tag. Supports hashtag patterns in two formats:
+       *     - #{tagName} - Extended format (supports spaces and special characters)
+       *     - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+       *
+       *     When hashtag patterns are found, the system will automatically:
+       *     1. Look for existing tags with matching names
+       *     2. Create new tags if they don't exist (with empty description and metadata)
+       *     3. Create associations between this tag and the referenced tags
+       *      */
+      description?: string;
+      metadata?: Record<string, never>;
+    };
+    TagDetail: components['schemas']['Tag'] & {
+      log_count: number;
+      recent_logs: components['schemas']['Log'][];
+      /** @description Tags associated with this tag */
+      associated_tags: components['schemas']['Tag'][];
+    };
+    Log: {
+      id: string;
+      user: components['schemas']['User'];
+      /** @description Tags associated with this log */
+      associated_tags: components['schemas']['Tag'][];
+      /** @description Optional title for the log. null when not provided by user. */
+      title: string | null;
+      /** @description Content in Markdown format */
+      content_md: string;
+      /** @description Images attached to this log */
+      images: components['schemas']['LogImage'][];
+      /** Format: date-time */
+      created_at: string;
+      /** Format: date-time */
+      updated_at: string;
+    };
+    LogCreate: {
+      /** @description IDs of existing tags to associate with this log */
+      tag_ids?: string[];
+      /** @description Names of tags to associate with this log (will create new tags if they don't exist) */
+      tag_names?: string[];
+      title?: string;
+      /** @description Markdown content of the log. Hashtags in the format #{tagName} or #tagName
+       *     will be automatically extracted and associated with the log as tags.
+       *      */
+      content_md: string;
+      /**
+       * @description Whether the log is publicly visible. Defaults to true (public) when not specified.
+       * @default true
+       */
+      is_public: boolean;
+    };
+    LogUpdate: {
+      /** @description Update the tags associated with this log using existing tag IDs */
+      tag_ids?: string[];
+      /** @description Update the tags associated with this log using tag names (will create new tags if they don't exist) */
+      tag_names?: string[];
+      title?: string;
+      /** @description Markdown content of the log. Hashtags in the format #{tagName} or #tagName
+       *     will be automatically extracted and associated with the log as tags when content is updated.
+       *      */
+      content_md?: string;
+      is_public?: boolean;
+    };
+    LogDetail: components['schemas']['Log'] & {
+      /** @description Whether this log is publicly visible */
+      is_public: boolean;
+    };
+    LogImage: {
+      /** @description Unique image identifier */
+      id: string;
+      /** @description ID of the log this image is attached to */
+      log_id: string;
+      /** @description R2 storage key for the image */
+      r2_key: string;
+      /** @description Original filename */
+      file_name: string;
+      /**
+       * @description MIME type of the image
+       * @example image/jpeg
+       */
+      content_type: string;
+      /** @description File size in bytes */
+      file_size: number;
+      /** @description Image width in pixels. null when dimension information is not available. */
+      width: number | null;
+      /** @description Image height in pixels. null when dimension information is not available. */
+      height: number | null;
+      /** @description Display order (lower numbers appear first) */
+      display_order: number;
+      /**
+       * Format: date-time
+       * @description When the image was uploaded
+       */
+      created_at: string;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;

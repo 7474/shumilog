@@ -13,18 +13,14 @@ export function LogCard({ log }: LogCardProps) {
     >
       <div className="space-y-2">
         {/* タイトル */}
-        {log.title && (
-          <h4 className="font-semibold text-gray-900 line-clamp-1">
-            {log.title}
-          </h4>
-        )}
-        
+        {log.title && <h4 className="font-semibold text-gray-900 line-clamp-1">{log.title}</h4>}
+
         {/* コンテンツプレビュー */}
         <p className="text-sm text-gray-600 line-clamp-2">
           {log.content_md.substring(0, 150)}
           {log.content_md.length > 150 ? '...' : ''}
         </p>
-        
+
         {/* メタ情報 */}
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center space-x-2">
@@ -41,11 +37,11 @@ export function LogCard({ log }: LogCardProps) {
             {new Date(log.created_at).toLocaleDateString('ja-JP', {
               year: 'numeric',
               month: 'short',
-              day: 'numeric'
+              day: 'numeric',
             })}
           </time>
         </div>
-        
+
         {/* タグ */}
         {log.associated_tags && log.associated_tags.length > 0 && (
           <div className="flex flex-wrap gap-1">

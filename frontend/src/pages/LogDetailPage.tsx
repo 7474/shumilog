@@ -68,7 +68,7 @@ export function LogDetailPage() {
 
   const handleDelete = async () => {
     if (!id) return;
-    
+
     try {
       const response = await api.logs[':id'].$delete({ param: { id } });
       if (!response.ok) {
@@ -131,7 +131,7 @@ export function LogDetailPage() {
             <span>ログ一覧に戻る</span>
           </Button>
         </Link>
-        
+
         <div className="flex flex-wrap gap-2">
           {/* 公開ログの場合はXへの共有ボタンを表示 */}
           {log.is_public && (
@@ -144,10 +144,10 @@ export function LogDetailPage() {
               className="text-sky-600 border-sky-200 hover:bg-sky-50"
             />
           )}
-          
+
           {isOwner && !isEditing && (
             <>
-              <Button 
+              <Button
                 onClick={() => setIsEditing(true)}
                 className="btn-fresh flex items-center gap-2"
                 size="sm"
@@ -155,7 +155,7 @@ export function LogDetailPage() {
                 <Edit size={16} />
                 <span>編集</span>
               </Button>
-              <Button 
+              <Button
                 onClick={() => setShowDeleteConfirm(true)}
                 variant="destructive"
                 className="flex items-center gap-2"
@@ -178,8 +178,8 @@ export function LogDetailPage() {
                 <Edit size={20} />
                 <span>ログを編集</span>
               </span>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setIsEditing(false)}
                 className="flex items-center gap-1"
@@ -190,11 +190,7 @@ export function LogDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <LogForm
-              log={log}
-              onSuccess={handleEditSuccess}
-              onCancel={() => setIsEditing(false)}
-            />
+            <LogForm log={log} onSuccess={handleEditSuccess} onCancel={() => setIsEditing(false)} />
           </CardContent>
         </Card>
       ) : (
@@ -231,7 +227,7 @@ export function LogDetailPage() {
                     {new Date(log.created_at).toLocaleDateString('ja-JP', {
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
                     })}
                   </time>
                 </div>
@@ -241,16 +237,16 @@ export function LogDetailPage() {
                     {new Date(log.updated_at).toLocaleDateString('ja-JP', {
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
                     })}
                   </time>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${
-                    log.is_public 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span
+                    className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${
+                      log.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
                     {log.is_public ? (
                       <>
                         <Globe size={12} />
@@ -308,22 +304,17 @@ export function LogDetailPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <Card className="max-w-md w-full">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-red-600">
-                ログを削除しますか？
-              </CardTitle>
+              <CardTitle className="text-xl font-bold text-red-600">ログを削除しますか？</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-700">
                 このログを削除すると、元に戻すことはできません。本当に削除してもよろしいですか？
               </p>
               <div className="flex gap-3 justify-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDeleteConfirm(false)}
-                >
+                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
                   キャンセル
                 </Button>
-                <Button 
+                <Button
                   variant="destructive"
                   onClick={handleDelete}
                   className="flex items-center gap-2"

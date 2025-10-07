@@ -13,7 +13,8 @@ describe('LogCard', () => {
   const mockLog: Log = {
     id: '1',
     title: 'Test Log Title',
-    content_md: 'This is a test content for the log entry. It should be displayed in the card preview.',
+    content_md:
+      'This is a test content for the log entry. It should be displayed in the card preview.',
     is_public: true,
     privacy: 'public',
     created_at: '2024-01-15T10:00:00Z',

@@ -140,7 +140,7 @@ const toLogResponse = (log: Log) => ({
     created_at: tag.created_at,
     updated_at: tag.updated_at
   })),
-  images: log.images ?? []
+  images: log.images || []
 });
 
 const logs = new Hono<AppBindings>();

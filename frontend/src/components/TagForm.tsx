@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Tag as TagIcon, FileText, AlertCircle, Loader2, Bot, PenLine, Plus, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -131,7 +132,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-            <span className="text-red-500 text-xl">⚠️</span>
+            <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
             <p className="text-red-700 text-sm flex-1">{error}</p>
           </div>
         )}
@@ -140,7 +141,10 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel className="text-sm font-semibold text-gray-700">🏷️ タグ名</FormLabel>
+              <FormLabel className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <TagIcon size={16} />
+                タグ名
+              </FormLabel>
               <FormControl>
                 <Input 
                   placeholder="タグ名を入力してください..." 
@@ -158,7 +162,10 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           render={({ field }) => (
             <FormItem className="space-y-2">
               <div className="flex items-center justify-between">
-                <FormLabel className="text-sm font-semibold text-gray-700">📝 説明（任意）</FormLabel>
+                <FormLabel className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <FileText size={16} />
+                  説明（任意）
+                </FormLabel>
                 <Button
                   type="button"
                   variant="outline"
@@ -169,12 +176,13 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
                 >
                   {isLoadingSupport ? (
                     <>
-                      <span className="animate-spin mr-1">⏳</span>
+                      <Loader2 size={14} className="mr-1 animate-spin" />
                       取得中...
                     </>
                   ) : (
                     <>
-                      🤖 Wikipedia×AI
+                      <Bot size={14} className="mr-1" />
+                      Wikipedia×AI
                     </>
                   )}
                 </Button>
@@ -196,7 +204,17 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
             type="submit" 
             className="btn-fresh flex-1 sm:flex-none px-6 py-2.5"
           >
-            {tag ? '✏️ タグを更新' : '✨ タグを作成'}
+            {tag ? (
+              <>
+                <PenLine size={16} className="mr-2" />
+                タグを更新
+              </>
+            ) : (
+              <>
+                <Plus size={16} className="mr-2" />
+                タグを作成
+              </>
+            )}
           </Button>
           {onCancel && (
             <Button 
@@ -205,7 +223,8 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
               variant="outline"
               className="flex-1 sm:flex-none px-6 py-2.5 border-gray-300 hover:bg-gray-50"
             >
-              ✕ キャンセル
+              <X size={16} className="mr-2" />
+              キャンセル
             </Button>
           )}
         </div>

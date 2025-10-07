@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Search, PenLine, X, FileText, Plus, BookOpen } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -92,7 +93,7 @@ export function MyLogsPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 text-center">
-        <div className="text-4xl">❌</div>
+        <X size={48} className="text-red-500" />
         <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
         <p className="text-gray-600">{error}</p>
         <Button onClick={() => fetchLogs(undefined, true)} variant="outline">
@@ -107,14 +108,24 @@ export function MyLogsPage() {
       {/* ページヘッダー */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">📚 マイログ</h1>
+          <h1 className="text-3xl font-bold text-gray-900">マイログ</h1>
           <p className="text-gray-600 mt-1">あなたの趣味活動の記録を振り返る</p>
         </div>
         <Button 
           onClick={() => setShowForm(!showForm)}
           className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
         >
-          {showForm ? '✕ キャンセル' : '✏️ 新しいログを作成'}
+          {showForm ? (
+            <>
+              <X size={16} className="mr-2" />
+              キャンセル
+            </>
+          ) : (
+            <>
+              <PenLine size={16} className="mr-2" />
+              新しいログを作成
+            </>
+          )}
         </Button>
       </div>
 
@@ -123,7 +134,7 @@ export function MyLogsPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span>{selectedLog ? '✏️' : '✨'}</span>
+              {selectedLog ? <PenLine size={20} /> : <Plus size={20} />}
               <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
             </CardTitle>
           </CardHeader>
@@ -167,7 +178,7 @@ export function MyLogsPage() {
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input
               type="text"
-              placeholder="🔍 ログを検索... (例: アニメ、進撃、RPG)"
+              placeholder="ログを検索... (例: アニメ、進撃、RPG)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
@@ -203,11 +214,12 @@ export function MyLogsPage() {
         ) : logs.length === 0 ? (
           <Card className="card-fresh text-center py-12">
             <CardContent className="space-y-4">
-              <div className="text-6xl">📝</div>
+              <FileText size={64} className="mx-auto text-gray-400" />
               <h3 className="text-xl font-semibold text-gray-900">まだログがありません</h3>
               <p className="text-gray-600">最初の趣味ログを作成してみましょう！</p>
               <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
-                ✨ 最初のログを作成
+                <Plus size={16} className="mr-2" />
+                最初のログを作成
               </Button>
             </CardContent>
           </Card>

@@ -26,53 +26,67 @@ export const cacheApi = () => {
       return;
     }
 
-    // Cache API を使用
-    const cache = caches.default;
-    const cacheKey = new Request(c.req.url, c.req.raw);
-    
-    // キャッシュから取得を試みる
-    let response = await cache.match(cacheKey);
-    
-    if (response) {
-      // キャッシュヒット - X-Cache-Status ヘッダーを追加
-      const newHeaders = new Headers(response.headers);
-      newHeaders.set('X-Cache-Status', 'HIT');
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: newHeaders,
-      });
-    }
+    try {
+      // Cache API を使用
+      const cache = caches.default;
+      const cacheKey = new Request(c.req.url, c.req.raw);
+      
+      // キャッシュから取得を試みる
+      let response = await cache.match(cacheKey);
+      
+      if (response) {
+        // キャッシュヒット - X-Cache-Status ヘッダーを追加
+        const newHeaders = new Headers(response.headers);
+        newHeaders.set('X-Cache-Status', 'HIT');
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: newHeaders,
+        });
+      }
 
-    // キャッシュミス - レスポンスを生成
-    await next();
-    
-    // 非公開データを含むレスポンスはキャッシュしない
-    const hasPrivateData = c.get('hasPrivateData');
-    if (hasPrivateData) {
-      return;
-    }
+      // キャッシュミス - レスポンスを生成
+      await next();
+      
+      // 非公開データを含むレスポンスはキャッシュしない
+      const hasPrivateData = c.get('hasPrivateData');
+      if (hasPrivateData) {
+        return;
+      }
 
-    // 成功レスポンス（2xx）のみキャッシュ
-    const status = c.res.status;
-    if (status < 200 || status >= 300) {
-      return;
-    }
+      // 成功レスポンス（2xx）のみキャッシュ
+      const status = c.res.status;
+      if (status < 200 || status >= 300) {
+        return;
+      }
 
-    // レスポンスをキャッシュに保存
-    // Cache-Control ヘッダーがある場合はそれに従う
-    response = c.res.clone();
-    
-    // X-Cache-Status ヘッダーを追加
-    c.header('X-Cache-Status', 'MISS');
-    
-    // キャッシュに保存（非同期）
-    // executionCtx が利用可能な場合のみ waitUntil を使用
-    if (c.executionCtx) {
-      c.executionCtx.waitUntil(cache.put(cacheKey, response));
-    } else {
-      // テスト環境などでは即座に保存
-      await cache.put(cacheKey, response);
+      // レスポンスをキャッシュに保存
+      // Cache-Control ヘッダーがある場合はそれに従う
+      response = c.res.clone();
+      
+      // X-Cache-Status ヘッダーを追加
+      c.header('X-Cache-Status', 'MISS');
+      
+      // キャッシュに保存（非同期）
+      // executionCtx が利用可能な場合のみ waitUntil を使用
+      try {
+        if (c.executionCtx) {
+          c.executionCtx.waitUntil(cache.put(cacheKey, response));
+        } else {
+          // テスト環境などでは即座に保存
+          await cache.put(cacheKey, response);
+        }
+      } catch (putError) {
+        // キャッシュ保存に失敗してもレスポンスは返す
+        console.error('Failed to put response in cache:', putError);
+      }
+    } catch (error) {
+      // Cache API でエラーが発生した場合は、キャッシュなしで続行
+      console.error('Cache API error:', error);
+      // レスポンスがまだ生成されていない場合のみ next() を呼ぶ
+      if (!c.res) {
+        await next();
+      }
     }
   };
 };

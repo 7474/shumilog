@@ -136,24 +136,33 @@ curl -X GET http://localhost:8787/api/users/me \
 | `frontend/` | `npm run dev` | HMR + APIプロキシでVite開発サーバーを起動 |
 | `frontend/` | `npm run build` | `frontend/dist/`への本番ビルドを生成 |
 | `frontend/` | `npm run test:smoke` | 最小UIスモークテストハーネスを実行 |
+| `frontend/` | `npm run test:contract` | フロントエンドAPIクライアントのOpenAPI仕様検証を実行 |
 
 ## テストとリンティング
 
 ```bash
-# APIコントラクトテスト (backend/)
+# バックエンドAPIコントラクトテスト
+cd backend
 npm run test:contract
 
-# フロントエンドスモークテスト (frontend/)
+# フロントエンドAPIコントラクトテスト（OpenAPI仕様検証）
+cd frontend
+npm run test:contract
+
+# フロントエンドスモークテスト
+cd frontend
 npm run test:smoke
 
 # 型チェック (backend/)
+cd backend
 npm run build
 
-# バックエンドソースのリント (backend/)
+# バックエンドソースのリント
+cd backend
 npm run lint
 ```
 
-フロントエンドのリンティングはフェーズ3.7で導入予定（`specs/003-specs-001-web/tasks.md`を参照）。現在は、Reactの型定義とスモークハーネスがUIの回帰チェックをカバーしています。
+バックエンドとフロントエンド両方でOpenAPI仕様に対する自動検証を実装しており、API実装とクライアントコードが常に仕様と一致していることを保証します。
 
 ## API開発
 

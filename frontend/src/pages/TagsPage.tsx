@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
-import { Tag } from '@/models';
+import { Tag } from '@/api-types';
 import { TagForm } from '@/components/TagForm';
 import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, X } from 'lucide-react';
 import { api } from '@/services/api';
-import { Log } from '@/models';
+import { Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';

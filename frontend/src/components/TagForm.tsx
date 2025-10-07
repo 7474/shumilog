@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Tag } from '@/models';
+import { Tag } from '@/api-types';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Tag name is required').max(200, 'Tag name must be 200 characters or fewer'),

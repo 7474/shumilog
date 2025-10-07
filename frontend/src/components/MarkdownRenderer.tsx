@@ -1,6 +1,6 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { Tag } from '@/models';
+import { Tag } from '@/api-types';
 
 interface MarkdownRendererProps {
   content: string;

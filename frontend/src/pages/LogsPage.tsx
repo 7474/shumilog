@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
-import { Log } from '@/models';
+import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
 import { Button } from '@/components/ui/button';

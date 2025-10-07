@@ -1,4 +1,4 @@
-import { LogImage } from '@/models';
+import { LogImage } from '@/api-types';
 
 interface LogImagesProps {
   logId: string;

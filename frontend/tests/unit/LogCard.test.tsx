@@ -25,7 +25,7 @@ describe('LogCard', () => {
       avatar_url: 'https://example.com/avatar.jpg',
       created_at: '2024-01-01T00:00:00Z',
     },
-    tags: [
+    associated_tags: [
       { id: 'tag1', name: 'Anime', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
       { id: 'tag2', name: 'Gaming', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
     ],
@@ -72,7 +72,7 @@ describe('LogCard', () => {
   it('shows tag count indicator when more than 3 tags', () => {
     const logWithManyTags: Log = {
       ...mockLog,
-      tags: [
+      associated_tags: [
         { id: 'tag1', name: 'Tag1', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
         { id: 'tag2', name: 'Tag2', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
         { id: 'tag3', name: 'Tag3', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
@@ -87,7 +87,7 @@ describe('LogCard', () => {
   it('renders without tags when log has no tags', () => {
     const logWithoutTags: Log = {
       ...mockLog,
-      tags: [],
+      associated_tags: [],
     };
     renderWithRouter(<LogCard log={logWithoutTags} />);
     expect(screen.queryByText('Anime')).not.toBeInTheDocument();

@@ -170,15 +170,26 @@ export class LogService {
       return null;
     }
     
-    // Get associated tags
-      const tagRows = await this.db.query(`
+    // 並列実行: タグとイメージを同時に取得
+    const [tagRows, imageRows] = await Promise.all([
+      // Get associated tags
+      this.db.query(`
         SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
                lta.association_order
         FROM tags t
         JOIN log_tag_associations lta ON t.id = lta.tag_id
         WHERE lta.log_id = ?
         ORDER BY lta.association_order ASC, t.name ASC
-      `, [id]);
+      `, [id]),
+      // Get images for the log
+      this.db.query(`
+        SELECT i.*, lia.display_order
+        FROM images i
+        JOIN log_image_associations lia ON i.id = lia.image_id
+        WHERE lia.log_id = ?
+        ORDER BY lia.display_order ASC, i.created_at ASC
+      `, [id])
+    ]);
     
     const user: User = {
       id: logRow.user_id,
@@ -190,15 +201,6 @@ export class LogService {
     };
     
     const tags: Tag[] = tagRows.map(row => TagModel.fromRow(row));
-    
-    // Get images for the log
-    const imageRows = await this.db.query(`
-      SELECT i.*, lia.display_order
-      FROM images i
-      JOIN log_image_associations lia ON i.id = lia.image_id
-      WHERE lia.log_id = ?
-      ORDER BY lia.display_order ASC, i.created_at ASC
-    `, [id]);
     const images: LogImage[] = imageRows.map(row => ImageModel.fromRowWithDisplayOrder(row));
     
     return LogModel.fromRowWithVisibility(logRow, user, tags, images);
@@ -249,10 +251,7 @@ export class LogService {
     sql += ' ORDER BY l.created_at DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
     
-    const logRows = await this.db.query(sql, params);
-    const logs = await this.enrichLogsWithTags(logRows);
-    
-    // Get total count for pagination
+    // Build count query
     let countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l`;
     const countParams: any[] = [];
     
@@ -288,7 +287,13 @@ export class LogService {
       countSql += ` WHERE ${countConditions.join(' AND ')}`;
     }
     
-    const totalResult = await this.db.queryFirst<{ total: number }>(countSql, countParams);
+    // 並列実行: ログ取得とカウントクエリを同時に実行
+    const [logRows, totalResult] = await Promise.all([
+      this.db.query(sql, params),
+      this.db.queryFirst<{ total: number }>(countSql, countParams)
+    ]);
+    
+    const logs = await this.enrichLogsWithTags(logRows);
     const total = totalResult?.total || 0;
     
     return {
@@ -318,12 +323,15 @@ export class LogService {
       LIMIT ? OFFSET ?
     `;
     
-    const logRows = await this.db.query(sql, [limit, offset]);
-    const logs = await this.enrichLogsWithTags(logRows);
+    // 並列実行: ログ取得とカウントクエリを同時に実行
+    const [logRows, totalResult] = await Promise.all([
+      this.db.query(sql, [limit, offset]),
+      this.db.queryFirst<{ total: number }>(
+        'SELECT COUNT(*) as total FROM logs WHERE is_public = 1'
+      )
+    ]);
     
-    const totalResult = await this.db.queryFirst<{ total: number }>(
-      'SELECT COUNT(*) as total FROM logs WHERE is_public = 1'
-    );
+    const logs = await this.enrichLogsWithTags(logRows);
     const total = totalResult?.total || 0;
     
     return {
@@ -599,22 +607,24 @@ export class LogService {
     publicLogs: number;
     recentLogsCount: number;
   }> {
-    const totalResult = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM logs WHERE user_id = ?',
-      [userId]
-    );
-    
-    const publicResult = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND is_public = 1',
-      [userId]
-    );
-    
     const recentDate = new Date();
     recentDate.setDate(recentDate.getDate() - 7);
-    const recentResult = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND created_at >= ?',
-      [userId, recentDate.toISOString()]
-    );
+    
+    // 並列実行: 3つのカウントクエリを同時に実行
+    const [totalResult, publicResult, recentResult] = await Promise.all([
+      this.db.queryFirst<{ count: number }>(
+        'SELECT COUNT(*) as count FROM logs WHERE user_id = ?',
+        [userId]
+      ),
+      this.db.queryFirst<{ count: number }>(
+        'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND is_public = 1',
+        [userId]
+      ),
+      this.db.queryFirst<{ count: number }>(
+        'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND created_at >= ?',
+        [userId, recentDate.toISOString()]
+      )
+    ]);
     
     return {
       totalLogs: totalResult?.count || 0,
@@ -648,23 +658,25 @@ export class LogService {
     const logIds = logRows.map(row => row.id);
     const placeholders = logIds.map(() => '?').join(',');
     
-    // Get all tags for these logs in one query
-    const tagAssociations = await this.db.query(`
-      SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
-      FROM log_tag_associations lta
-      JOIN tags t ON lta.tag_id = t.id
-      WHERE lta.log_id IN (${placeholders})
-      ORDER BY t.name
-    `, logIds);
-    
-    // Get all images for these logs in one query
-    const imageRows = await this.db.query(`
-      SELECT i.*, lia.log_id, lia.display_order
-      FROM images i
-      JOIN log_image_associations lia ON i.id = lia.image_id
-      WHERE lia.log_id IN (${placeholders})
-      ORDER BY lia.log_id, lia.display_order ASC, i.created_at ASC
-    `, logIds);
+    // 並列実行: タグとイメージを同時に取得
+    const [tagAssociations, imageRows] = await Promise.all([
+      // Get all tags for these logs in one query
+      this.db.query(`
+        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+        FROM log_tag_associations lta
+        JOIN tags t ON lta.tag_id = t.id
+        WHERE lta.log_id IN (${placeholders})
+        ORDER BY t.name
+      `, logIds),
+      // Get all images for these logs in one query
+      this.db.query(`
+        SELECT i.*, lia.log_id, lia.display_order
+        FROM images i
+        JOIN log_image_associations lia ON i.id = lia.image_id
+        WHERE lia.log_id IN (${placeholders})
+        ORDER BY lia.log_id, lia.display_order ASC, i.created_at ASC
+      `, logIds)
+    ]);
     
     // Group tags by log_id
     const tagsByLogId = new Map<string, Tag[]>();

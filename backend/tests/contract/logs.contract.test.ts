@@ -57,16 +57,17 @@ describe('Contract: Logs routes', () => {
           content_md: expect.any(String),
           created_at: expect.any(String),
           updated_at: expect.any(String),
-          author: {
+          user: {
             id: expect.any(String),
             twitter_username: expect.any(String),
             display_name: expect.any(String),
             avatar_url: expect.any(String)
           },
-          tags: expect.any(Array)
+          associated_tags: expect.any(Array),
+          images: expect.any(Array)
         });
 
-        log.tags.forEach((tag: any) => {
+        log.associated_tags.forEach((tag: any) => {
           expect(tag).toMatchObject({
             id: expect.any(String),
             name: expect.any(String)
@@ -84,7 +85,7 @@ describe('Contract: Logs routes', () => {
       const payload = await response.json();
       expect(payload.items.length).toBeGreaterThan(0);
       payload.items.forEach((log: any) => {
-        const tagIds = (log.tags ?? []).map((tag: any) => tag.id);
+        const tagIds = (log.associated_tags ?? []).map((tag: any) => tag.id);
         expect(tagIds).toContain('tag_anime');
       });
     });
@@ -98,7 +99,7 @@ describe('Contract: Logs routes', () => {
       const payload = await response.json();
       expect(payload.items.length).toBeGreaterThan(0);
       payload.items.forEach((log: any) => {
-        expect(log.author.id).toBe(ownerId);
+        expect(log.user.id).toBe(ownerId);
         expect(log.is_public).toBe(true);
       });
     });
@@ -143,15 +144,15 @@ describe('Contract: Logs routes', () => {
         title: 'New adventure',
         content_md: '# Log\nTesting contract expectations',
         is_public: true,
-        author: {
+        user: {
           id: userId,
           twitter_username: 'writer'
         }
       });
       expect(typeof log.id).toBe('string');
       expect(typeof log.created_at).toBe('string');
-      expect(Array.isArray(log.tags)).toBe(true);
-      expect(log.tags.map((tag: any) => tag.id)).toEqual(expect.arrayContaining(['tag_anime', 'tag_manga']));
+      expect(Array.isArray(log.associated_tags)).toBe(true);
+      expect(log.associated_tags.map((tag: any) => tag.id)).toEqual(expect.arrayContaining(['tag_anime', 'tag_manga']));
     });
 
     it('defaults to public when is_public is not specified', async () => {
@@ -208,22 +209,22 @@ describe('Contract: Logs routes', () => {
         title: 'Adventure with tag names',
         content_md: '# Log\nTesting tag_names functionality',
         is_public: true,
-        author: {
+        user: {
           id: userId,
           twitter_username: 'writer_tags'
         }
       });
       expect(typeof log.id).toBe('string');
       expect(typeof log.created_at).toBe('string');
-      expect(Array.isArray(log.tags)).toBe(true);
-      expect(log.tags).toHaveLength(3);
+      expect(Array.isArray(log.associated_tags)).toBe(true);
+      expect(log.associated_tags).toHaveLength(3);
       
       // Check that we have the existing 'Anime' tag and the two new auto-created tags
-      const tagNames = log.tags.map((tag: any) => tag.name).sort();
+      const tagNames = log.associated_tags.map((tag: any) => tag.name).sort();
       expect(tagNames).toEqual(['Anime', 'Another New Tag', 'New Auto-Created Tag']);
       
       // Check that new tags have empty description and metadata
-      const newTags = log.tags.filter((tag: any) => tag.name !== 'Anime');
+      const newTags = log.associated_tags.filter((tag: any) => tag.name !== 'Anime');
       newTags.forEach((tag: any) => {
         expect(tag.description).toBe('');
         expect(tag.metadata).toEqual({});
@@ -295,11 +296,11 @@ describe('Contract: Logs routes', () => {
       expect(log).toMatchObject({
         id: publicLogId,
         is_public: true,
-        author: {
+        user: {
           id: expect.any(String)
         }
       });
-      expect(Array.isArray(log.tags)).toBe(true);
+      expect(Array.isArray(log.associated_tags)).toBe(true);
     });
 
     it('allows owners to see private logs', async () => {
@@ -316,7 +317,7 @@ describe('Contract: Logs routes', () => {
       expect(response.status).toBe(200);
       const log = await response.json();
       expect(log.is_public).toBe(false);
-      expect(log.author.id).toBe(ownerId);
+      expect(log.user.id).toBe(ownerId);
     });
 
     it('returns 403 for private log when not owner', async () => {
@@ -378,7 +379,7 @@ describe('Contract: Logs routes', () => {
         content_md: 'Updated content',
         is_public: false
       });
-      expect(log.tags.map((tag: any) => tag.id)).toEqual(['tag_manga']);
+      expect(log.associated_tags.map((tag: any) => tag.id)).toEqual(['tag_manga']);
     });
 
     it('returns 401 when unauthenticated', async () => {

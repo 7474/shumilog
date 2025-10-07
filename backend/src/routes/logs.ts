@@ -123,22 +123,24 @@ const toLogResponse = (log: Log) => ({
   privacy: log.is_public ? 'public' : 'private',
   created_at: log.created_at,
   updated_at: log.updated_at,
-  author: {
+  user: {
     id: log.user.id,
-    twitter_username: log.user.twitter_username,
+    twitter_username: log.user.twitter_username ?? '',
     display_name: log.user.display_name,
-    avatar_url: log.user.avatar_url,
+    avatar_url: log.user.avatar_url ?? null,
+    role: 'user',
     created_at: log.user.created_at
   },
-  tags: log.associated_tags.map((tag) => ({
+  associated_tags: log.associated_tags.map((tag) => ({
     id: tag.id,
     name: tag.name,
-    description: tag.description,
+    description: tag.description ?? null,
     metadata: tag.metadata,
     created_by: tag.created_by,
     created_at: tag.created_at,
     updated_at: tag.updated_at
-  }))
+  })),
+  images: log.images ?? []
 });
 
 const logs = new Hono<AppBindings>();

@@ -6,6 +6,7 @@ import { SessionService } from '../services/SessionService.js';
 import { UserService } from '../services/UserService.js';
 import { Log } from '../models/Log.js';
 import { getAuthUser, getOptionalAuthUser, optionalAuthMiddleware } from '../middleware/auth.js';
+import { invalidateCache } from '../middleware/cache.js';
 import type { AppBindings } from '../index.js';
 
 const MAX_LIMIT = 100;
@@ -276,6 +277,13 @@ logs.post('/', async (c) => {
       tag_names: tagNames
     }, user.id);
 
+    // 公開ログの場合、一覧のキャッシュを無効化
+    if (isPublic) {
+      const baseUrl = new URL(c.req.url).origin;
+      await invalidateCache('/logs', baseUrl);
+      await invalidateCache('/api/logs', baseUrl);
+    }
+
     return c.json(toLogResponse(newLog), 201);
   } catch (error) {
     console.error('Error creating log:', error);
@@ -422,6 +430,18 @@ logs.put('/:logId', async (c) => {
       tag_names: tagNames
     }, user.id);
 
+    // キャッシュを無効化して、更新後のコンテンツが確実に表示されるようにする
+    // ログ詳細のキャッシュを削除
+    const baseUrl = new URL(c.req.url).origin;
+    await invalidateCache(`/logs/${logId}`, baseUrl);
+    await invalidateCache(`/api/logs/${logId}`, baseUrl);
+    
+    // 公開ログの場合、一覧のキャッシュも削除
+    if (updatedLog.is_public) {
+      await invalidateCache('/logs', baseUrl);
+      await invalidateCache('/api/logs', baseUrl);
+    }
+
     return c.json(toLogResponse(updatedLog));
   } catch (error) {
     if (error instanceof HTTPException) {
@@ -452,6 +472,17 @@ logs.delete('/:logId', async (c) => {
 
     // Delete the log
     await logService.deleteLog(logId, user.id);
+    
+    // キャッシュを無効化
+    const baseUrl = new URL(c.req.url).origin;
+    await invalidateCache(`/logs/${logId}`, baseUrl);
+    await invalidateCache(`/api/logs/${logId}`, baseUrl);
+    
+    // 公開ログだった場合、一覧のキャッシュも削除
+    if (existingLog.is_public) {
+      await invalidateCache('/logs', baseUrl);
+      await invalidateCache('/api/logs', baseUrl);
+    }
     
     return c.body(null, 204);
   } catch (error) {

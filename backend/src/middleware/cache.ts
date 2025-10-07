@@ -139,3 +139,46 @@ export const cacheControl = () => {
     c.header('Vary', 'Origin');
   };
 };
+
+/**
+ * キャッシュを無効化するヘルパー関数
+ * 指定されたURLのキャッシュを削除する
+ * 
+ * @param url - 無効化するURL（完全なURLまたはパス）
+ * @param baseUrl - ベースURL（パスのみが指定された場合に使用）
+ */
+export async function invalidateCache(url: string, baseUrl?: string): Promise<void> {
+  // Cache API が利用可能かチェック
+  if (typeof caches === 'undefined') {
+    return;
+  }
+
+  try {
+    const cache = caches.default;
+    
+    // URLが相対パスの場合、完全なURLに変換
+    let fullUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (!baseUrl) {
+        // baseUrlが指定されていない場合はスキップ
+        console.warn('Cache invalidation skipped: baseUrl not provided for relative path', url);
+        return;
+      }
+      // ベースURLとパスを結合（重複するスラッシュを避ける）
+      const base = baseUrl.replace(/\/$/, '');
+      const path = url.startsWith('/') ? url : `/${url}`;
+      fullUrl = `${base}${path}`;
+    }
+    
+    // キャッシュから削除
+    const cacheKey = new Request(fullUrl);
+    const deleted = await cache.delete(cacheKey);
+    
+    if (deleted) {
+      console.log('Cache invalidated:', fullUrl);
+    }
+  } catch (error) {
+    // キャッシュ削除に失敗してもエラーにしない（ログのみ）
+    console.error('Failed to invalidate cache:', error);
+  }
+}

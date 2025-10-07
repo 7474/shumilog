@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import { Twitter, FileText, Tag, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -53,7 +54,7 @@ export function LoginPage() {
                 onClick={handleLogin}
                 className="btn-fresh w-full py-3 text-base font-medium"
               >
-                <span className="mr-2">🐦</span>
+                <Twitter className="mr-2" size={18} />
                 X (Twitter) でログイン
               </Button>
               
@@ -63,15 +64,15 @@ export function LoginPage() {
                 </p>
                 <div className="flex flex-col space-y-2 text-xs text-gray-500">
                   <span className="flex items-center justify-center space-x-2">
-                    <span>📝</span>
+                    <FileText size={14} />
                     <span>体験を記録</span>
                   </span>
                   <span className="flex items-center justify-center space-x-2">
-                    <span>🏷️</span>
+                    <Tag size={14} />
                     <span>タグで整理</span>
                   </span>
                   <span className="flex items-center justify-center space-x-2">
-                    <span>📱</span>
+                    <Smartphone size={14} />
                     <span>モバイル対応</span>
                   </span>
                 </div>

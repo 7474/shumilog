@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, PenLine, X, Trash2, FileText, Tag as TagIcon } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag, Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -137,7 +137,7 @@ export function TagDetailPage() {
   if (!tag) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 text-center">
-        <div className="text-4xl">🏷️</div>
+        <TagIcon size={64} className="text-gray-400" />
         <h2 className="text-xl font-bold text-gray-900">タグが見つかりません</h2>
         <Link to="/tags">
           <Button variant="outline">
@@ -178,7 +178,17 @@ export function TagDetailPage() {
                 size="sm"
                 className={showLogForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
               >
-                {showLogForm ? '✕ キャンセル' : '✨ このタグでログを作成'}
+                {showLogForm ? (
+                  <>
+                    <X size={16} className="mr-2" />
+                    キャンセル
+                  </>
+                ) : (
+                  <>
+                    <Plus size={16} className="mr-2" />
+                    このタグでログを作成
+                  </>
+                )}
               </Button>
               <Button
                 onClick={() => setShowEditForm(!showEditForm)}
@@ -186,7 +196,17 @@ export function TagDetailPage() {
                 variant="outline"
                 className={showEditForm ? "bg-gray-500 hover:bg-gray-600 text-white border-gray-500" : "text-sky-600 border-sky-200 hover:bg-sky-50"}
               >
-                {showEditForm ? '✕ キャンセル' : '✏️ 編集'}
+                {showEditForm ? (
+                  <>
+                    <X size={16} className="mr-2" />
+                    キャンセル
+                  </>
+                ) : (
+                  <>
+                    <PenLine size={16} className="mr-2" />
+                    編集
+                  </>
+                )}
               </Button>
               <Button
                 onClick={handleDelete}
@@ -194,7 +214,8 @@ export function TagDetailPage() {
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50"
               >
-                🗑️ 削除
+                <Trash2 size={16} className="mr-2" />
+                削除
               </Button>
             </>
           )}
@@ -206,7 +227,7 @@ export function TagDetailPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span>✨</span>
+              <Plus size={20} />
               <span>{tag.name} のログを作成</span>
             </CardTitle>
           </CardHeader>
@@ -225,7 +246,7 @@ export function TagDetailPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span>✏️</span>
+              <PenLine size={20} />
               <span>タグを編集</span>
             </CardTitle>
           </CardHeader>
@@ -251,7 +272,10 @@ export function TagDetailPage() {
           {/* 説明 */}
           {tag.description ? (
             <div className="border-t border-gray-100 pt-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">📝 説明</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <FileText size={16} />
+                説明
+              </h3>
               <MarkdownRenderer content={tag.description} tags={tag.associations} />
             </div>
           ) : (
@@ -332,7 +356,7 @@ export function TagDetailPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-              <span>📝</span>
+              <FileText size={20} />
               <span>新着のログ</span>
             </CardTitle>
           </CardHeader>

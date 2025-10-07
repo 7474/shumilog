@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Upload, PenLine, Plus, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -163,9 +164,22 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
             className="btn-fresh"
             disabled={uploadingImages}
           >
-            {uploadingImages 
-              ? '📤 画像をアップロード中...' 
-              : log ? '✏️ ログを更新' : '✨ ログを作成'}
+            {uploadingImages ? (
+              <>
+                <Upload size={16} className="mr-2" />
+                画像をアップロード中...
+              </>
+            ) : log ? (
+              <>
+                <PenLine size={16} className="mr-2" />
+                ログを更新
+              </>
+            ) : (
+              <>
+                <Plus size={16} className="mr-2" />
+                ログを作成
+              </>
+            )}
           </Button>
           {onCancel && (
             <Button 
@@ -174,7 +188,8 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
               variant="outline"
               className="border-gray-300 hover:bg-gray-50"
             >
-              ✕ キャンセル
+              <X size={16} className="mr-2" />
+              キャンセル
             </Button>
           )}
         </div>

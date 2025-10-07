@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, X, AlertTriangle, FileText, Globe, Lock } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -98,7 +98,7 @@ export function LogDetailPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 text-center">
-        <div className="text-4xl">⚠️</div>
+        <AlertTriangle size={48} className="text-red-500" />
         <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
         <p className="text-gray-600">{error}</p>
         <Link to="/logs">
@@ -111,7 +111,7 @@ export function LogDetailPage() {
   if (!log) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 text-center">
-        <div className="text-6xl">📝</div>
+        <FileText size={64} className="text-gray-400" />
         <h2 className="text-xl font-bold text-gray-900">ログが見つかりません</h2>
         <p className="text-gray-600">指定されたログは存在しないか、削除された可能性があります。</p>
         <Link to="/logs">
@@ -246,12 +246,22 @@ export function LogDetailPage() {
                   </time>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${
                     log.is_public 
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {log.is_public ? '🌐 公開' : '🔒 非公開'}
+                    {log.is_public ? (
+                      <>
+                        <Globe size={12} />
+                        公開
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={12} />
+                        非公開
+                      </>
+                    )}
                   </span>
                 </div>
               </div>

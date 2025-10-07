@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Search, Lock, PenLine, X, Tag as TagIcon, Plus } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag } from '@/api-types';
 import { TagForm } from '@/components/TagForm';
@@ -124,7 +125,7 @@ export function TagsPage() {
       {/* ページヘッダー */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">🏷️ タグ管理</h1>
+          <h1 className="text-3xl font-bold text-gray-900">タグ管理</h1>
           <p className="text-gray-600 mt-1">ログを整理するためのタグを管理しましょう</p>
         </div>
         <Button 
@@ -132,7 +133,22 @@ export function TagsPage() {
           className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
           disabled={!isAuthenticated}
         >
-          {!isAuthenticated ? '🔒 ログインして作成' : showForm ? '✕ キャンセル' : '✨ 新しいタグを作成'}
+          {!isAuthenticated ? (
+            <>
+              <Lock size={16} className="mr-2" />
+              ログインして作成
+            </>
+          ) : showForm ? (
+            <>
+              <X size={16} className="mr-2" />
+              キャンセル
+            </>
+          ) : (
+            <>
+              <Plus size={16} className="mr-2" />
+              新しいタグを作成
+            </>
+          )}
         </Button>
       </div>
 
@@ -140,7 +156,7 @@ export function TagsPage() {
       <Card className="card-fresh">
         <CardContent className="pt-6">
           <div className="flex items-center space-x-2">
-            <span className="text-2xl">🔍</span>
+            <Search size={20} className="text-gray-400" />
             <Input
               type="text"
               placeholder="タグを検索（名前または説明）..."
@@ -155,7 +171,8 @@ export function TagsPage() {
                 onClick={() => setSearchQuery('')}
                 className="text-gray-600"
               >
-                ✕ クリア
+                <X size={16} className="mr-1" />
+                クリア
               </Button>
             )}
           </div>
@@ -172,7 +189,7 @@ export function TagsPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span>{selectedTag ? '✏️' : '✨'}</span>
+              {selectedTag ? <PenLine size={20} /> : <Plus size={20} />}
               <span>{selectedTag ? 'タグを編集' : '新しいタグを作成'}</span>
             </CardTitle>
           </CardHeader>
@@ -191,7 +208,7 @@ export function TagsPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span>✨</span>
+              <Plus size={20} />
               <span>{logFormTag.name} のログを作成</span>
             </CardTitle>
           </CardHeader>
@@ -218,7 +235,7 @@ export function TagsPage() {
         ) : tags.length === 0 ? (
           <Card className="card-fresh text-center py-12">
             <CardContent className="space-y-4">
-              <div className="text-6xl">🏷️</div>
+              <TagIcon size={64} className="mx-auto text-gray-400" />
               <h3 className="text-xl font-semibold text-gray-900">
                 {searchQuery ? 'タグが見つかりません' : 'まだタグがありません'}
               </h3>
@@ -231,12 +248,14 @@ export function TagsPage() {
               {!searchQuery && (
                 isAuthenticated ? (
                   <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
-                    ✨ 最初のタグを作成
+                    <Plus size={16} className="mr-2" />
+                    最初のタグを作成
                   </Button>
                 ) : (
                   <Link to="/login">
                     <Button className="btn-fresh mt-4">
-                      🔒 ログインしてタグを作成
+                      <Lock size={16} className="mr-2" />
+                      ログインしてタグを作成
                     </Button>
                   </Link>
                 )
@@ -272,7 +291,8 @@ export function TagsPage() {
                       size="sm"
                       className="btn-fresh w-full"
                     >
-                      ✨ このタグでログを作成
+                      <Plus size={16} className="mr-2" />
+                      このタグでログを作成
                     </Button>
                   </CardFooter>
                 )}

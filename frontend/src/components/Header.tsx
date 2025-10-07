@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { FileText, BookOpen, Tag, LogOut, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/services/api';
@@ -46,21 +47,21 @@ export function Header() {
             <Link to="/logs">
               <Button variant="ghost" size="sm" className="text-gray-700 hover:text-fresh-600">
                 <span className="hidden sm:inline">Logs</span>
-                <span className="sm:hidden">📝</span>
+                <FileText className="sm:hidden" size={18} />
               </Button>
             </Link>
             {isAuthenticated && (
               <Link to="/my/logs">
                 <Button variant="ghost" size="sm" className="text-gray-700 hover:text-fresh-600">
                   <span className="hidden sm:inline">My Logs</span>
-                  <span className="sm:hidden">📚</span>
+                  <BookOpen className="sm:hidden" size={18} />
                 </Button>
               </Link>
             )}
             <Link to="/tags">
               <Button variant="ghost" size="sm" className="text-gray-700 hover:text-sky-600">
                 <span className="hidden sm:inline">Tags</span>
-                <span className="sm:hidden">🏷️</span>
+                <Tag className="sm:hidden" size={18} />
               </Button>
             </Link>
             {isAuthenticated ? (
@@ -71,13 +72,13 @@ export function Header() {
                 className="border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 <span className="hidden sm:inline">Logout</span>
-                <span className="sm:hidden">🚪</span>
+                <LogOut className="sm:hidden" size={18} />
               </Button>
             ) : (
               <Link to="/login">
                 <Button className="btn-fresh">
                   <span className="hidden sm:inline">Login</span>
-                  <span className="sm:hidden">🔑</span>
+                  <LogIn className="sm:hidden" size={18} />
                 </Button>
               </Link>
             )}

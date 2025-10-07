@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, PenLine, Plus, X } from 'lucide-react';
+import { PenLine, Plus, X, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -36,6 +36,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
   const [error, setError] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<LogFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -81,6 +82,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
   const onSubmit = async (values: LogFormValues) => {
     try {
       setError(null);
+      setIsSubmitting(true);
       const response = log
         ? await api.logs[':id'].$put({ param: { id: log.id }, json: values })
         : await api.logs.$post({ json: values });
@@ -103,6 +105,8 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -159,11 +163,11 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
           }))}
         />
         <div className="flex gap-3 pt-2">
-          <Button type="submit" className="btn-fresh" disabled={uploadingImages}>
-            {uploadingImages ? (
+          <Button type="submit" className="btn-fresh" disabled={isSubmitting || uploadingImages}>
+            {isSubmitting || uploadingImages ? (
               <>
-                <Upload size={16} className="mr-2" />
-                画像をアップロード中...
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                {uploadingImages ? '画像をアップロード中...' : log ? '更新中...' : '作成中...'}
               </>
             ) : log ? (
               <>
@@ -183,6 +187,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
               onClick={onCancel}
               variant="outline"
               className="border-gray-300 hover:bg-gray-50"
+              disabled={isSubmitting || uploadingImages}
             >
               <X size={16} className="mr-2" />
               キャンセル

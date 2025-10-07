@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, PenLine, X, Trash2, FileText, Tag as TagIcon } from 'lucide-react';
+import { ArrowLeft, Plus, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag, Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ export function TagDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -88,6 +89,7 @@ export function TagDetailPage() {
 
     if (window.confirm('このタグを削除してもよろしいですか？')) {
       try {
+        setIsDeleting(true);
         const decodedName = decodeURIComponent(name);
         const response = await api.tags[':id'].$delete({ param: { id: decodedName } });
         if (!response.ok) {
@@ -96,6 +98,8 @@ export function TagDetailPage() {
         navigate('/tags');
       } catch (err) {
         alert(err instanceof Error ? err.message : 'タグの削除に失敗しました');
+      } finally {
+        setIsDeleting(false);
       }
     }
   };
@@ -213,9 +217,19 @@ export function TagDetailPage() {
                 size="sm"
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50"
+                disabled={isDeleting}
               >
-                <Trash2 size={16} className="mr-2" />
-                削除
+                {isDeleting ? (
+                  <>
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                    削除中...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} className="mr-2" />
+                    削除
+                  </>
+                )}
               </Button>
             </>
           )}

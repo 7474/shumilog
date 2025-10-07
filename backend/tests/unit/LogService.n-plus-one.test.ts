@@ -63,7 +63,7 @@ describe('LogService - N+1 Query Optimization', () => {
 
     it('should handle mix of existing and new tags efficiently', async () => {
       // 事前に一部のタグを作成
-      const existingLog = await logService.createLog({
+      await logService.createLog({
         content_md: 'Setup log',
         is_public: true,
         tag_names: ['ExistingTag1', 'ExistingTag2']

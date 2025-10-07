@@ -167,25 +167,37 @@ export class TagService {
   }
 
   /**
-   * Search tags
+   * Search tags using FTS5 full-text search
    */
   async searchTags(options: TagSearchParams = {}): Promise<PaginatedResult<Tag>> {
     const { search, limit = 20, offset = 0 } = options;
 
-    const baseSelect = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags';
-    const baseCount = 'SELECT COUNT(*) as total FROM tags';
-    const clauses: string[] = [];
+    let selectSql: string;
+    let countSql: string;
     const params: any[] = [];
 
     if (search) {
-      clauses.push('(LOWER(name) LIKE ? OR LOWER(description) LIKE ?)');
-      const pattern = `%${search.toLowerCase()}%`;
-      params.push(pattern, pattern);
+      // Use FTS5 for search - wrap in quotes to treat as phrase
+      const searchQuery = `"${search.replace(/"/g, '""')}"`;
+      selectSql = `
+        SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at 
+        FROM tags t
+        JOIN tags_fts fts ON t.id = fts.tag_id
+        WHERE tags_fts MATCH ?
+        ORDER BY t.name ASC
+      `;
+      countSql = `
+        SELECT COUNT(*) as total 
+        FROM tags t
+        JOIN tags_fts fts ON t.id = fts.tag_id
+        WHERE tags_fts MATCH ?
+      `;
+      params.push(searchQuery);
+    } else {
+      // No search, return all tags
+      selectSql = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags ORDER BY name ASC';
+      countSql = 'SELECT COUNT(*) as total FROM tags';
     }
-
-    const whereClause = clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '';
-    const selectSql = `${baseSelect}${whereClause} ORDER BY name ASC`;
-    const countSql = `${baseCount}${whereClause}`;
 
     const result = await this.db.queryWithPagination(selectSql, countSql, params, limit, offset);
 
@@ -281,20 +293,21 @@ export class TagService {
   }
 
   /**
-   * Get tag suggestions based on input
+   * Get tag suggestions based on input using FTS5
    */
   async getTagSuggestions(query: string, limit = 5): Promise<Tag[]> {
-    const searchPattern = `%${query.toLowerCase()}%`;
+    const searchQuery = `"${query.replace(/"/g, '""')}"`;
     const rows = await this.db.query(
       `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
               COUNT(lta.tag_id) as usage_count
        FROM tags t
+       JOIN tags_fts fts ON t.id = fts.tag_id
        LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
-       WHERE LOWER(t.name) LIKE ? OR LOWER(t.description) LIKE ?
+       WHERE tags_fts MATCH ?
        GROUP BY t.id
        ORDER BY usage_count DESC, t.name ASC
        LIMIT ?`,
-      [searchPattern, searchPattern, limit]
+      [searchQuery, limit]
     );
     
     return rows.map(row => TagModel.fromRow(row));

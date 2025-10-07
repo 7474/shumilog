@@ -91,6 +91,58 @@ export const DATABASE_SCHEMAS = [
   CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_id ON log_tag_associations(tag_id);
   CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_log ON log_tag_associations(tag_id, log_id);`,
 
+  `-- FTS5 full-text search for logs
+  CREATE VIRTUAL TABLE IF NOT EXISTS logs_fts USING fts5(
+    log_id UNINDEXED,
+    title,
+    content_md,
+    tokenize='trigram'
+  );`,
+
+  `-- FTS triggers to keep logs_fts in sync
+  CREATE TRIGGER IF NOT EXISTS logs_fts_insert AFTER INSERT ON logs
+  BEGIN
+    INSERT INTO logs_fts(log_id, title, content_md)
+    VALUES (NEW.id, COALESCE(NEW.title, ''), NEW.content_md);
+  END;`,
+
+  `CREATE TRIGGER IF NOT EXISTS logs_fts_update AFTER UPDATE ON logs
+  BEGIN
+    UPDATE logs_fts SET title = COALESCE(NEW.title, ''), content_md = NEW.content_md
+    WHERE log_id = NEW.id;
+  END;`,
+
+  `CREATE TRIGGER IF NOT EXISTS logs_fts_delete AFTER DELETE ON logs
+  BEGIN
+    DELETE FROM logs_fts WHERE log_id = OLD.id;
+  END;`,
+
+  `-- FTS5 full-text search for tags
+  CREATE VIRTUAL TABLE IF NOT EXISTS tags_fts USING fts5(
+    tag_id UNINDEXED,
+    name,
+    description,
+    tokenize='trigram'
+  );`,
+
+  `-- Tags FTS triggers
+  CREATE TRIGGER IF NOT EXISTS tags_fts_insert AFTER INSERT ON tags
+  BEGIN
+    INSERT INTO tags_fts(tag_id, name, description)
+    VALUES (NEW.id, NEW.name, COALESCE(NEW.description, ''));
+  END;`,
+
+  `CREATE TRIGGER IF NOT EXISTS tags_fts_update AFTER UPDATE ON tags
+  BEGIN
+    UPDATE tags_fts SET name = NEW.name, description = COALESCE(NEW.description, '')
+    WHERE tag_id = NEW.id;
+  END;`,
+
+  `CREATE TRIGGER IF NOT EXISTS tags_fts_delete AFTER DELETE ON tags
+  BEGIN
+    DELETE FROM tags_fts WHERE tag_id = OLD.id;
+  END;`,
+
   `-- Images table (owned by users)
   CREATE TABLE IF NOT EXISTS images (
     id TEXT PRIMARY KEY,

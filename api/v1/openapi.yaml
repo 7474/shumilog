@@ -148,6 +148,12 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - items
+                  - total
+                  - limit
+                  - offset
+                  - has_more
                 properties:
                   items:
                     type: array
@@ -190,6 +196,11 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - items
+                  - total
+                  - limit
+                  - offset
                 properties:
                   items:
                     type: array
@@ -511,6 +522,9 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - items
+                  - total
                 properties:
                   items:
                     type: array
@@ -643,6 +657,9 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - items
+                  - total
                 properties:
                   items:
                     type: array
@@ -671,6 +688,8 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - twitter_post_id
                 properties:
                   twitter_post_id:
                     type: string
@@ -748,6 +767,8 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - items
                 properties:
                   items:
                     type: array
@@ -830,6 +851,13 @@ components:
   schemas:
     User:
       type: object
+      required:
+        - id
+        - twitter_username
+        - display_name
+        - avatar_url
+        - role
+        - created_at
       properties:
         id:
           type: string
@@ -839,6 +867,8 @@ components:
           type: string
         avatar_url:
           type: string
+          nullable: true
+          description: User's avatar URL. null when user has no avatar set.
         role:
           type: string
           enum: [user, admin]
@@ -850,6 +880,14 @@ components:
 
     Tag:
       type: object
+      required:
+        - id
+        - name
+        - description
+        - metadata
+        - created_by
+        - created_at
+        - updated_at
       properties:
         id:
           type: string
@@ -857,6 +895,8 @@ components:
           type: string
         description:
           type: string
+          nullable: true
+          description: Optional description for the tag. null when not provided by user.
         metadata:
           type: object
           description: Flexible metadata storage
@@ -916,6 +956,10 @@ components:
       allOf:
         - $ref: '#/components/schemas/Tag'
         - type: object
+          required:
+            - log_count
+            - recent_logs
+            - associated_tags
           properties:
             log_count:
               type: integer
@@ -931,6 +975,15 @@ components:
 
     Log:
       type: object
+      required:
+        - id
+        - user
+        - associated_tags
+        - title
+        - content_md
+        - images
+        - created_at
+        - updated_at
       properties:
         id:
           type: string
@@ -943,6 +996,8 @@ components:
           description: Tags associated with this log
         title:
           type: string
+          nullable: true
+          description: Optional title for the log. null when not provided by user.
         content_md:
           type: string
           description: Content in Markdown format
@@ -1016,6 +1071,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/Log'
         - type: object
+          required:
+            - is_public
           properties:
             is_public:
               type: boolean
@@ -1023,6 +1080,17 @@ components:
 
     LogImage:
       type: object
+      required:
+        - id
+        - log_id
+        - r2_key
+        - file_name
+        - content_type
+        - file_size
+        - width
+        - height
+        - display_order
+        - created_at
       properties:
         id:
           type: string
@@ -1045,10 +1113,12 @@ components:
           description: File size in bytes
         width:
           type: integer
-          description: Image width in pixels
+          nullable: true
+          description: Image width in pixels. null when dimension information is not available.
         height:
           type: integer
-          description: Image height in pixels
+          nullable: true
+          description: Image height in pixels. null when dimension information is not available.
         display_order:
           type: integer
           description: Display order (lower numbers appear first)

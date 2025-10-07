@@ -73,7 +73,8 @@ export const DATABASE_SCHEMAS = [
   );
 
   CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
-  CREATE INDEX IF NOT EXISTS idx_logs_is_public ON logs(is_public);`,
+  CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_logs_user_created ON logs(user_id, created_at DESC);`,
 
   `-- Log-tag associations (simplified)
   CREATE TABLE IF NOT EXISTS log_tag_associations (
@@ -87,7 +88,8 @@ export const DATABASE_SCHEMAS = [
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
   );
 
-  CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_id ON log_tag_associations(tag_id);`,
+  CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_id ON log_tag_associations(tag_id);
+  CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_log ON log_tag_associations(tag_id, log_id);`,
 
   `-- Images table (owned by users)
   CREATE TABLE IF NOT EXISTS images (

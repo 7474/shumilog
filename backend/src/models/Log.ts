@@ -80,7 +80,8 @@ export const LOG_TABLE_SCHEMA = `
   );
   
   CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
-  CREATE INDEX IF NOT EXISTS idx_logs_is_public ON logs(is_public);
+  CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_logs_user_created ON logs(user_id, created_at DESC);
 `;
 
 export class LogModel {

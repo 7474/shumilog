@@ -28,6 +28,7 @@ export const LOG_TAG_ASSOCIATION_TABLE_SCHEMA = `
   );
   
   CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_id ON log_tag_associations(tag_id);
+  CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_log ON log_tag_associations(tag_id, log_id);
 `;
 
 export class LogTagAssociationModel {

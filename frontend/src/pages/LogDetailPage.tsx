@@ -84,7 +84,7 @@ export function LogDetailPage() {
   };
 
   // Check if current user is the log owner
-  const isOwner = user && log && log.author.id === user.id;
+  const isOwner = user && log && log.user.id === user.id;
 
   if (loading) {
     return (
@@ -210,16 +210,16 @@ export function LogDetailPage() {
 
               {/* 作者情報 */}
               <div className="flex items-center space-x-3 pt-2 border-t border-gray-100">
-                {log.author.avatar_url && (
+                {log.user.avatar_url && (
                   <img
-                    src={log.author.avatar_url}
-                    alt={log.author.display_name}
+                    src={log.user.avatar_url}
+                    alt={log.user.display_name}
                     className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-fresh-200"
                   />
                 )}
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{log.author.display_name}</p>
-                  <p className="text-sm text-gray-500">@{log.author.twitter_username}</p>
+                  <p className="font-semibold text-gray-900">{log.user.display_name}</p>
+                  <p className="text-sm text-gray-500">@{log.user.twitter_username}</p>
                 </div>
               </div>
 

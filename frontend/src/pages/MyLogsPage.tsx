@@ -118,6 +118,25 @@ export function MyLogsPage() {
         </Button>
       </div>
 
+      {/* ログ作成フォーム */}
+      {showForm && (
+        <Card className="card-fresh">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span>{selectedLog ? '✏️' : '✨'}</span>
+              <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LogForm
+              log={selectedLog}
+              onSuccess={handleSuccess}
+              onCancel={handleCancel}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* 統計情報 */}
       <Card className="card-fresh bg-gradient-to-br from-fresh-50 to-sky-50">
         <CardContent className="pt-6">
@@ -173,25 +192,6 @@ export function MyLogsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* ログ作成フォーム */}
-      {showForm && (
-        <Card className="card-fresh">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <span>{selectedLog ? '✏️' : '✨'}</span>
-              <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LogForm
-              log={selectedLog}
-              onSuccess={handleSuccess}
-              onCancel={handleCancel}
-            />
-          </CardContent>
-        </Card>
-      )}
 
       {/* ログリスト */}
       <div className="space-y-4">

@@ -47,9 +47,9 @@ export function LogCard({ log }: LogCardProps) {
         </div>
         
         {/* タグ */}
-        {log.tags && log.tags.length > 0 && (
+        {log.associated_tags && log.associated_tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {log.tags.slice(0, 3).map((logTag) => (
+            {log.associated_tags.slice(0, 3).map((logTag) => (
               <span
                 key={logTag.id}
                 className="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-50 text-gray-600 rounded text-xs"
@@ -58,9 +58,9 @@ export function LogCard({ log }: LogCardProps) {
                 <span>{logTag.name}</span>
               </span>
             ))}
-            {log.tags.length > 3 && (
+            {log.associated_tags.length > 3 && (
               <span className="text-xs text-gray-500">
-                +{log.tags.length - 3}
+                +{log.associated_tags.length - 3}
               </span>
             )}
           </div>

@@ -138,7 +138,7 @@ export function LogDetailPage() {
             <ShareToXButton
               text={log.title}
               url={window.location.href}
-              hashtags={log.tags?.map(tag => tag.name) || []}
+              hashtags={log.associated_tags?.map(tag => tag.name) || []}
               size="sm"
               variant="outline"
               className="text-sky-600 border-sky-200 hover:bg-sky-50"
@@ -281,9 +281,9 @@ export function LogDetailPage() {
               )}
 
               {/* タグ */}
-              {log.tags && log.tags.length > 0 && (
+              {log.associated_tags && log.associated_tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-4 mt-6">
-                  {log.tags.map((tag) => (
+                  {log.associated_tags.map((tag) => (
                     <Link
                       key={tag.id}
                       to={`/tags/${encodeURIComponent(tag.name)}`}

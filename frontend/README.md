@@ -78,29 +78,39 @@ npm run test
 # スモークテスト
 npm run test:smoke
 
-# コントラクトテスト（OpenAPI仕様検証）
-npm run test:contract
+# OpenAPI型定義生成
+npm run generate:types
 ```
 
-## OpenAPI仕様検証
+## OpenAPI型定義の自動生成
 
-フロントエンドAPIクライアントには**OpenAPI仕様の自動検証機能**が組み込まれており、APIレスポンスが定義された仕様と一致することを保証します。
+フロントエンドの型定義は**OpenAPI仕様から自動生成**されます。これにより、API仕様との整合性を保証し、TypeScriptの型チェックによってコンパイル時にAPI仕様との乖離を検出できます。
 
-### コントラクトテスト
+### 型定義の生成
 
-コントラクトテストは以下を自動的に検証します：
-- ✅ レスポンスステータスコードが仕様と一致
-- ✅ レスポンスボディの構造が定義されたスキーマと一致
-- ✅ 必須フィールドが存在
-- ✅ フィールドの型が正しい
-- ✅ 列挙値が有効
+OpenAPI仕様が更新されたら、以下のコマンドで型を再生成します：
+
+```bash
+npm run generate:types
+```
 
 ### 使用方法
 
-```bash
-# コントラクトテストを実行
-npm run test:contract
+自動生成された型定義をインポートして使用します：
+
+```typescript
+import { Log, Tag, User } from '@/api-types';
+
+const response = await api.logs.$get();
+const data: { items: Log[]; total: number } = await response.json();
 ```
+
+### メリット
+
+- ✅ **自動化**: OpenAPI仕様の更新だけで型定義も自動更新
+- ✅ **型安全性**: TypeScriptコンパイラによるコンパイル時の型チェック
+- ✅ **メンテナンスフリー**: 手動での型定義保守が不要
+- ✅ **IDEサポート**: 自動補完とインラインドキュメント
 
 詳細は [フロントエンドAPI検証ガイド](../docs/frontend-api-validation.md) を参照してください。
 

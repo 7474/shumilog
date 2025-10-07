@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Log } from '@/models';
+import { Log } from '@/api-types';
 import { ImageUpload } from './ImageUpload';
 
 const formSchema = z.object({

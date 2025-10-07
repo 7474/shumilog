@@ -2,159 +2,141 @@
 
 ## 概要
 
-フロントエンドのAPIクライアントが受信するレスポンスがOpenAPI仕様に準拠していることを自動検証するシステムを実装しました。これにより、バックエンドAPIから予期しない形式のデータが返される問題を早期に発見できます。
+フロントエンドのAPIクライアントが使用する型定義をOpenAPI仕様から自動生成することで、API仕様との整合性を保証します。
 
 ## 実装内容
 
-### 1. 技術構成
+### 1. OpenAPI型生成の導入
 
-```
-/api/v1/openapi.yaml                           # 正規のAPI仕様書（信頼できる唯一の情報源）
-/frontend/tests/helpers/openapi-setup.ts       # OpenAPI検証セットアップ
-/frontend/tests/helpers/openapi-matchers.d.ts  # TypeScript型定義
-/frontend/tests/contract/*.test.ts             # 自動検証を含むコントラクトテスト
-```
+- **openapi-typescript**: OpenAPI仕様からTypeScript型定義を自動生成するツール
 
-### 2. 使用ライブラリ
+### 2. 自動生成される型定義
 
-- **jest-openapi**: OpenAPI 3.0仕様に対してレスポンスを自動検証するライブラリ
-- **MSW (Mock Service Worker)**: APIレスポンスをモックするライブラリ
-- **Vitest**: テストフレームワーク
+OpenAPI仕様 (`/api/v1/openapi.yaml`) から以下のファイルが自動生成されます：
 
-### 3. 検証内容
+- `frontend/src/types/api.ts`: 完全なAPI型定義（自動生成、直接編集禁止）
+- `frontend/src/api-types.ts`: よく使う型の再エクスポート
 
-コントラクトテストで以下を自動検証：
-- ✅ レスポンスステータスコード
-- ✅ レスポンスボディの構造
-- ✅ 必須フィールドの存在
-- ✅ データ型の正確性
-- ✅ 列挙値の有効性
-- ✅ ネストされたオブジェクトの構造
+### 3. 使用方法
 
-## 使用方法
+#### 型定義の生成
 
-### コントラクトテストの実行
+OpenAPI仕様が更新されたら、以下のコマンドで型を再生成します：
 
 ```bash
 cd frontend
-npm run test:contract
+npm run generate:types
 ```
 
-### 新しいエンドポイントの検証追加
-
-新しいAPIエンドポイントのコントラクトテストを追加する場合：
+#### コード内での使用
 
 ```typescript
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { toOpenApiResponse } from '../helpers/openapi-setup';
+import { Log, Tag, User } from '@/api-types';
 
-const baseUrl = 'http://localhost:8787';
-
-// MSWハンドラーでOpenAPI準拠のモックレスポンスを定義
-const handlers = [
-  http.get(`${baseUrl}/api/your-endpoint`, () => {
-    return HttpResponse.json({
-      // OpenAPI仕様に準拠したレスポンス
-      field1: 'value1',
-      field2: 123,
-    });
-  }),
-];
-
-const server = setupServer(...handlers);
-
-describe('Contract: Your Endpoint', () => {
-  beforeAll(() => {
-    server.listen({ onUnhandledRequest: 'error' });
-    import('../helpers/openapi-setup');
-  });
-
-  afterEach(() => {
-    server.resetHandlers();
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
-  it('validates response against OpenAPI spec', async () => {
-    const response = await fetch(`${baseUrl}/api/your-endpoint`);
-    
-    expect(response.ok).toBe(true);
-    
-    // OpenAPI仕様に対して自動検証
-    const openApiResponse = await toOpenApiResponse(response, '/your-endpoint', 'GET');
-    expect(openApiResponse).toSatisfyApiSpec();
-  });
-});
+// 型安全なAPIクライアント使用
+const response = await api.logs.$get();
+const data: { items: Log[]; total: number } = await response.json();
 ```
 
 ## メリット
 
-1. **自動化**: OpenAPI仕様との整合性を自動チェック
-2. **メンテナンスフリー**: OpenAPI仕様を更新するだけで検証も更新
-3. **早期発見**: フロントエンドが期待する形式とバックエンドの実装の乖離を即座に検出
-4. **バックエンド不要**: MSWを使用するため、テスト実行にバックエンドサーバー不要
-5. **CI統合**: 既存テストフレームワーク（Vitest）に統合済み
-6. **バグ予防**: Issue #249のようなAPI仕様不一致によるバグを予防
+### 1. 自動化とメンテナンスフリー
+OpenAPI仕様を更新して型を再生成するだけで、フロントエンドの型定義も自動的に更新されます。手動でのメンテナンスは不要です。
 
-## 実装例
+### 2. コンパイル時の型安全性
+TypeScriptのコンパイラがAPI仕様に基づいた型チェックを行うため、仕様と実装の乖離をコンパイル時に検出できます。
 
-現在、以下のエンドポイントのコントラクトテストを実装済み：
+### 3. IDEサポート
+生成された型定義により、エディタの自動補完やインラインドキュメントが利用できます。
 
-### ログエンドポイント
-- `GET /api/logs` - ログ一覧取得
-- `GET /api/logs/:logId` - ログ詳細取得
-- `GET /api/logs/:logId/related` - 関連ログ取得
-
-### タグエンドポイント
-- `GET /api/tags` - タグ一覧取得
-- `GET /api/tags/:id` - タグ詳細取得
-
-### その他
-- `GET /api/health` - ヘルスチェック
-
-## テスト結果
-
-```bash
-$ npm run test:contract
-
-Test Files  3 passed (3)
-     Tests  6 passed (6)
-```
-
-すべてのコントラクトテストが成功しており、モックレスポンスがOpenAPI仕様に準拠していることを確認済みです。
+### 4. シンプルな構成
+複雑なテストコードやモックの保守が不要で、型定義ファイルの自動生成のみで完結します。
 
 ## ワークフロー
 
-### フロントエンド開発時
+### API変更時の手順
 
-1. **API仕様確認**: `/api/v1/openapi.yaml` で正規のAPI仕様を確認
-2. **コントラクトテスト作成**: 新しいエンドポイント用のテストを追加
-3. **実装**: フロントエンドコードを実装
-4. **検証**: `npm run test:contract` で仕様との一致を確認
+1. **OpenAPI仕様を更新**: `/api/v1/openapi.yaml` を編集
+2. **バックエンド実装**: API実装を更新
+3. **型を再生成**: `npm run generate:types` を実行
+4. **フロントエンド更新**: TypeScriptコンパイラが型エラーを報告するため、それに従って修正
+5. **ビルド確認**: `npm run build` で最終確認
 
-### API変更時
+### 日常的な開発
 
-1. **仕様更新**: `/api/v1/openapi.yaml` を更新
-2. **テスト実行**: `npm run test:contract` を実行
-3. **エラー確認**: 仕様変更によりテストが失敗した場合、フロントエンドコードを修正
-4. **再検証**: テストが成功することを確認
+フロントエンド開発者は自動生成された型定義をインポートして使用するだけです：
 
-## 注意事項
+```typescript
+import { LogCreate, TagDetail } from '@/api-types';
 
-- コントラクトテストはMSWを使用してモックレスポンスを検証します
-- 実際のバックエンドサーバーとの通信をテストする場合は、別途E2Eテストを実装してください
-- OpenAPI仕様が最新であることを常に確認してください
+const newLog: LogCreate = {
+  title: 'タイトル',
+  content_md: '# 内容',
+  is_public: true,
+};
+```
+
+## 技術詳細
+
+### 生成される型の構造
+
+`openapi-typescript` は以下の形式で型を生成します：
+
+```typescript
+// パス定義
+export interface paths {
+  "/logs": {
+    get: {
+      responses: {
+        200: {
+          content: {
+            "application/json": {
+              items: Log[];
+              total: number;
+            };
+          };
+        };
+      };
+    };
+  };
+}
+
+// コンポーネントスキーマ
+export interface components {
+  schemas: {
+    Log: { ... };
+    Tag: { ... };
+    User: { ... };
+  };
+}
+```
+
+### 型の再エクスポート
+
+よく使う型は `api-types.ts` で再エクスポートしており、簡潔にインポートできます：
+
+```typescript
+// api-types.ts
+export type Log = components['schemas']['Log'];
+export type Tag = components['schemas']['Tag'];
+// ...
+```
+
+## 既存の実装からの移行
+
+以前のMSWベースのコントラクトテストは削除され、OpenAPI型生成に置き換えられました。これにより：
+
+- ✅ テストコードのメンテナンス不要
+- ✅ モックレスポンスの保守不要
+- ✅ コンパイル時の型チェックで十分な安全性
+- ✅ シンプルで理解しやすい構成
 
 ## 関連ドキュメント
 
-- [バックエンドのOpenAPI検証](../backend/README.md#openapi-specification-validation)
 - [OpenAPI仕様書](/api/v1/openapi.yaml)
-- [OpenAPI検証ガイド](/docs/openapi-validation-guide.md)
+- [openapi-typescript ドキュメント](https://github.com/drwpow/openapi-typescript)
 
 ## まとめ
 
-フロントエンドAPIクライアントが受信するレスポンスを自動的にOpenAPI仕様に対して検証することで、バックエンドとフロントエンドの実装の乖離を早期に発見し、Issue #249のようなバグを予防できるようになりました。
+OpenAPI仕様から型定義を自動生成することで、メンテナンスコストを最小限に抑えながら、TypeScriptの型システムを活用してAPI仕様との整合性を保証できます。
+

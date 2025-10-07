@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/services/api';
-import { User } from '@/models';
+import { User } from '@/api-types';
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Log } from '@/models';
+import { Log } from '@/api-types';
 
 interface LogCardProps {
   log: Log;

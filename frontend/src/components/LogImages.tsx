@@ -30,11 +30,6 @@ export function LogImages({ logId, images }: LogImagesProps) {
               loading="lazy"
             />
           </a>
-          {image.width && image.height && (
-            <p className="text-xs text-gray-500 mt-2">
-              {image.width} × {image.height}px
-            </p>
-          )}
         </div>
       ))}
     </div>

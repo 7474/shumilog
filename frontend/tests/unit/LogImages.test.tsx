@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { LogImages } from '@/components/LogImages';
 import type { LogImage } from '@/models';
 
@@ -40,12 +40,6 @@ describe('LogImages', () => {
     const { container } = render(<LogImages logId="log_1" images={mockImages} />);
     const images = container.querySelectorAll('img');
     expect(images).toHaveLength(2);
-  });
-
-  it('画像の寸法を表示する', () => {
-    render(<LogImages logId="log_1" images={mockImages} />);
-    expect(screen.getByText('800 × 600px')).toBeInTheDocument();
-    expect(screen.getByText('1024 × 768px')).toBeInTheDocument();
   });
 
   it('環境変数からAPI base URLを使用する', () => {

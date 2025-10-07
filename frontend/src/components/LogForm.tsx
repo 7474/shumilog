@@ -52,13 +52,16 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
 
     setUploadingImages(true);
     try {
+      // Use configured API base URL to ensure requests go to the correct backend
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+      
       for (let i = 0; i < selectedImages.length; i++) {
         const file = selectedImages[i];
         const formData = new FormData();
         formData.append('file', file);
         formData.append('display_order', i.toString());
 
-        const response = await fetch(`/api/logs/${logId}/images`, {
+        const response = await fetch(`${baseUrl}/logs/${logId}/images`, {
           method: 'POST',
           body: formData,
           credentials: 'include',

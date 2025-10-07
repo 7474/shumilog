@@ -142,8 +142,9 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
     }
     return optionalAuth(c, next);
   });
-  app.route('/logs', logRoutes);
+  // Register image routes first (more specific paths should be registered before general ones)
   app.route('/logs', imageRoutes);
+  app.route('/logs', logRoutes);
 
   // Support routes require authentication for all methods
   app.use('/support/*', requireAuth);

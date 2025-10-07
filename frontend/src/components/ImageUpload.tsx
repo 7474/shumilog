@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface ImageUploadProps {
@@ -65,10 +65,10 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          画像を追加
+        <label className="block text-sm text-gray-600 mb-2">
+          画像を追加（任意）
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -81,14 +81,15 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
           />
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-3.5 h-3.5" />
             画像を選択
           </Button>
-          <span className="text-sm text-gray-500">
+          <span className="text-xs text-gray-400">
             JPEG, PNG, GIF, WebP (最大10MB)
           </span>
         </div>
@@ -97,7 +98,7 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
       {/* Existing images */}
       {existingImages && existingImages.length > 0 && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm text-gray-600 mb-2">
             現在の画像
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -128,7 +129,7 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
       {/* Preview new images */}
       {previewUrls.length > 0 && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm text-gray-600 mb-2">
             新しい画像 ({selectedFiles.length})
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -153,15 +154,6 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {selectedFiles.length === 0 && (!existingImages || existingImages.length === 0) && (
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-          <ImageIcon className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500">
-            画像をアップロードするには「画像を選択」をクリックしてください
-          </p>
         </div>
       )}
     </div>

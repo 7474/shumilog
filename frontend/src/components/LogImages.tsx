@@ -10,6 +10,9 @@ export function LogImages({ logId, images }: LogImagesProps) {
     return null;
   }
 
+  // Use configured API base URL to ensure requests go to the correct backend
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">添付画像</h3>
@@ -17,13 +20,13 @@ export function LogImages({ logId, images }: LogImagesProps) {
         {images.map((image) => (
           <div key={image.id} className="group relative">
             <a
-              href={`/api/logs/${logId}/images/${image.id}`}
+              href={`${baseUrl}/logs/${logId}/images/${image.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block overflow-hidden rounded-lg border border-gray-200 hover:border-fresh-500 transition-colors"
             >
               <img
-                src={`/api/logs/${logId}/images/${image.id}`}
+                src={`${baseUrl}/logs/${logId}/images/${image.id}`}
                 alt={image.file_name}
                 className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200"
                 loading="lazy"

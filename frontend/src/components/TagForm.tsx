@@ -45,6 +45,7 @@ interface TagFormProps {
 export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingSupport, setIsLoadingSupport] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   const form = useForm<TagFormValues>({
@@ -58,6 +59,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
   const onSubmit = async (values: TagFormValues) => {
     try {
       setError(null);
+      setIsSubmitting(true);
       const response = tag
         ? await api.tags[':id'].$put({ param: { id: tag.id }, json: values })
         : await api.tags.$post({ json: values });
@@ -70,6 +72,8 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -217,8 +221,13 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           )}
         />
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <Button type="submit" className="btn-fresh flex-1 sm:flex-none px-6 py-2.5">
-            {tag ? (
+          <Button type="submit" className="btn-fresh flex-1 sm:flex-none px-6 py-2.5" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                {tag ? '更新中...' : '作成中...'}
+              </>
+            ) : tag ? (
               <>
                 <PenLine size={16} className="mr-2" />
                 タグを更新
@@ -236,6 +245,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
               onClick={onCancel}
               variant="outline"
               className="flex-1 sm:flex-none px-6 py-2.5 border-gray-300 hover:bg-gray-50"
+              disabled={isSubmitting}
             >
               <X size={16} className="mr-2" />
               キャンセル

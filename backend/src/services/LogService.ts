@@ -383,41 +383,42 @@ export class LogService {
   async associateTagsByNamesWithLog(logId: string, tagNames: string[], userId: string): Promise<void> {
     if (tagNames.length === 0) return;
     
-    const tagIds: string[] = [];
+    // Batch query: Get all existing tags in one query
+    const placeholders = tagNames.map(() => '?').join(',');
+    const existingTags = await this.db.query<{ id: string; name: string }>(
+      `SELECT id, name FROM tags WHERE name IN (${placeholders})`,
+      tagNames
+    );
     
-    for (const tagName of tagNames) {
-      // Try to find existing tag by name
-      const existingTag = await this.db.queryFirst(
-        'SELECT id FROM tags WHERE name = ?',
-        [tagName]
-      );
-      
-      if (existingTag) {
-        // Tag exists, use its ID
-        tagIds.push(existingTag.id);
-      } else {
-        // Tag doesn't exist, create it
-        const now = new Date().toISOString();
-        const tagId = `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        const createTagStmt = this.db.prepare(`
-          INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-        
-        await createTagStmt.run([
-          tagId,
-          tagName,
-          '', // empty description as specified
-          '{}', // empty metadata as specified
-          userId,
-          now,
-          now
-        ]);
-        
-        tagIds.push(tagId);
-      }
+    // Create a map of existing tag names to IDs
+    const existingTagMap = new Map<string, string>();
+    for (const tag of existingTags) {
+      existingTagMap.set(tag.name, tag.id);
     }
+    
+    // Find tags that need to be created
+    const tagsToCreate = tagNames.filter(name => !existingTagMap.has(name));
+    
+    // Batch create: Create all missing tags in one transaction
+    if (tagsToCreate.length > 0) {
+      const now = new Date().toISOString();
+      
+      // Use batch insert for better performance
+      const insertStatements = tagsToCreate.map(tagName => {
+        const tagId = `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        existingTagMap.set(tagName, tagId);
+        return {
+          sql: `INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          params: [tagId, tagName, '', '{}', userId, now, now]
+        };
+      });
+      
+      await this.db.batch(insertStatements);
+    }
+    
+    // Collect all tag IDs in the order of tagNames
+    const tagIds = tagNames.map(name => existingTagMap.get(name)!);
     
     // Now associate all tag IDs with the log
     await this.associateTagsWithLog(logId, tagIds);
@@ -430,13 +431,14 @@ export class LogService {
     if (tagIds.length === 0) return;
     
     const now = new Date().toISOString();
-    const stmt = this.db.prepare(
-      'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id, association_order, created_at) VALUES (?, ?, ?, ?)'
-    );
     
-    for (let i = 0; i < tagIds.length; i++) {
-      await stmt.run([logId, tagIds[i], i, now]);
-    }
+    // Batch insert: Use batch API for better performance
+    const insertStatements = tagIds.map((tagId, index) => ({
+      sql: 'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id, association_order, created_at) VALUES (?, ?, ?, ?)',
+      params: [logId, tagId, index, now]
+    }));
+    
+    await this.db.batch(insertStatements);
   }
 
   /**

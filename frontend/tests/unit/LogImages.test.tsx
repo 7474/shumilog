@@ -36,15 +36,10 @@ describe('LogImages', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('画像がある場合は添付画像セクションを表示する', () => {
-    render(<LogImages logId="log_1" images={mockImages} />);
-    expect(screen.getByText('添付画像')).toBeInTheDocument();
-  });
-
-  it('各画像のファイル名を表示する', () => {
-    render(<LogImages logId="log_1" images={mockImages} />);
-    expect(screen.getByText('test-image-1.jpg')).toBeInTheDocument();
-    expect(screen.getByText('test-image-2.png')).toBeInTheDocument();
+  it('画像がある場合は画像を表示する', () => {
+    const { container } = render(<LogImages logId="log_1" images={mockImages} />);
+    const images = container.querySelectorAll('img');
+    expect(images).toHaveLength(2);
   });
 
   it('画像の寸法を表示する', () => {

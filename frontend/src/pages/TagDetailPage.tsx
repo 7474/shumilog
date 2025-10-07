@@ -122,7 +122,7 @@ export function TagDetailPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 text-center">
-        <div className="text-4xl">❌</div>
+        <X size={48} className="text-red-500" />
         <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
         <p className="text-gray-600">{error}</p>
         <Link to="/tags">

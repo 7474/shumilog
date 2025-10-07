@@ -207,84 +207,122 @@ export class LogService {
   }
 
   /**
-   * Search logs with full-text search
+   * Search logs with full-text search using FTS5
    */
   async searchLogs(options: LogSearchParams): Promise<LogSearchResult> {
     const { tag_ids, user_id, is_public, search, limit = 20, offset = 0 } = options;
     
-    let sql = `
-      SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
-      FROM logs l
-      JOIN users u ON l.user_id = u.id
-    `;
-    
-    const conditions: string[] = [];
+    let sql: string;
+    let countSql: string;
     const params: any[] = [];
-    
-    if (tag_ids && tag_ids.length > 0) {
-      const placeholders = tag_ids.map(() => '?').join(',');
-      sql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
-      conditions.push(`lta.tag_id IN (${placeholders})`);
-      params.push(...tag_ids);
-    }
-    
-    if (user_id) {
-      conditions.push('l.user_id = ?');
-      params.push(user_id);
-    }
-    
-    if (is_public !== undefined) {
-      conditions.push('l.is_public = ?');
-      params.push(is_public ? 1 : 0);
-    }
-
-    if (search) {
-      const searchPattern = `%${search}%`;
-      conditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
-      params.push(searchPattern, searchPattern);
-    }
-
-    if (conditions.length > 0) {
-      sql += ` WHERE ${conditions.join(' AND ')}`;
-    }
-    
-    sql += ' ORDER BY l.created_at DESC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
-    
-    // Build count query
-    let countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l`;
     const countParams: any[] = [];
     
-    if (tag_ids && tag_ids.length > 0) {
-      const _placeholders = tag_ids.map(() => '?').join(',');
-      countSql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
-      countParams.push(...tag_ids);
-    }
-    
-    const countConditions: string[] = [];
-    if (tag_ids && tag_ids.length > 0) {
-      const placeholders = tag_ids.map(() => '?').join(',');
-      countConditions.push(`lta.tag_id IN (${placeholders})`);
-    }
-
-    if (user_id) {
-      countConditions.push('l.user_id = ?');
-      countParams.push(user_id);
-    }
-
-    if (is_public !== undefined) {
-      countConditions.push('l.is_public = ?');
-      countParams.push(is_public ? 1 : 0);
-    }
-
+    // Use FTS5 if search query is provided, otherwise use regular query
     if (search) {
-      const searchPattern = `%${search}%`;
-      countConditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
-      countParams.push(searchPattern, searchPattern);
-    }
-    
-    if (countConditions.length > 0) {
-      countSql += ` WHERE ${countConditions.join(' AND ')}`;
+      // FTS5-based search query
+      sql = `
+        SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
+        FROM logs l
+        JOIN users u ON l.user_id = u.id
+        JOIN logs_fts fts ON l.id = fts.log_id
+      `;
+      
+      countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l JOIN logs_fts fts ON l.id = fts.log_id`;
+      
+      const conditions: string[] = [];
+      const countConditions: string[] = [];
+      
+      // FTS5 MATCH condition - wrap in quotes to treat as phrase and escape internal quotes
+      const searchQuery = `"${search.replace(/"/g, '""')}"`;
+      conditions.push('logs_fts MATCH ?');
+      params.push(searchQuery);
+      countConditions.push('logs_fts MATCH ?');
+      countParams.push(searchQuery);
+      
+      // Add tag filter if provided
+      if (tag_ids && tag_ids.length > 0) {
+        const placeholders = tag_ids.map(() => '?').join(',');
+        sql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
+        conditions.push(`lta.tag_id IN (${placeholders})`);
+        params.push(...tag_ids);
+        
+        countSql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
+        countConditions.push(`lta.tag_id IN (${placeholders})`);
+        countParams.push(...tag_ids);
+      }
+      
+      if (user_id) {
+        conditions.push('l.user_id = ?');
+        params.push(user_id);
+        countConditions.push('l.user_id = ?');
+        countParams.push(user_id);
+      }
+      
+      if (is_public !== undefined) {
+        conditions.push('l.is_public = ?');
+        params.push(is_public ? 1 : 0);
+        countConditions.push('l.is_public = ?');
+        countParams.push(is_public ? 1 : 0);
+      }
+      
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(' AND ')}`;
+      }
+      
+      if (countConditions.length > 0) {
+        countSql += ` WHERE ${countConditions.join(' AND ')}`;
+      }
+      
+      sql += ' ORDER BY l.created_at DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+    } else {
+      // Regular query without search
+      sql = `
+        SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
+        FROM logs l
+        JOIN users u ON l.user_id = u.id
+      `;
+      
+      countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l`;
+      
+      const conditions: string[] = [];
+      const countConditions: string[] = [];
+      
+      if (tag_ids && tag_ids.length > 0) {
+        const placeholders = tag_ids.map(() => '?').join(',');
+        sql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
+        conditions.push(`lta.tag_id IN (${placeholders})`);
+        params.push(...tag_ids);
+        
+        countSql += ` JOIN log_tag_associations lta ON l.id = lta.log_id`;
+        countConditions.push(`lta.tag_id IN (${placeholders})`);
+        countParams.push(...tag_ids);
+      }
+      
+      if (user_id) {
+        conditions.push('l.user_id = ?');
+        params.push(user_id);
+        countConditions.push('l.user_id = ?');
+        countParams.push(user_id);
+      }
+      
+      if (is_public !== undefined) {
+        conditions.push('l.is_public = ?');
+        params.push(is_public ? 1 : 0);
+        countConditions.push('l.is_public = ?');
+        countParams.push(is_public ? 1 : 0);
+      }
+      
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(' AND ')}`;
+      }
+      
+      if (countConditions.length > 0) {
+        countSql += ` WHERE ${countConditions.join(' AND ')}`;
+      }
+      
+      sql += ' ORDER BY l.created_at DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
     }
     
     // 並列実行: ログ取得とカウントクエリを同時に実行

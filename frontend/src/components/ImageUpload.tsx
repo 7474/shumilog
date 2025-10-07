@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { X, Upload } from 'lucide-react';
 import { Button } from './ui/button';
+import { normalizeImage } from '@/utils/imageNormalizer';
 
 interface ImageUploadProps {
   logId?: string;
@@ -14,7 +15,7 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
@@ -37,11 +38,16 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
 
     if (validFiles.length === 0) return;
 
+    // 画像を正規化（1MB以上の場合はWebPに変換してリサイズ）
+    const normalizedFiles = await Promise.all(
+      validFiles.map((file) => normalizeImage(file))
+    );
+
     // Create preview URLs
-    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
+    const newPreviewUrls = normalizedFiles.map((file) => URL.createObjectURL(file));
     setPreviewUrls([...previewUrls, ...newPreviewUrls]);
     
-    const newFiles = [...selectedFiles, ...validFiles];
+    const newFiles = [...selectedFiles, ...normalizedFiles];
     setSelectedFiles(newFiles);
     onImagesChange(newFiles);
   };

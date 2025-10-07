@@ -237,6 +237,18 @@ describe('TagService', () => {
 
       expect(result.items).toHaveLength(0);
     });
+
+    it('should be case insensitive', async () => {
+      const result1 = await tagService.searchTags({ search: 'anime' });
+      const result2 = await tagService.searchTags({ search: 'ANIME' });
+      const result3 = await tagService.searchTags({ search: 'Anime' });
+
+      expect(result1.items.length).toBeGreaterThan(0);
+      expect(result1.items.length).toBe(result2.items.length);
+      expect(result1.items.length).toBe(result3.items.length);
+      expect(result1.items.map(t => t.id).sort()).toEqual(result2.items.map(t => t.id).sort());
+      expect(result1.items.map(t => t.id).sort()).toEqual(result3.items.map(t => t.id).sort());
+    });
   });
 
   describe('getTagUsageStats', () => {
@@ -353,6 +365,18 @@ describe('TagService', () => {
       const result = await tagService.getTagSuggestions('zzz-no-match');
 
       expect(result).toEqual([]);
+    });
+
+    it('should be case insensitive', async () => {
+      const result1 = await tagService.getTagSuggestions('anime');
+      const result2 = await tagService.getTagSuggestions('ANIME');
+      const result3 = await tagService.getTagSuggestions('Anime');
+
+      expect(result1.length).toBeGreaterThan(0);
+      expect(result1.length).toBe(result2.length);
+      expect(result1.length).toBe(result3.length);
+      expect(result1.map(t => t.id).sort()).toEqual(result2.map(t => t.id).sort());
+      expect(result1.map(t => t.id).sort()).toEqual(result3.map(t => t.id).sort());
     });
   });
 

@@ -239,8 +239,8 @@ export class LogService {
     }
 
     if (search) {
-      const searchPattern = `%${search}%`;
-      conditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
+      const searchPattern = `%${search.toLowerCase()}%`;
+      conditions.push('(LOWER(l.title) LIKE ? OR LOWER(l.content_md) LIKE ?)');
       params.push(searchPattern, searchPattern);
     }
 
@@ -278,8 +278,8 @@ export class LogService {
     }
 
     if (search) {
-      const searchPattern = `%${search}%`;
-      countConditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
+      const searchPattern = `%${search.toLowerCase()}%`;
+      countConditions.push('(LOWER(l.title) LIKE ? OR LOWER(l.content_md) LIKE ?)');
       countParams.push(searchPattern, searchPattern);
     }
     

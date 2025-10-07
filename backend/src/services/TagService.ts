@@ -284,13 +284,13 @@ export class TagService {
    * Get tag suggestions based on input
    */
   async getTagSuggestions(query: string, limit = 5): Promise<Tag[]> {
-    const searchPattern = `%${query}%`;
+    const searchPattern = `%${query.toLowerCase()}%`;
     const rows = await this.db.query(
       `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
               COUNT(lta.tag_id) as usage_count
        FROM tags t
        LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
-       WHERE t.name LIKE ? OR t.description LIKE ?
+       WHERE LOWER(t.name) LIKE ? OR LOWER(t.description) LIKE ?
        GROUP BY t.id
        ORDER BY usage_count DESC, t.name ASC
        LIMIT ?`,

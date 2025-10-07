@@ -21,73 +21,36 @@ describe('Header Component', () => {
     mockUseAuth.user = undefined;
   });
 
-  it('should show Logs and Tags navigation links when not authenticated', async () => {
+  it('should show Tags navigation link when not authenticated', async () => {
     mockUseAuth.isAuthenticated = false;
     renderWithRouter();
     
-    // ログとタグのナビゲーションリンクが表示されていることを確認
+    // タグのナビゲーションリンクが表示されていることを確認
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: /Logs|📝/ })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Tags|🏷️/ })).toBeInTheDocument();
     });
     
     // ログインボタンが表示されていることを確認
     expect(screen.getByRole('link', { name: /Login|🔑/ })).toBeInTheDocument();
     
-    // ログアウトボタンが表示されていないことを確認
-    expect(screen.queryByRole('button', { name: /Logout|🚪/ })).not.toBeInTheDocument();
+    // My Logsリンクが表示されていないことを確認
+    expect(screen.queryByRole('link', { name: /My Logs|📚/ })).not.toBeInTheDocument();
   });
 
-  it('should show Logs, Tags, and Logout when authenticated', async () => {
+  it('should show My Logs and Tags when authenticated', async () => {
     mockUseAuth.isAuthenticated = true;
     mockUseAuth.user = { id: '1', name: 'Test User' };
     
     renderWithRouter();
     
-    // ログとタグのナビゲーションリンクが表示されていることを確認
+    // My LogsとTagsのナビゲーションリンクが表示されていることを確認
     await waitFor(() => {
-      expect(screen.getAllByRole('link', { name: /Logs|📝/ }).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByRole('link', { name: /My Logs|📚/ })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Tags|🏷️/ })).toBeInTheDocument();
     });
     
-    // My Logsリンクが表示されていることを確認（認証時のみ）
-    expect(screen.getByRole('link', { name: /My Logs|📚/ })).toBeInTheDocument();
-    
-    // ログアウトボタンが表示されていることを確認
-    expect(screen.getByRole('button', { name: /Logout|🚪/ })).toBeInTheDocument();
-    
     // ログインボタンが表示されていないことを確認
     expect(screen.queryByRole('link', { name: /Login|🔑/ })).not.toBeInTheDocument();
-  });
-
-  it('should always show navigation to Logs page', async () => {
-    // 未ログイン時
-    mockUseAuth.isAuthenticated = false;
-    const { rerender } = renderWithRouter();
-    
-    await waitFor(() => {
-      const logsLinks = screen.getAllByRole('link', { name: /Logs|📝/ });
-      const logsLink = logsLinks.find((link) => link.getAttribute('href') === '/logs');
-      expect(logsLink).toBeInTheDocument();
-      expect(logsLink).toHaveAttribute('href', '/logs');
-    });
-    
-    // ログイン時も同じリンクが存在することを確認
-    mockUseAuth.isAuthenticated = true;
-    mockUseAuth.user = { id: '1', name: 'Test User' };
-    
-    rerender(
-      <MemoryRouter>
-        <Header />
-      </MemoryRouter>
-    );
-    
-    await waitFor(() => {
-      const logsLinks = screen.getAllByRole('link', { name: /Logs|📝/ });
-      const logsLink = logsLinks.find((link) => link.getAttribute('href') === '/logs');
-      expect(logsLink).toBeInTheDocument();
-      expect(logsLink).toHaveAttribute('href', '/logs');
-    });
   });
 
   it('should always show navigation to Tags page', async () => {

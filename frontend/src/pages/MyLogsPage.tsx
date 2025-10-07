@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, PenLine, X, FileText, Plus, BookOpen } from 'lucide-react';
+import { Search, PenLine, X, FileText, Plus, BookOpen, LogOut } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -22,7 +22,7 @@ export function MyLogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, clearAuth } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState(''); 
 
@@ -79,6 +79,20 @@ export function MyLogsPage() {
   const handleCancel = () => {
     setShowForm(false);
     setSelectedLog(undefined);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const res = await api.auth.logout.$post();
+      if (res.ok) {
+        clearAuth();
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
   };
 
   if (loading) {
@@ -230,6 +244,21 @@ export function MyLogsPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* ログアウト */}
+      <div className="pt-8 border-t border-gray-200">
+        <div className="flex justify-center">
+          <Button 
+            onClick={handleLogout}
+            variant="ghost" 
+            size="sm"
+            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+          >
+            <LogOut size={16} className="mr-2" />
+            <span>ログアウト</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

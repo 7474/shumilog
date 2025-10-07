@@ -1,11 +1,11 @@
 /**
  * API型定義
- * 
+ *
  * このファイルはOpenAPI仕様から自動生成された型定義を再エクスポートします。
  * OpenAPI仕様が更新された場合は、以下のコマンドで型を再生成してください：
- * 
+ *
  *   npm run generate:types
- * 
+ *
  * @see ../api/v1/openapi.yaml - 正規のAPI仕様書
  */
 

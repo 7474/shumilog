@@ -45,12 +45,12 @@ describe('LogImages', () => {
   it('環境変数からAPI base URLを使用する', () => {
     const { container } = render(<LogImages logId="log_1" images={mockImages} />);
     const images = container.querySelectorAll('img');
-    
+
     // In test environment, VITE_API_BASE_URL is set to http://localhost:8787/api
     const expectedBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     expect(images[0]).toHaveAttribute('src', `${expectedBaseUrl}/logs/log_1/images/image_1`);
     expect(images[1]).toHaveAttribute('src', `${expectedBaseUrl}/logs/log_1/images/image_2`);
-    
+
     const links = container.querySelectorAll('a');
     expect(links[0]).toHaveAttribute('href', `${expectedBaseUrl}/logs/log_1/images/image_1`);
     expect(links[1]).toHaveAttribute('href', `${expectedBaseUrl}/logs/log_1/images/image_2`);
@@ -63,13 +63,25 @@ describe('LogImages', () => {
 
     const { container } = render(<LogImages logId="log_1" images={mockImages} />);
     const images = container.querySelectorAll('img');
-    
-    expect(images[0]).toHaveAttribute('src', 'https://api.shumilog.dev/api/logs/log_1/images/image_1');
-    expect(images[1]).toHaveAttribute('src', 'https://api.shumilog.dev/api/logs/log_1/images/image_2');
-    
+
+    expect(images[0]).toHaveAttribute(
+      'src',
+      'https://api.shumilog.dev/api/logs/log_1/images/image_1'
+    );
+    expect(images[1]).toHaveAttribute(
+      'src',
+      'https://api.shumilog.dev/api/logs/log_1/images/image_2'
+    );
+
     const links = container.querySelectorAll('a');
-    expect(links[0]).toHaveAttribute('href', 'https://api.shumilog.dev/api/logs/log_1/images/image_1');
-    expect(links[1]).toHaveAttribute('href', 'https://api.shumilog.dev/api/logs/log_1/images/image_2');
+    expect(links[0]).toHaveAttribute(
+      'href',
+      'https://api.shumilog.dev/api/logs/log_1/images/image_1'
+    );
+    expect(links[1]).toHaveAttribute(
+      'href',
+      'https://api.shumilog.dev/api/logs/log_1/images/image_2'
+    );
 
     // Restore original environment
     if (originalEnv) {
@@ -82,7 +94,7 @@ describe('LogImages', () => {
   it('画像にlazy loading属性が設定されている', () => {
     const { container } = render(<LogImages logId="log_1" images={mockImages} />);
     const images = container.querySelectorAll('img');
-    
+
     images.forEach((img) => {
       expect(img).toHaveAttribute('loading', 'lazy');
     });

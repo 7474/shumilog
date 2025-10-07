@@ -55,7 +55,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
     try {
       // Use configured API base URL to ensure requests go to the correct backend
       const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-      
+
       for (let i = 0; i < selectedImages.length; i++) {
         const file = selectedImages[i];
         const formData = new FormData();
@@ -121,10 +121,10 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
             <FormItem>
               <FormLabel className="text-gray-700 font-semibold">タイトル</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="ログのタイトルを入力してください..." 
+                <Input
+                  placeholder="ログのタイトルを入力してください..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fresh-500 focus:border-transparent transition-all"
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -138,11 +138,11 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
             <FormItem>
               <FormLabel className="text-gray-700 font-semibold">内容</FormLabel>
               <FormControl>
-                <Textarea 
+                <Textarea
                   placeholder="趣味の体験を詳しく記録しましょう..."
                   rows={8}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fresh-500 focus:border-transparent transition-all resize-y"
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -152,18 +152,14 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
         <ImageUpload
           logId={log?.id}
           onImagesChange={handleImagesChange}
-          existingImages={log?.images?.map(img => ({
+          existingImages={log?.images?.map((img) => ({
             id: img.id,
             file_name: img.file_name,
             url: `/api/logs/${log.id}/images/${img.id}`,
           }))}
         />
         <div className="flex gap-3 pt-2">
-          <Button 
-            type="submit"
-            className="btn-fresh"
-            disabled={uploadingImages}
-          >
+          <Button type="submit" className="btn-fresh" disabled={uploadingImages}>
             {uploadingImages ? (
               <>
                 <Upload size={16} className="mr-2" />
@@ -182,8 +178,8 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
             )}
           </Button>
           {onCancel && (
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               onClick={onCancel}
               variant="outline"
               className="border-gray-300 hover:bg-gray-50"

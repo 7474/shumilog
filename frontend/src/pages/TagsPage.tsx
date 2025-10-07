@@ -6,13 +6,7 @@ import { TagForm } from '@/components/TagForm';
 import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -128,9 +122,9 @@ export function TagsPage() {
           <h1 className="text-3xl font-bold text-gray-900">タグ管理</h1>
           <p className="text-gray-600 mt-1">ログを整理するためのタグを管理しましょう</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowForm(!showForm)}
-          className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+          className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
           disabled={!isAuthenticated}
         >
           {!isAuthenticated ? (
@@ -165,8 +159,8 @@ export function TagsPage() {
               className="flex-1"
             />
             {searchQuery && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => setSearchQuery('')}
                 className="text-gray-600"
@@ -177,9 +171,7 @@ export function TagsPage() {
             )}
           </div>
           {searchQuery && (
-            <p className="text-sm text-gray-600 mt-2">
-              「{searchQuery}」で検索中...
-            </p>
+            <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中...</p>
           )}
         </CardContent>
       </Card>
@@ -194,11 +186,7 @@ export function TagsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TagForm
-              tag={selectedTag}
-              onSuccess={handleSuccess}
-              onCancel={handleCancel}
-            />
+            <TagForm tag={selectedTag} onSuccess={handleSuccess} onCancel={handleCancel} />
           </CardContent>
         </Card>
       )}
@@ -240,13 +228,12 @@ export function TagsPage() {
                 {searchQuery ? 'タグが見つかりません' : 'まだタグがありません'}
               </h3>
               <p className="text-gray-600">
-                {searchQuery 
+                {searchQuery
                   ? '検索条件に一致するタグがありません。別のキーワードで試してください。'
-                  : '最初のタグを作成してログを整理しましょう！'
-                }
+                  : '最初のタグを作成してログを整理しましょう！'}
               </p>
-              {!searchQuery && (
-                isAuthenticated ? (
+              {!searchQuery &&
+                (isAuthenticated ? (
                   <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
                     <Plus size={16} className="mr-2" />
                     最初のタグを作成
@@ -258,8 +245,7 @@ export function TagsPage() {
                       ログインしてタグを作成
                     </Button>
                   </Link>
-                )
-              )}
+                ))}
             </CardContent>
           </Card>
         ) : (
@@ -276,13 +262,11 @@ export function TagsPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <p className="text-gray-700 line-clamp-2">
-                        {tag.description || '説明なし'}
-                      </p>
+                      <p className="text-gray-700 line-clamp-2">{tag.description || '説明なし'}</p>
                     </CardContent>
                   </div>
                 </Link>
-                
+
                 {/* Action buttons - always visible for authenticated users */}
                 {isAuthenticated && (
                   <CardFooter className="bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 py-3 px-4">

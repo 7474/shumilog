@@ -6,12 +6,7 @@ import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,7 +19,7 @@ export function MyLogsPage() {
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
   const { isAuthenticated, clearAuth } = useAuth();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState(''); 
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchLogs = async (search?: string, isInitialLoad = false) => {
     try {
@@ -125,9 +120,9 @@ export function MyLogsPage() {
           <h1 className="text-3xl font-bold text-gray-900">マイログ</h1>
           <p className="text-gray-600 mt-1">あなたの趣味活動の記録を振り返る</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowForm(!showForm)}
-          className={showForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+          className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
         >
           {showForm ? (
             <>
@@ -153,11 +148,7 @@ export function MyLogsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <LogForm
-              log={selectedLog}
-              onSuccess={handleSuccess}
-              onCancel={handleCancel}
-            />
+            <LogForm log={selectedLog} onSuccess={handleSuccess} onCancel={handleCancel} />
           </CardContent>
         </Card>
       )}
@@ -172,13 +163,13 @@ export function MyLogsPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-sky-600">
-                {logs.filter(log => log.is_public).length}
+                {logs.filter((log) => log.is_public).length}
               </div>
               <div className="text-sm text-gray-600 mt-1">公開中</div>
             </div>
             <div className="text-center col-span-2 sm:col-span-1">
               <div className="text-2xl sm:text-3xl font-bold text-teal-600">
-                {logs.filter(log => !log.is_public).length}
+                {logs.filter((log) => !log.is_public).length}
               </div>
               <div className="text-sm text-gray-600 mt-1">非公開</div>
             </div>
@@ -201,20 +192,12 @@ export function MyLogsPage() {
               検索
             </Button>
             {searchQuery && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleClearSearch}
-              >
+              <Button type="button" variant="outline" onClick={handleClearSearch}>
                 クリア
               </Button>
             )}
           </form>
-          {searchQuery && (
-            <p className="text-sm text-gray-600 mt-2">
-              「{searchQuery}」で検索中
-            </p>
-          )}
+          {searchQuery && <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中</p>}
         </CardContent>
       </Card>
 
@@ -249,9 +232,9 @@ export function MyLogsPage() {
       {/* ログアウト */}
       <div className="pt-8 border-t border-gray-200">
         <div className="flex justify-center">
-          <Button 
+          <Button
             onClick={handleLogout}
-            variant="ghost" 
+            variant="ghost"
             size="sm"
             className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
           >

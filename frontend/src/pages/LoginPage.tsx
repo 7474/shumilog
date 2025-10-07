@@ -1,13 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { Twitter, FileText, Tag, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 
 export function LoginPage() {
@@ -40,9 +34,7 @@ export function LoginPage() {
               <span className="text-white font-bold text-2xl">S</span>
             </div>
             <div className="space-y-2">
-              <CardTitle className="text-2xl font-bold text-gray-900">
-                Shumilogへようこそ
-              </CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">Shumilogへようこそ</CardTitle>
               <CardDescription className="text-gray-600">
                 あなた専用の趣味ログサービス
               </CardDescription>
@@ -50,14 +42,10 @@ export function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center space-y-4">
-              <Button 
-                onClick={handleLogin}
-                className="btn-fresh w-full py-3 text-base font-medium"
-              >
-                <Twitter className="mr-2" size={18} />
-                X (Twitter) でログイン
+              <Button onClick={handleLogin} className="btn-fresh w-full py-3 text-base font-medium">
+                <Twitter className="mr-2" size={18} />X (Twitter) でログイン
               </Button>
-              
+
               <div className="space-y-3">
                 <p className="text-sm text-gray-600">
                   Xアカウントで簡単ログイン、趣味活動を記録しましょう

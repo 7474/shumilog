@@ -42,7 +42,12 @@ describe('Log Management Integration Test', () => {
         privacy: 'private',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        user: { id: '1', display_name: 'Test User', twitter_username: 'testuser', created_at: new Date().toISOString() },
+        user: {
+          id: '1',
+          display_name: 'Test User',
+          twitter_username: 'testuser',
+          created_at: new Date().toISOString(),
+        },
         tags: [],
       },
       {
@@ -53,7 +58,12 @@ describe('Log Management Integration Test', () => {
         privacy: 'private',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        user: { id: '1', display_name: 'Test User', twitter_username: 'testuser', created_at: new Date().toISOString() },
+        user: {
+          id: '1',
+          display_name: 'Test User',
+          twitter_username: 'testuser',
+          created_at: new Date().toISOString(),
+        },
         tags: [],
       },
     ];

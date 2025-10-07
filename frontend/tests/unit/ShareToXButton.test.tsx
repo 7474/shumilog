@@ -15,7 +15,7 @@ describe('ShareToXButton', () => {
     window.open = mockOpen;
 
     render(
-      <ShareToXButton 
+      <ShareToXButton
         text="Test content"
         url="https://example.com/log/123"
         hashtags={['test', 'hobby']}
@@ -51,12 +51,7 @@ describe('ShareToXButton', () => {
     const mockOpen = vi.fn();
     window.open = mockOpen;
 
-    render(
-      <ShareToXButton 
-        text="Test"
-        hashtags={['tag1', 'tag2', 'tag3', 'tag4', 'tag5']}
-      />
-    );
+    render(<ShareToXButton text="Test" hashtags={['tag1', 'tag2', 'tag3', 'tag4', 'tag5']} />);
 
     const button = screen.getByText('Xで共有');
     await user.click(button);
@@ -76,12 +71,7 @@ describe('ShareToXButton', () => {
     const mockOpen = vi.fn();
     window.open = mockOpen;
 
-    render(
-      <ShareToXButton 
-        text="Test"
-        hashtags={['attack on titan', 'my hobby']}
-      />
-    );
+    render(<ShareToXButton text="Test" hashtags={['attack on titan', 'my hobby']} />);
 
     const button = screen.getByText('Xで共有');
     await user.click(button);
@@ -98,12 +88,7 @@ describe('ShareToXButton', () => {
     const mockOpen = vi.fn();
     window.open = mockOpen;
 
-    render(
-      <ShareToXButton 
-        text="Test"
-        hashtags={['#anime', '##gaming']}
-      />
-    );
+    render(<ShareToXButton text="Test" hashtags={['#anime', '##gaming']} />);
 
     const button = screen.getByText('Xで共有');
     await user.click(button);
@@ -122,12 +107,7 @@ describe('ShareToXButton', () => {
     const mockOpen = vi.fn();
     window.open = mockOpen;
 
-    render(
-      <ShareToXButton 
-        text="Test"
-        hashtags={['anime', 'gaming']}
-      />
-    );
+    render(<ShareToXButton text="Test" hashtags={['anime', 'gaming']} />);
 
     const button = screen.getByText('Xで共有');
     await user.click(button);

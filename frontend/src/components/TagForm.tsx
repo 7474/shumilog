@@ -1,5 +1,14 @@
 import { useState, useRef } from 'react';
-import { Tag as TagIcon, FileText, AlertCircle, Loader2, Bot, PenLine, Plus, X } from 'lucide-react';
+import {
+  Tag as TagIcon,
+  FileText,
+  AlertCircle,
+  Loader2,
+  Bot,
+  PenLine,
+  Plus,
+  X,
+} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,11 +16,21 @@ import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Tag } from '@/api-types';
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Tag name is required').max(200, 'Tag name must be 200 characters or fewer'),
+  name: z
+    .string()
+    .min(1, 'Tag name is required')
+    .max(200, 'Tag name must be 200 characters or fewer'),
   description: z.string().optional(),
 });
 
@@ -27,7 +46,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingSupport, setIsLoadingSupport] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const form = useForm<TagFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,7 +75,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
 
   const handleGetSupport = async () => {
     const tagName = form.getValues('name');
-    
+
     if (!tagName || tagName.trim().length === 0) {
       setError('タグ名を入力してからサポート機能を使用してください');
       return;
@@ -69,8 +88,8 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
       const response = await api.support.tags.$post({
         json: {
           tag_name: tagName,
-          support_type: 'ai_enhanced'
-        }
+          support_type: 'ai_enhanced',
+        },
       });
 
       if (!response.ok) {
@@ -81,21 +100,19 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
       const data = await response.json();
       const currentDescription = form.getValues('description') || '';
       const textarea = descriptionRef.current;
-      
+
       let newDescription: string;
-      
+
       if (textarea && textarea === document.activeElement) {
         // Textarea has focus - insert at cursor position
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        newDescription = 
-          currentDescription.substring(0, start) + 
-          data.content + 
-          currentDescription.substring(end);
-        
+        newDescription =
+          currentDescription.substring(0, start) + data.content + currentDescription.substring(end);
+
         // Set the new value
         form.setValue('description', newDescription);
-        
+
         // Set cursor position after inserted content
         setTimeout(() => {
           const newCursorPos = start + data.content.length;
@@ -110,7 +127,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           newDescription = data.content;
         }
         form.setValue('description', newDescription);
-        
+
         // Set cursor to end
         setTimeout(() => {
           if (textarea) {
@@ -146,10 +163,10 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
                 タグ名
               </FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="タグ名を入力してください..." 
+                <Input
+                  placeholder="タグ名を入力してください..."
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-colors bg-white shadow-sm"
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormMessage className="text-sm text-red-600" />
@@ -188,11 +205,11 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
                 </Button>
               </div>
               <FormControl>
-                <Textarea 
+                <Textarea
                   ref={descriptionRef}
-                  placeholder="このタグが表すものを説明してください..." 
+                  placeholder="このタグが表すものを説明してください..."
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-colors bg-white shadow-sm min-h-[100px] resize-y"
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormMessage className="text-sm text-red-600" />
@@ -200,10 +217,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           )}
         />
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <Button 
-            type="submit" 
-            className="btn-fresh flex-1 sm:flex-none px-6 py-2.5"
-          >
+          <Button type="submit" className="btn-fresh flex-1 sm:flex-none px-6 py-2.5">
             {tag ? (
               <>
                 <PenLine size={16} className="mr-2" />
@@ -217,8 +231,8 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
             )}
           </Button>
           {onCancel && (
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               onClick={onCancel}
               variant="outline"
               className="flex-1 sm:flex-none px-6 py-2.5 border-gray-300 hover:bg-gray-50"

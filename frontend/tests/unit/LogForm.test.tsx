@@ -73,7 +73,15 @@ describe('LogForm', () => {
   });
 
   it('should render edit form correctly with initial values', () => {
-    const log = { id: 'log-1', title: 'Existing Log', content_md: 'Log content', is_public: false, user_id: 'user-1', created_at: '', updated_at: '' };
+    const log = {
+      id: 'log-1',
+      title: 'Existing Log',
+      content_md: 'Log content',
+      is_public: false,
+      user_id: 'user-1',
+      created_at: '',
+      updated_at: '',
+    };
     render(
       <MemoryRouter>
         <LogForm log={log} onSuccess={mockOnSuccess} />
@@ -91,8 +99,12 @@ describe('LogForm', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText('ログのタイトルを入力してください...'), { target: { value: 'New Log Title' } });
-    fireEvent.change(screen.getByPlaceholderText('趣味の体験を詳しく記録しましょう...'), { target: { value: 'New content.' } });
+    fireEvent.change(screen.getByPlaceholderText('ログのタイトルを入力してください...'), {
+      target: { value: 'New Log Title' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('趣味の体験を詳しく記録しましょう...'), {
+      target: { value: 'New content.' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /ログを作成/i }));
 
     await waitFor(() => {
@@ -107,14 +119,24 @@ describe('LogForm', () => {
   });
 
   it('should call api.logs[":id"].$put on form submission for existing log', async () => {
-    const log = { id: 'log-1', title: 'Existing Log', content_md: 'Log content', is_public: false, user_id: 'user-1', created_at: '', updated_at: '' };
+    const log = {
+      id: 'log-1',
+      title: 'Existing Log',
+      content_md: 'Log content',
+      is_public: false,
+      user_id: 'user-1',
+      created_at: '',
+      updated_at: '',
+    };
     render(
       <MemoryRouter>
         <LogForm log={log} onSuccess={mockOnSuccess} />
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText('ログのタイトルを入力してください...'), { target: { value: 'Updated Log Title' } });
+    fireEvent.change(screen.getByPlaceholderText('ログのタイトルを入力してください...'), {
+      target: { value: 'Updated Log Title' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /ログを更新/i }));
 
     await waitFor(() => {

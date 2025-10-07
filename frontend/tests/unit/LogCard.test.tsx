@@ -13,7 +13,8 @@ describe('LogCard', () => {
   const mockLog: Log = {
     id: '1',
     title: 'Test Log Title',
-    content_md: 'This is a test content for the log entry. It should be displayed in the card preview.',
+    content_md:
+      'This is a test content for the log entry. It should be displayed in the card preview.',
     is_public: true,
     privacy: 'public',
     created_at: '2024-01-15T10:00:00Z',
@@ -26,8 +27,22 @@ describe('LogCard', () => {
       created_at: '2024-01-01T00:00:00Z',
     },
     tags: [
-      { id: 'tag1', name: 'Anime', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-      { id: 'tag2', name: 'Gaming', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+      {
+        id: 'tag1',
+        name: 'Anime',
+        description: '',
+        created_by: 'user1',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'tag2',
+        name: 'Gaming',
+        description: '',
+        created_by: 'user1',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      },
     ],
   };
 
@@ -73,11 +88,46 @@ describe('LogCard', () => {
     const logWithManyTags: Log = {
       ...mockLog,
       tags: [
-        { id: 'tag1', name: 'Tag1', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-        { id: 'tag2', name: 'Tag2', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-        { id: 'tag3', name: 'Tag3', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-        { id: 'tag4', name: 'Tag4', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-        { id: 'tag5', name: 'Tag5', description: '', created_by: 'user1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+        {
+          id: 'tag1',
+          name: 'Tag1',
+          description: '',
+          created_by: 'user1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'tag2',
+          name: 'Tag2',
+          description: '',
+          created_by: 'user1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'tag3',
+          name: 'Tag3',
+          description: '',
+          created_by: 'user1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'tag4',
+          name: 'Tag4',
+          description: '',
+          created_by: 'user1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'tag5',
+          name: 'Tag5',
+          description: '',
+          created_by: 'user1',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
       ],
     };
     renderWithRouter(<LogCard log={logWithManyTags} />);

@@ -41,4 +41,3 @@ export type Log = {
   tags: Tag[];
   images?: LogImage[];
 };
-

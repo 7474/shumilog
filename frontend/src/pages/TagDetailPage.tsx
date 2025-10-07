@@ -59,7 +59,7 @@ export function TagDetailPage() {
 
   const fetchTag = async () => {
     if (!name) return;
-    
+
     try {
       const decodedName = decodeURIComponent(name);
       const response = await api.tags[':id'].$get({ param: { id: decodedName } });
@@ -85,7 +85,7 @@ export function TagDetailPage() {
 
   const handleDelete = async () => {
     if (!name) return;
-    
+
     if (window.confirm('このタグを削除してもよろしいですか？')) {
       try {
         const decodedName = decodeURIComponent(name);
@@ -126,9 +126,7 @@ export function TagDetailPage() {
         <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
         <p className="text-gray-600">{error}</p>
         <Link to="/tags">
-          <Button variant="outline">
-            タグ一覧に戻る
-          </Button>
+          <Button variant="outline">タグ一覧に戻る</Button>
         </Link>
       </div>
     );
@@ -140,9 +138,7 @@ export function TagDetailPage() {
         <TagIcon size={64} className="text-gray-400" />
         <h2 className="text-xl font-bold text-gray-900">タグが見つかりません</h2>
         <Link to="/tags">
-          <Button variant="outline">
-            タグ一覧に戻る
-          </Button>
+          <Button variant="outline">タグ一覧に戻る</Button>
         </Link>
       </div>
     );
@@ -170,13 +166,13 @@ export function TagDetailPage() {
             variant="outline"
             className="text-sky-600 border-sky-200 hover:bg-sky-50"
           />
-          
+
           {isAuthenticated && (
             <>
               <Button
                 onClick={() => setShowLogForm(!showLogForm)}
                 size="sm"
-                className={showLogForm ? "bg-gray-500 hover:bg-gray-600" : "btn-fresh"}
+                className={showLogForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
               >
                 {showLogForm ? (
                   <>
@@ -194,7 +190,11 @@ export function TagDetailPage() {
                 onClick={() => setShowEditForm(!showEditForm)}
                 size="sm"
                 variant="outline"
-                className={showEditForm ? "bg-gray-500 hover:bg-gray-600 text-white border-gray-500" : "text-sky-600 border-sky-200 hover:bg-sky-50"}
+                className={
+                  showEditForm
+                    ? 'bg-gray-500 hover:bg-gray-600 text-white border-gray-500'
+                    : 'text-sky-600 border-sky-200 hover:bg-sky-50'
+                }
               >
                 {showEditForm ? (
                   <>
@@ -251,11 +251,7 @@ export function TagDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TagForm
-              tag={tag}
-              onSuccess={handleEditSuccess}
-              onCancel={handleEditCancel}
-            />
+            <TagForm tag={tag} onSuccess={handleEditSuccess} onCancel={handleEditCancel} />
           </CardContent>
         </Card>
       )}
@@ -298,7 +294,7 @@ export function TagDetailPage() {
                   {new Date(tag.created_at).toLocaleDateString('ja-JP', {
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric'
+                    day: 'numeric',
                   })}
                 </span>
               </div>
@@ -308,7 +304,7 @@ export function TagDetailPage() {
                   {new Date(tag.updated_at).toLocaleDateString('ja-JP', {
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric'
+                    day: 'numeric',
                   })}
                 </span>
               </div>
@@ -321,7 +317,10 @@ export function TagDetailPage() {
               <h3 className="text-sm font-semibold text-gray-700 mb-3">🔗 関連タグ</h3>
               <div className="flex flex-wrap gap-2">
                 {tag.associations.map((associatedTag) => (
-                  <Link key={associatedTag.id} to={`/tags/${encodeURIComponent(associatedTag.name)}`}>
+                  <Link
+                    key={associatedTag.id}
+                    to={`/tags/${encodeURIComponent(associatedTag.name)}`}
+                  >
                     <span className="inline-flex items-center space-x-1 px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm hover:bg-sky-100 transition-colors cursor-pointer">
                       <span className="w-2 h-2 rounded-full bg-sky-400"></span>
                       <span>{associatedTag.name}</span>

@@ -18,7 +18,7 @@ describe('LogCard', () => {
     privacy: 'public',
     created_at: '2024-01-15T10:00:00Z',
     updated_at: '2024-01-15T10:00:00Z',
-    author: {
+    user: {
       id: 'user1',
       display_name: 'Test User',
       twitter_username: 'testuser',
@@ -96,8 +96,8 @@ describe('LogCard', () => {
   it('renders without avatar when author has no avatar_url', () => {
     const logWithoutAvatar: Log = {
       ...mockLog,
-      author: {
-        ...mockLog.author,
+      user: {
+        ...mockLog.user,
         avatar_url: undefined,
       },
     };

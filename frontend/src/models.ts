@@ -37,7 +37,7 @@ export type Log = {
   privacy: 'public' | 'private';
   created_at: string;
   updated_at: string;
-  author: User;
+  user: User;
   tags: Tag[];
   images?: LogImage[];
 };

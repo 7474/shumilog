@@ -28,14 +28,14 @@ export function LogCard({ log }: LogCardProps) {
         {/* メタ情報 */}
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center space-x-2">
-            {log.author?.avatar_url && (
+            {log.user?.avatar_url && (
               <img
-                src={log.author.avatar_url}
-                alt={log.author.display_name}
+                src={log.user.avatar_url}
+                alt={log.user.display_name}
                 className="w-5 h-5 rounded-full"
               />
             )}
-            <span>{log.author?.display_name || 'Unknown'}</span>
+            <span>{log.user?.display_name || 'Unknown'}</span>
           </div>
           <time dateTime={log.created_at}>
             {new Date(log.created_at).toLocaleDateString('ja-JP', {

@@ -32,6 +32,7 @@ export default [
         ...globals.node,
         ...globals.webworker,
         ExecutionContext: 'readonly',
+        caches: 'readonly',
       },
     },
     plugins: {

@@ -14,7 +14,7 @@ import { ImageService } from './services/ImageService.js';
 
 import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
 import { securityHeaders, requestLogger, rateLimiter } from './middleware/security.js';
-import { cacheControl } from './middleware/cache.js';
+import { cacheApi, cacheControl } from './middleware/cache.js';
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
@@ -211,6 +211,7 @@ export function createApp(env: RuntimeEnv = {}) {
   app.use('*', securityHeaders());
   app.use('*', requestLogger());
   app.use('*', rateLimiter(RATE_WINDOW_MS, MAX_RATE_REQUESTS));
+  app.use('*', cacheApi());
   app.use('*', cacheControl());
 
   app.use('*', async (c, next) => {

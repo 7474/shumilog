@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, X, AlertTriangle, FileText, Globe, Lock } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, X, AlertTriangle, FileText, Globe, Lock, Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ export function LogDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchLog = async () => {
@@ -70,6 +71,7 @@ export function LogDetailPage() {
     if (!id) return;
 
     try {
+      setIsDeleting(true);
       const response = await api.logs[':id'].$delete({ param: { id } });
       if (!response.ok) {
         throw new Error('Failed to delete log');
@@ -80,6 +82,8 @@ export function LogDetailPage() {
       console.error('Failed to delete log:', err);
       setError('Failed to delete log');
       setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -311,16 +315,26 @@ export function LogDetailPage() {
                 このログを削除すると、元に戻すことはできません。本当に削除してもよろしいですか？
               </p>
               <div className="flex gap-3 justify-end">
-                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
                   キャンセル
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={handleDelete}
                   className="flex items-center gap-2"
+                  disabled={isDeleting}
                 >
-                  <Trash2 size={16} />
-                  <span>削除する</span>
+                  {isDeleting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>削除中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      <span>削除する</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>

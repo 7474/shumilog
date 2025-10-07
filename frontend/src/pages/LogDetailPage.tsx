@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { RelatedLogs } from '@/components/RelatedLogs';
+import { LogImages } from '@/components/LogImages';
 import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
 
@@ -261,6 +262,13 @@ export function LogDetailPage() {
               <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-sky-600 hover:prose-a:text-sky-700 prose-strong:text-gray-900 prose-code:text-pink-600 prose-pre:bg-gray-50">
                 <MarkdownRenderer content={log.content_md} />
               </div>
+
+              {/* 画像 */}
+              {log.images && log.images.length > 0 && (
+                <div className="border-t border-gray-100 pt-4 mt-6">
+                  <LogImages logId={log.id} images={log.images} />
+                </div>
+              )}
 
               {/* タグ */}
               {log.tags && log.tags.length > 0 && (

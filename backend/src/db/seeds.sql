@@ -117,4 +117,34 @@ VALUES
   ('log_dave_3', 'tag_manga', 0, '2023-01-11T19:00:00Z'),
   ('log_dave_3', 'tag_shonen', 1, '2023-01-11T19:00:00Z');
 
+-- 画像データ（ユーザーが所有）
+-- 注: 実際のR2オブジェクトは存在しないため、これらは表示されませんが、
+-- データ構造とスキーマを示すためのサンプルデータです
+INSERT OR IGNORE INTO images (id, user_id, r2_key, file_name, content_type, file_size, width, height, created_at)
+VALUES 
+  -- Alice の画像
+  ('img_alice_1', 'user_alice', 'users/user_alice/img_alice_1.jpg', 'attack_on_titan_scene.jpg', 'image/jpeg', 245678, 1920, 1080, '2023-01-05T10:31:00Z'),
+  ('img_alice_2', 'user_alice', 'users/user_alice/img_alice_2.jpg', 'eren_final_scene.jpg', 'image/jpeg', 189234, 1280, 720, '2023-01-05T10:32:00Z'),
+  
+  -- Bob の画像
+  ('img_bob_1', 'user_bob', 'users/user_bob/img_bob_1.png', 'elden_ring_screenshot.png', 'image/png', 512345, 1920, 1080, '2023-01-06T20:46:00Z'),
+  
+  -- Carol の画像
+  ('img_carol_1', 'user_carol', 'users/user_carol/img_carol_1.jpg', 'concert_photo.jpg', 'image/jpeg', 378912, 1600, 1200, '2023-01-08T15:01:00Z'),
+  ('img_carol_2', 'user_carol', 'users/user_carol/img_carol_2.jpg', 'artist_photo.jpg', 'image/jpeg', 298456, 1280, 1280, '2023-01-08T15:02:00Z');
+
+-- ログと画像の関連付け
+INSERT OR IGNORE INTO log_image_associations (log_id, image_id, display_order, created_at)
+VALUES 
+  -- Alice のログに画像を関連付け
+  ('log_alice_1', 'img_alice_1', 0, '2023-01-05T10:31:00Z'),
+  ('log_alice_1', 'img_alice_2', 1, '2023-01-05T10:32:00Z'),
+  
+  -- Bob のゲームログに画像を関連付け
+  ('log_bob_1', 'img_bob_1', 0, '2023-01-06T20:46:00Z'),
+  
+  -- Carol の音楽ログに画像を関連付け
+  ('log_carol_1', 'img_carol_1', 0, '2023-01-08T15:01:00Z'),
+  ('log_carol_1', 'img_carol_2', 1, '2023-01-08T15:02:00Z');
+
 COMMIT;

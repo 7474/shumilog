@@ -14,8 +14,10 @@ const testD1 = await mf.getD1Database('DB');
 
 const TABLES_IN_DEPENDENCY_ORDER = [
   'schema_migrations',
+  'log_image_associations',
   'log_tag_associations',
   'tag_associations',
+  'images',
   'logs',
   'sessions',
   'tags',

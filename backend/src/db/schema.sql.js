@@ -58,7 +58,7 @@ export const DATABASE_SCHEMAS = [
   CREATE INDEX idx_tag_assoc_associated_tag_id ON tag_associations(associated_tag_id);`,
 
   `-- Logs table (minimal with markdown limits)
-  CREATE TABLE logs (
+  CREATE TABLE IF NOT EXISTS logs (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     title TEXT,
@@ -72,11 +72,11 @@ export const DATABASE_SCHEMAS = [
     CHECK (length(content_md) <= 10000)
   );
 
-  CREATE INDEX idx_logs_user_id ON logs(user_id);
-  CREATE INDEX idx_logs_is_public ON logs(is_public);`,
+  CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
+  CREATE INDEX IF NOT EXISTS idx_logs_is_public ON logs(is_public);`,
 
   `-- Log-tag associations (simplified)
-  CREATE TABLE log_tag_associations (
+  CREATE TABLE IF NOT EXISTS log_tag_associations (
     log_id TEXT NOT NULL,
     tag_id TEXT NOT NULL,
     association_order INTEGER NOT NULL DEFAULT 0,
@@ -87,7 +87,39 @@ export const DATABASE_SCHEMAS = [
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
   );
 
-  CREATE INDEX idx_log_tag_assoc_tag_id ON log_tag_associations(tag_id);`,
+  CREATE INDEX IF NOT EXISTS idx_log_tag_assoc_tag_id ON log_tag_associations(tag_id);`,
+
+  `-- Images table (owned by users)
+  CREATE TABLE IF NOT EXISTS images (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    r2_key TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    width INTEGER,
+    height INTEGER,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_images_user_id ON images(user_id);`,
+
+  `-- Log-image associations
+  CREATE TABLE IF NOT EXISTS log_image_associations (
+    log_id TEXT NOT NULL,
+    image_id TEXT NOT NULL,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (log_id, image_id),
+    FOREIGN KEY (log_id) REFERENCES logs(id) ON DELETE CASCADE,
+    FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_log_image_assoc_image_id ON log_image_associations(image_id);
+  CREATE INDEX IF NOT EXISTS idx_log_image_assoc_display_order ON log_image_associations(log_id, display_order);`,
 
   `-- Schema migrations tracking
   CREATE TABLE schema_migrations (

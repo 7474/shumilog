@@ -16,6 +16,19 @@ export type User = {
   created_at: string;
 };
 
+export type LogImage = {
+  id: string;
+  log_id: string;
+  r2_key: string;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+  width?: number;
+  height?: number;
+  display_order: number;
+  created_at: string;
+};
+
 export type Log = {
   id: string;
   title: string | null;
@@ -26,5 +39,6 @@ export type Log = {
   updated_at: string;
   author: User;
   tags: Tag[];
+  images?: LogImage[];
 };
 

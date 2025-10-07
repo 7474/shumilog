@@ -24,6 +24,10 @@ migrations_dir = "migrations"
 [ai]
 binding = "AI"
 
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "shumilog-images-dev"
+
 [env.development]
 name = "shumilog-backend-dev"
 
@@ -35,6 +39,10 @@ migrations_dir = "migrations"
 
 [env.development.ai]
 binding = "AI"
+
+[[env.development.r2_buckets]]
+binding = "IMAGES"
+bucket_name = "shumilog-images-devel"
 
 [env.development.vars]
 ENVIRONMENT = "development"
@@ -53,6 +61,10 @@ migrations_dir = "migrations"
 
 [env.production.ai]
 binding = "AI"
+
+[[env.production.r2_buckets]]
+binding = "IMAGES"
+bucket_name = "shumilog-images"
 
 [env.production.vars]
 ENVIRONMENT = "production"

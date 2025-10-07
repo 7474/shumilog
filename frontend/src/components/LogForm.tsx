@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Log } from '@/models';
+import { ImageUpload } from './ImageUpload';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -32,6 +33,8 @@ interface LogFormProps {
 
 export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormProps) {
   const [error, setError] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const form = useForm<LogFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,6 +42,37 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
       content_md: log?.content_md ?? initialContent ?? '',
     },
   });
+
+  const handleImagesChange = (files: File[]) => {
+    setSelectedImages(files);
+  };
+
+  const uploadImages = async (logId: string) => {
+    if (selectedImages.length === 0) return;
+
+    setUploadingImages(true);
+    try {
+      for (let i = 0; i < selectedImages.length; i++) {
+        const file = selectedImages[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('display_order', i.toString());
+
+        const response = await fetch(`/api/logs/${logId}/images`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to upload ${file.name}`);
+        }
+      }
+    } finally {
+      setUploadingImages(false);
+    }
+  };
 
   const onSubmit = async (values: LogFormValues) => {
     try {
@@ -51,6 +85,16 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to save log');
       }
+
+      // Upload images if creating new log
+      if (!log && selectedImages.length > 0) {
+        const createdLog = await response.json();
+        await uploadImages(createdLog.id);
+      } else if (log && selectedImages.length > 0) {
+        // Upload additional images for existing log
+        await uploadImages(log.id);
+      }
+
       onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
@@ -101,12 +145,24 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
             </FormItem>
           )}
         />
+        <ImageUpload
+          logId={log?.id}
+          onImagesChange={handleImagesChange}
+          existingImages={log?.images?.map(img => ({
+            id: img.id,
+            file_name: img.file_name,
+            url: `/api/logs/${log.id}/images/${img.id}`,
+          }))}
+        />
         <div className="flex gap-3 pt-2">
           <Button 
             type="submit"
             className="btn-fresh"
+            disabled={uploadingImages}
           >
-            {log ? '✏️ ログを更新' : '✨ ログを作成'}
+            {uploadingImages 
+              ? '📤 画像をアップロード中...' 
+              : log ? '✏️ ログを更新' : '✨ ログを作成'}
           </Button>
           {onCancel && (
             <Button 

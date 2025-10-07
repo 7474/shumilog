@@ -1,4 +1,4 @@
-import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import type { D1Database, KVNamespace, R2Bucket } from '@cloudflare/workers-types';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
@@ -10,6 +10,7 @@ import { LogService } from './services/LogService.js';
 import { SessionService } from './services/SessionService.js';
 import { TwitterService } from './services/TwitterService.js';
 import { AiService, type AiBinding } from './services/AiService.js';
+import { ImageService } from './services/ImageService.js';
 
 import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
 import { securityHeaders, requestLogger, rateLimiter } from './middleware/security.js';
@@ -19,6 +20,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
+import imageRoutes from './routes/images.js';
 import healthRoutes from './routes/health.js';
 import devRoutes from './routes/dev.js';
 import supportRoutes from './routes/support.js';
@@ -27,6 +29,7 @@ export interface RuntimeEnv {
   DB?: D1Database;
   SESSIONS?: KVNamespace;
   AI?: AiBinding;
+  IMAGES?: R2Bucket;
   DATABASE_URL?: string;
   DB_PATH?: string;
   NODE_ENV?: string;
@@ -57,6 +60,7 @@ export type AppBindings = {
     tagService: TagService;
     logService: LogService;
     twitterService: TwitterService;
+    imageService: ImageService;
     aiService?: AiService;
     config: RuntimeConfig;
     auth?: {
@@ -139,6 +143,7 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
     return optionalAuth(c, next);
   });
   app.route('/logs', logRoutes);
+  app.route('/logs', imageRoutes);
 
   // Support routes require authentication for all methods
   app.use('/support/*', requireAuth);
@@ -154,6 +159,7 @@ export function createApp(env: RuntimeEnv = {}) {
   const userService = new UserService(database);
   const tagService = new TagService(database);
   const logService = new LogService(database);
+  const imageService = new ImageService(database, env.IMAGES || null);
 
   // AiServiceを初期化（AIバインディングがある場合のみ）
   const aiService = env.AI ? new AiService(env.AI) : undefined;
@@ -214,6 +220,7 @@ export function createApp(env: RuntimeEnv = {}) {
     c.set('tagService', tagService);
     c.set('logService', logService);
     c.set('twitterService', twitterService);
+    c.set('imageService', imageService);
     if (aiService) {
       c.set('aiService', aiService);
     }

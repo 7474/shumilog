@@ -38,6 +38,6 @@ export type Log = {
   created_at: string;
   updated_at: string;
   user: User;
-  tags: Tag[];
+  associated_tags: Tag[];
   images?: LogImage[];
 };

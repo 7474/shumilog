@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { normalizeImage } from '../../src/utils/imageNormalizer';
 
+type BlobCallback = (blob: Blob | null) => void;
+
 describe('imageNormalizer', () => {
   let mockCanvas: HTMLCanvasElement;
   let mockContext: CanvasRenderingContext2D;

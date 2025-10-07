@@ -73,9 +73,9 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm text-gray-600 mb-2">
+        <div className="block text-sm text-gray-600 mb-2">
           画像を追加（任意）
-        </label>
+        </div>
         <div className="flex items-center gap-2">
           <input
             ref={fileInputRef}
@@ -104,9 +104,9 @@ export function ImageUpload({ onImagesChange, existingImages, onDeleteExisting }
       {/* Existing images */}
       {existingImages && existingImages.length > 0 && (
         <div>
-          <label className="block text-sm text-gray-600 mb-2">
+          <div className="block text-sm text-gray-600 mb-2">
             現在の画像
-          </label>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {existingImages.map((image) => (
               <div key={image.id} className="relative group">

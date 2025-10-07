@@ -80,6 +80,15 @@ npm run test:smoke
 
 # OpenAPI型定義生成
 npm run generate:types
+
+# リント実行
+npm run lint
+
+# リント自動修正
+npm run lint:fix
+
+# コードフォーマット
+npm run format
 ```
 
 ## OpenAPI型定義の自動生成

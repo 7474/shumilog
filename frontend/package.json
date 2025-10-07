@@ -10,7 +10,8 @@
     "preview": "vite preview --host",
     "test": "vitest --run",
     "test:watch": "vitest --watch",
-    "test:smoke": "vitest run tests/smoke"
+    "test:smoke": "vitest run tests/smoke",
+    "test:contract": "vitest run tests/contract"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -37,7 +38,9 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "hono": "^4.9.10",
+    "jest-openapi": "^0.14.2",
     "jsdom": "^27.0.0",
+    "msw": "^2.11.3",
     "tailwindcss": "^4.1.14",
     "typescript": "^5.9.3",
     "vite": "^7.1.9",

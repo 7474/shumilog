@@ -293,11 +293,12 @@ export function TagsPage() {
 
                 {/* Action buttons - always visible for authenticated users */}
                 {isAuthenticated && (
-                  <CardFooter className="bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 py-3 px-4">
+                  <CardFooter className="border-t border-gray-100 py-3 px-4">
                     <Button
                       onClick={(e) => handleCreateLogWithTag(tag, e)}
                       size="sm"
-                      className="btn-fresh w-full"
+                      variant="outline"
+                      className="text-sky-600 border-sky-200 hover:bg-sky-50"
                     >
                       <Plus size={16} className="mr-2" />
                       このタグでログを作成

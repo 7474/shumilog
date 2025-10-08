@@ -127,6 +127,21 @@ export function LogsPage() {
         </Button>
       </div>
 
+      {/* ログ作成フォーム */}
+      {showForm && (
+        <Card className="card-fresh">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              {selectedLog ? <PenLine size={20} /> : <Plus size={20} />}
+              <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LogForm log={selectedLog} onSuccess={handleSuccess} onCancel={handleCancel} />
+          </CardContent>
+        </Card>
+      )}
+
       {/* 検索フォーム */}
       <Card className="card-fresh">
         <CardContent className="pt-6">
@@ -150,21 +165,6 @@ export function LogsPage() {
           {searchQuery && <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中</p>}
         </CardContent>
       </Card>
-
-      {/* ログ作成フォーム */}
-      {showForm && (
-        <Card className="card-fresh">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              {selectedLog ? <PenLine size={20} /> : <Plus size={20} />}
-              <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LogForm log={selectedLog} onSuccess={handleSuccess} onCancel={handleCancel} />
-          </CardContent>
-        </Card>
-      )}
 
       {/* ログリスト */}
       <div className="space-y-4">

@@ -146,36 +146,6 @@ export function TagsPage() {
         </Button>
       </div>
 
-      {/* 検索ボックス */}
-      <Card className="card-fresh">
-        <CardContent className="pt-6">
-          <div className="flex items-center space-x-2">
-            <Search size={20} className="text-gray-400" />
-            <Input
-              type="text"
-              placeholder="タグを検索（名前または説明）..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1"
-            />
-            {searchQuery && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchQuery('')}
-                className="text-gray-600"
-              >
-                <X size={16} className="mr-1" />
-                クリア
-              </Button>
-            )}
-          </div>
-          {searchQuery && (
-            <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中...</p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* タグ作成フォーム */}
       {showForm && (
         <Card className="card-fresh">
@@ -212,6 +182,36 @@ export function TagsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* 検索ボックス */}
+      <Card className="card-fresh">
+        <CardContent className="pt-6">
+          <div className="flex items-center space-x-2">
+            <Search size={20} className="text-gray-400" />
+            <Input
+              type="text"
+              placeholder="タグを検索（名前または説明）..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1"
+            />
+            {searchQuery && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="text-gray-600"
+              >
+                <X size={16} className="mr-1" />
+                クリア
+              </Button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中...</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* タグリスト */}
       <div className="space-y-4">

@@ -190,7 +190,7 @@ export function TagsPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Plus size={20} />
+              <PenLine size={20} />
               <span>{logFormTag.name} のログを作成</span>
             </CardTitle>
           </CardHeader>
@@ -294,7 +294,7 @@ export function TagsPage() {
                             className="text-sky-600 hover:bg-sky-50 hover:text-sky-700 shrink-0"
                             title="このタグでログを作成"
                           >
-                            <Plus size={18} />
+                            <PenLine size={18} />
                           </Button>
                         )}
                       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag, Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -191,7 +191,7 @@ export function TagDetailPage() {
                   </>
                 ) : (
                   <>
-                    <Plus size={16} className="mr-2" />
+                    <PenLine size={16} className="mr-2" />
                     このタグでログを作成
                   </>
                 )}
@@ -247,7 +247,7 @@ export function TagDetailPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Plus size={20} />
+              <PenLine size={20} />
               <span>{tag.name} のログを作成</span>
             </CardTitle>
           </CardHeader>

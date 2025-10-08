@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Lock, PenLine, X, FileText, Plus } from 'lucide-react';
+import { Search, Lock, PenLine, X, FileText } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -132,7 +132,7 @@ export function LogsPage() {
         <Card className="card-fresh">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              {selectedLog ? <PenLine size={20} /> : <Plus size={20} />}
+              <PenLine size={20} />
               <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
             </CardTitle>
           </CardHeader>
@@ -181,7 +181,7 @@ export function LogsPage() {
               <p className="text-gray-600">最初の趣味ログを作成してみましょう！</p>
               {isAuthenticated ? (
                 <Button onClick={() => setShowForm(true)} className="btn-fresh mt-4">
-                  <Plus size={16} className="mr-2" />
+                  <PenLine size={16} className="mr-2" />
                   最初のログを作成
                 </Button>
               ) : (

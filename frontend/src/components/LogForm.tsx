@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PenLine, Plus, X, Loader2 } from 'lucide-react';
+import { PenLine, X, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -176,7 +176,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
               </>
             ) : (
               <>
-                <Plus size={16} className="mr-2" />
+                <PenLine size={16} className="mr-2" />
                 ログを作成
               </>
             )}

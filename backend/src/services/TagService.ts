@@ -184,7 +184,7 @@ export class TagService {
         FROM tags t
         JOIN tags_fts fts ON t.id = fts.tag_id
         WHERE tags_fts MATCH ?
-        ORDER BY t.name ASC
+        ORDER BY t.updated_at DESC
       `;
       countSql = `
         SELECT COUNT(*) as total 
@@ -195,7 +195,7 @@ export class TagService {
       params.push(searchQuery);
     } else {
       // No search, return all tags
-      selectSql = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags ORDER BY name ASC';
+      selectSql = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags ORDER BY updated_at DESC';
       countSql = 'SELECT COUNT(*) as total FROM tags';
     }
 

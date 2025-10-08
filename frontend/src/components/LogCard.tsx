@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Log } from '@/api-types';
+import { getMarkdownSummary } from '@/utils/markdownUtils';
 
 interface LogCardProps {
   log: Log;
@@ -17,8 +18,7 @@ export function LogCard({ log }: LogCardProps) {
 
         {/* コンテンツプレビュー */}
         <p className="text-sm text-gray-600 line-clamp-2">
-          {log.content_md.substring(0, 150)}
-          {log.content_md.length > 150 ? '...' : ''}
+          {getMarkdownSummary(log.content_md, 150)}
         </p>
 
         {/* メタ情報 */}

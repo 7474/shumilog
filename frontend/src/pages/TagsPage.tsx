@@ -286,7 +286,7 @@ export function TagsPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <p className="text-gray-700 line-clamp-2">{tag.description || '説明なし'}</p>
+                      <p className="text-gray-700 line-clamp-2">{tag.description || ''}</p>
                     </CardContent>
                   </div>
                 </Link>

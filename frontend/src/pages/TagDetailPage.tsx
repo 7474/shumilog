@@ -1,10 +1,16 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag, Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
@@ -29,7 +35,6 @@ export function TagDetailPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAuthenticated } = useAuth();
-  const logFormRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchTag = async () => {
@@ -58,14 +63,6 @@ export function TagDetailPage() {
 
     fetchTag();
   }, [name]);
-
-  // ログ作成フォームが表示されたときにスクロール
-  useEffect(() => {
-    if (showLogForm && logFormRef.current) {
-      // Smooth scroll to the form with some offset
-      logFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [showLogForm]);
 
   const fetchTag = async () => {
     if (!name) return;
@@ -252,24 +249,22 @@ export function TagDetailPage() {
       </div>
 
       {/* ログ作成フォーム */}
-      {showLogForm && (
-        <Card className="card-fresh" ref={logFormRef}>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+      <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
               <PenLine size={20} />
               <span>{tag.name} のログを作成</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LogForm
-              key={tag.id}
-              initialContent={formatTagHashtag(tag.name)}
-              onSuccess={handleLogSuccess}
-              onCancel={() => setShowLogForm(false)}
-            />
-          </CardContent>
-        </Card>
-      )}
+            </DialogTitle>
+          </DialogHeader>
+          <LogForm
+            key={tag.id}
+            initialContent={formatTagHashtag(tag.name)}
+            onSuccess={handleLogSuccess}
+            onCancel={() => setShowLogForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* タグ編集フォーム */}
       {showEditForm && (

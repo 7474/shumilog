@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, Lock, PenLine, X, Tag as TagIcon, Plus } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag } from '@/api-types';
@@ -7,6 +7,12 @@ import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -22,7 +28,6 @@ export function TagsPage() {
   const [logFormTag, setLogFormTag] = useState<Tag | null>(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const logFormRef = useRef<HTMLDivElement>(null);
 
   const fetchTags = async (search?: string, isInitialLoad = false) => {
     try {
@@ -61,14 +66,6 @@ export function TagsPage() {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  // ログ作成フォームが表示されたときにスクロール
-  useEffect(() => {
-    if (showLogForm && logFormRef.current) {
-      // Smooth scroll to the form with some offset
-      logFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [showLogForm]);
 
   const handleSuccess = async (tagId?: string) => {
     setShowForm(false);
@@ -195,27 +192,25 @@ export function TagsPage() {
       )}
 
       {/* ログ作成フォーム */}
-      {showLogForm && logFormTag && (
-        <Card className="card-fresh" ref={logFormRef}>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+      <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
               <PenLine size={20} />
-              <span>{logFormTag.name} のログを作成</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LogForm
-              key={logFormTag.id}
-              initialContent={formatTagHashtag(logFormTag.name)}
-              onSuccess={handleLogSuccess}
-              onCancel={() => {
-                setShowLogForm(false);
-                setLogFormTag(null);
-              }}
-            />
-          </CardContent>
-        </Card>
-      )}
+              <span>{logFormTag?.name} のログを作成</span>
+            </DialogTitle>
+          </DialogHeader>
+          <LogForm
+            key={logFormTag?.id}
+            initialContent={logFormTag ? formatTagHashtag(logFormTag.name) : ''}
+            onSuccess={handleLogSuccess}
+            onCancel={() => {
+              setShowLogForm(false);
+              setLogFormTag(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* 検索ボックス */}
       <Card className="card-fresh">

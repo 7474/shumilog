@@ -22,7 +22,7 @@ export function LogCard({ log }: LogCardProps) {
         </p>
 
         {/* メタ情報 */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
           <div className="flex items-center space-x-2">
             {log.user?.avatar_url && (
               <img

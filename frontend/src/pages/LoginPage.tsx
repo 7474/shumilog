@@ -40,8 +40,8 @@ export function LoginPage() {
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center space-y-4">
+          <CardContent className="space-y-4">
+            <div className="text-center space-y-3">
               <Button onClick={handleLogin} className="btn-fresh w-full py-3 text-base font-medium">
                 <Twitter className="mr-2" size={18} />X (Twitter) でログイン
               </Button>

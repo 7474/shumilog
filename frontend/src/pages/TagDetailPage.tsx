@@ -155,9 +155,9 @@ export function TagDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* ヘッダー */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex items-center space-x-4">
           <Link to="/tags">
             <Button variant="outline" size="sm">
@@ -284,11 +284,11 @@ export function TagDetailPage() {
             <span>{tag.name}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {/* 説明 */}
           {tag.description && (
-            <div className="border-t border-gray-100 pt-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <div className="border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <FileText size={16} />
                 説明
               </h3>
@@ -297,8 +297,8 @@ export function TagDetailPage() {
           )}
 
           {/* メタデータ */}
-          <div className="border-t border-gray-100 pt-6 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">ℹ️ 情報</h3>
+          <div className="border-t border-gray-100 pt-4 space-y-2">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">ℹ️ 情報</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="flex items-start space-x-2">
                 <span className="text-gray-500 font-medium min-w-[100px]">📊 使用回数:</span>
@@ -329,8 +329,8 @@ export function TagDetailPage() {
 
           {/* 関連タグ */}
           {tag.associations && tag.associations.length > 0 && (
-            <div className="border-t border-gray-100 pt-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">🔗 関連タグ</h3>
+            <div className="border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">🔗 関連タグ</h3>
               <div className="flex flex-wrap gap-2">
                 {tag.associations.map((associatedTag) => (
                   <Link
@@ -349,8 +349,8 @@ export function TagDetailPage() {
 
           {/* 新着の被参照関連タグ */}
           {tag.recent_referring_tags && tag.recent_referring_tags.length > 0 && (
-            <div className="border-t border-gray-100 pt-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">🔖 新着の被参照関連タグ</h3>
+            <div className="border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">🔖 新着の被参照関連タグ</h3>
               <div className="flex flex-wrap gap-2">
                 {tag.recent_referring_tags.map((referringTag) => (
                   <Link key={referringTag.id} to={`/tags/${encodeURIComponent(referringTag.name)}`}>

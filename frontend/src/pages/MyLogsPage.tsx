@@ -113,9 +113,9 @@ export function MyLogsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* ページヘッダー */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">マイログ</h1>
           <p className="text-gray-600 mt-1">あなたの趣味活動の記録を振り返る</p>
@@ -155,7 +155,7 @@ export function MyLogsPage() {
 
       {/* 統計情報 */}
       <Card className="card-fresh bg-gradient-to-br from-fresh-50 to-sky-50">
-        <CardContent className="pt-6">
+        <CardContent className="pt-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-fresh-600">{logs.length}</div>
@@ -179,7 +179,7 @@ export function MyLogsPage() {
 
       {/* 検索フォーム */}
       <Card className="card-fresh">
-        <CardContent className="pt-6">
+        <CardContent className="pt-4">
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input
               type="text"

@@ -293,7 +293,7 @@ export function TagsPage() {
 
                 {/* Action buttons - always visible for authenticated users */}
                 {isAuthenticated && (
-                  <CardFooter className="border-t border-gray-100 py-3 px-4">
+                  <CardFooter className="border-t border-gray-100 py-3 px-4 flex justify-end">
                     <Button
                       onClick={(e) => handleCreateLogWithTag(tag, e)}
                       size="sm"

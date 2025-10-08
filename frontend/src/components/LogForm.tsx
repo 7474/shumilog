@@ -28,7 +28,7 @@ type LogFormValues = z.infer<typeof formSchema>;
 interface LogFormProps {
   log?: Log;
   initialContent?: string;
-  onSuccess: () => void;
+  onSuccess: (logId?: string) => void;
   onCancel?: () => void;
 }
 
@@ -92,16 +92,16 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
         throw new Error(errorData.error || 'Failed to save log');
       }
 
-      // Upload images if creating new log
-      if (!log && selectedImages.length > 0) {
-        const createdLog = await response.json();
-        await uploadImages(createdLog.id);
-      } else if (log && selectedImages.length > 0) {
-        // Upload additional images for existing log
-        await uploadImages(log.id);
+      const resultLog = await response.json();
+
+      // Upload images if needed
+      if (selectedImages.length > 0) {
+        const logId = log ? log.id : resultLog.id;
+        await uploadImages(logId);
       }
 
-      onSuccess();
+      // Pass the log ID to onSuccess (either existing log ID or newly created log ID)
+      onSuccess(log ? log.id : resultLog.id);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);

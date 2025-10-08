@@ -49,7 +49,7 @@ export function LogDetailPage() {
     fetchLog();
   }, [id]);
 
-  const handleEditSuccess = () => {
+  const handleEditSuccess = (logId?: string) => {
     setIsEditing(false);
     // Refetch log to get updated data
     const fetchLog = async () => {

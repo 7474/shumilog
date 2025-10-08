@@ -61,9 +61,27 @@ export function TagsPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const handleSuccess = () => {
+  const handleSuccess = async (tagId?: string) => {
     setShowForm(false);
+    const wasCreating = !selectedTag;
     setSelectedTag(undefined);
+    
+    if (tagId && wasCreating) {
+      // For newly created tags, navigate to the detail page
+      // We need to fetch the tag to get its name for the URL
+      try {
+        const response = await api.tags[':id'].$get({ param: { id: tagId } });
+        if (response.ok) {
+          const tag = await response.json();
+          navigate(`/tags/${encodeURIComponent(tag.name)}`);
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to fetch created tag:', err);
+      }
+    }
+    
+    // For edits or if navigation failed, just refresh the tag list
     fetchTags();
   };
 
@@ -79,10 +97,16 @@ export function TagsPage() {
     setShowLogForm(true);
   };
 
-  const handleLogSuccess = () => {
+  const handleLogSuccess = (logId?: string) => {
     setShowLogForm(false);
     setLogFormTag(null);
-    navigate('/logs');
+    if (logId) {
+      // Navigate to the newly created log's detail page
+      navigate(`/logs/${logId}`);
+    } else {
+      // Fallback to logs list if no ID is provided
+      navigate('/logs');
+    }
   };
 
   const formatTagHashtag = (tagName: string): string => {

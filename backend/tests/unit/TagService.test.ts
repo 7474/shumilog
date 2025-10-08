@@ -249,6 +249,50 @@ describe('TagService', () => {
       expect(result1.items.map(t => t.id).sort()).toEqual(result2.items.map(t => t.id).sort());
       expect(result1.items.map(t => t.id).sort()).toEqual(result3.items.map(t => t.id).sort());
     });
+
+    it('should return tags ordered by updated_at DESC (newest first)', async () => {
+      // Clear and create tags with delays to ensure different timestamps
+      await clearTestData();
+      await createTestUser('user-1', 'tag-user-1');
+      
+      const tag1 = await tagService.createTag({ name: 'First Tag' }, 'user-1');
+      
+      // Small delay to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      const tag2 = await tagService.createTag({ name: 'Second Tag' }, 'user-1');
+      
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      const tag3 = await tagService.createTag({ name: 'Third Tag' }, 'user-1');
+
+      const result = await tagService.searchTags();
+
+      // Should be ordered by updated_at DESC (newest first)
+      expect(result.items).toHaveLength(3);
+      expect(result.items[0].id).toBe(tag3.id); // Most recent
+      expect(result.items[1].id).toBe(tag2.id);
+      expect(result.items[2].id).toBe(tag1.id); // Oldest
+    });
+
+    it('should maintain updated_at DESC order when searching', async () => {
+      // Clear and create tags with delays
+      await clearTestData();
+      await createTestUser('user-1', 'tag-user-1');
+      
+      await tagService.createTag({ name: 'Anime First', description: 'anime content' }, 'user-1');
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const tag2 = await tagService.createTag({ name: 'Anime Second', description: 'more anime' }, 'user-1');
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const tag3 = await tagService.createTag({ name: 'Anime Third', description: 'latest anime' }, 'user-1');
+
+      const result = await tagService.searchTags({ search: 'anime' });
+
+      // Should be ordered by updated_at DESC even when searching
+      expect(result.items.length).toBeGreaterThanOrEqual(2);
+      expect(result.items[0].id).toBe(tag3.id); // Most recent matching tag
+      expect(result.items[1].id).toBe(tag2.id);
+    });
   });
 
   describe('getTagUsageStats', () => {

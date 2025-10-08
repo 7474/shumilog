@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Search, Lock, PenLine, X, Tag as TagIcon, Plus } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag } from '@/api-types';
@@ -22,6 +22,7 @@ export function TagsPage() {
   const [logFormTag, setLogFormTag] = useState<Tag | null>(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const logFormRef = useRef<HTMLDivElement>(null);
 
   const fetchTags = async (search?: string, isInitialLoad = false) => {
     try {
@@ -60,6 +61,14 @@ export function TagsPage() {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // ログ作成フォームが表示されたときにスクロール
+  useEffect(() => {
+    if (showLogForm && logFormRef.current) {
+      // Smooth scroll to the form with some offset
+      logFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showLogForm]);
 
   const handleSuccess = async (tagId?: string) => {
     setShowForm(false);
@@ -187,7 +196,7 @@ export function TagsPage() {
 
       {/* ログ作成フォーム */}
       {showLogForm && logFormTag && (
-        <Card className="card-fresh">
+        <Card className="card-fresh" ref={logFormRef}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <PenLine size={20} />
@@ -196,6 +205,7 @@ export function TagsPage() {
           </CardHeader>
           <CardContent>
             <LogForm
+              key={logFormTag.id}
               initialContent={formatTagHashtag(logFormTag.name)}
               onSuccess={handleLogSuccess}
               onCancel={() => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
@@ -29,6 +29,7 @@ export function TagDetailPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAuthenticated } = useAuth();
+  const logFormRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchTag = async () => {
@@ -57,6 +58,14 @@ export function TagDetailPage() {
 
     fetchTag();
   }, [name]);
+
+  // ログ作成フォームが表示されたときにスクロール
+  useEffect(() => {
+    if (showLogForm && logFormRef.current) {
+      // Smooth scroll to the form with some offset
+      logFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showLogForm]);
 
   const fetchTag = async () => {
     if (!name) return;
@@ -244,7 +253,7 @@ export function TagDetailPage() {
 
       {/* ログ作成フォーム */}
       {showLogForm && (
-        <Card className="card-fresh">
+        <Card className="card-fresh" ref={logFormRef}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <PenLine size={20} />
@@ -253,6 +262,7 @@ export function TagDetailPage() {
           </CardHeader>
           <CardContent>
             <LogForm
+              key={tag.id}
               initialContent={formatTagHashtag(tag.name)}
               onSuccess={handleLogSuccess}
               onCancel={() => setShowLogForm(false)}

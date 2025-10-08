@@ -112,4 +112,20 @@ describe('LogCard', () => {
     const link = container.querySelector('a');
     expect(link).toHaveAttribute('href', '/logs/1');
   });
+
+  it('removes HTML comments from content preview', () => {
+    const logWithHtmlComments: Log = {
+      ...mockLog,
+      content_md: '<!-- AI生成コンテンツ開始 -->\n\nこれはAI生成のテストコンテンツです。\n\n<!-- AI生成コンテンツ終了 -->',
+    };
+    renderWithRouter(<LogCard log={logWithHtmlComments} />);
+    
+    // HTMLコメントが表示されていないことを確認
+    expect(screen.queryByText(/AI生成コンテンツ開始/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/AI生成コンテンツ終了/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/<!--/)).not.toBeInTheDocument();
+    
+    // 実際のコンテンツは表示されていることを確認
+    expect(screen.getByText(/これはAI生成のテストコンテンツです。/)).toBeInTheDocument();
+  });
 });

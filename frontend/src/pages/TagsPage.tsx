@@ -7,6 +7,12 @@ import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -186,26 +192,25 @@ export function TagsPage() {
       )}
 
       {/* ログ作成フォーム */}
-      {showLogForm && logFormTag && (
-        <Card className="card-fresh">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+      <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
               <PenLine size={20} />
-              <span>{logFormTag.name} のログを作成</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LogForm
-              initialContent={formatTagHashtag(logFormTag.name)}
-              onSuccess={handleLogSuccess}
-              onCancel={() => {
-                setShowLogForm(false);
-                setLogFormTag(null);
-              }}
-            />
-          </CardContent>
-        </Card>
-      )}
+              <span>{logFormTag?.name} のログを作成</span>
+            </DialogTitle>
+          </DialogHeader>
+          <LogForm
+            key={logFormTag?.id}
+            initialContent={logFormTag ? formatTagHashtag(logFormTag.name) : ''}
+            onSuccess={handleLogSuccess}
+            onCancel={() => {
+              setShowLogForm(false);
+              setLogFormTag(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* 検索ボックス */}
       <Card className="card-fresh">

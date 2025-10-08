@@ -152,6 +152,7 @@ X-Cache-Status: MISS  # または HIT
 - [Cloudflare Workers Cache API ドキュメント](https://developers.cloudflare.com/workers/runtime-apis/cache/)
 - [Cloudflare Workers Cache API サンプル（Hono）](https://developers.cloudflare.com/workers/examples/cache-api/)
 - [Cache-Control ヘッダーの仕様](https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Cache-Control)
+- [キャッシュ無効化の実装](./cache-invalidation-implementation.md) - コンテンツ更新時のキャッシュ無効化
 
 ## まとめ
 
@@ -161,5 +162,6 @@ X-Cache-Status: MISS  # または HIT
 2. **負荷軽減**: データベースクエリの削減
 3. **コスト削減**: Cloudflare Workers の実行時間削減
 4. **透過的**: 既存のAPIに変更不要で自動的にキャッシュ
+5. **即時反映**: コンテンツ更新時にキャッシュが無効化され、最新のコンテンツが表示される
 
-キャッシュは適切なタイミングで自動的に期限切れになるため、データの鮮度とパフォーマンスのバランスが取れています。
+キャッシュは適切なタイミングで自動的に期限切れになり、コンテンツ更新時には即座に無効化されるため、データの鮮度とパフォーマンスのバランスが取れています。

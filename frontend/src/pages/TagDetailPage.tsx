@@ -286,17 +286,13 @@ export function TagDetailPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* 説明 */}
-          {tag.description ? (
+          {tag.description && (
             <div className="border-t border-gray-100 pt-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <FileText size={16} />
                 説明
               </h3>
               <MarkdownRenderer content={tag.description} tags={tag.associations} />
-            </div>
-          ) : (
-            <div className="border-t border-gray-100 pt-6">
-              <p className="text-gray-500 italic">説明はありません</p>
             </div>
           )}
 

@@ -205,7 +205,7 @@ export function LogDetailPage() {
             <CardHeader className="space-y-4">
               {/* タイトル */}
               <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {log.title || 'タイトルなし'}
+                {log.title}
               </CardTitle>
 
               {/* 作者情報 */}

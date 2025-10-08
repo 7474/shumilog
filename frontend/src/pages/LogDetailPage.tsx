@@ -126,9 +126,9 @@ export function LogDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* ヘッダー: 戻るボタンと編集/削除ボタン */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <Link to="/logs">
           <Button variant="outline" className="flex items-center gap-2">
             <ArrowLeft size={16} />

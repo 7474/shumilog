@@ -8,7 +8,7 @@ export function Header() {
 
   return (
     <header className="mobile-header">
-      <div className="container-mobile py-4">
+      <div className="container-mobile py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-3 text-decoration-none">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-fresh-400 to-sky-500 flex items-center justify-center shadow-lg p-1.5">

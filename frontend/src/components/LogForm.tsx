@@ -112,7 +112,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
             <p className="text-sm font-medium">{error}</p>
@@ -162,7 +162,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
             url: `/api/logs/${log.id}/images/${img.id}`,
           }))}
         />
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-4">
           <Button type="submit" className="btn-fresh" disabled={isSubmitting || uploadingImages}>
             {isSubmitting || uploadingImages ? (
               <>

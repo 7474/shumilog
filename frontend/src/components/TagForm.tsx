@@ -153,9 +153,9 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
             <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
             <p className="text-red-700 text-sm flex-1">{error}</p>
           </div>
@@ -164,7 +164,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           control={form.control}
           name="name"
           render={({ field }) => (
-            <FormItem className="space-y-2">
+            <FormItem className="space-y-1.5">
               <FormLabel className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <TagIcon size={16} />
                 タグ名
@@ -184,7 +184,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
           control={form.control}
           name="description"
           render={({ field }) => (
-            <FormItem className="space-y-2">
+            <FormItem className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <FormLabel className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <FileText size={16} />
@@ -223,7 +223,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
             </FormItem>
           )}
         />
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button type="submit" className="btn-fresh flex-1 sm:flex-none px-6 py-2.5" disabled={isSubmitting}>
             {isSubmitting ? (
               <>

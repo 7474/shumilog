@@ -96,9 +96,9 @@ export function LogsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* ページヘッダー */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">趣味ログ</h1>
           <p className="text-gray-600 mt-1">あなたの趣味活動を記録しましょう</p>
@@ -144,7 +144,7 @@ export function LogsPage() {
 
       {/* 検索フォーム */}
       <Card className="card-fresh">
-        <CardContent className="pt-6">
+        <CardContent className="pt-4">
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input
               type="text"

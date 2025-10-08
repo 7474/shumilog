@@ -6,7 +6,7 @@ export function AppLayout() {
   return (
     <div className="app-container flex flex-col min-h-screen">
       <Header />
-      <main className="container-mobile py-6 space-y-8 flex-1">
+      <main className="container-mobile py-4 sm:py-6 space-y-6 flex-1">
         <Outlet />
       </main>
       <Footer />

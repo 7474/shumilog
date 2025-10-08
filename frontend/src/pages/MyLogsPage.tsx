@@ -55,7 +55,7 @@ export function MyLogsPage() {
     fetchLogs(undefined, true);
   }, []);
 
-  const handleSuccess = () => {
+  const handleSuccess = (logId?: string) => {
     setShowForm(false);
     setSelectedLog(undefined);
     fetchLogs(searchQuery || undefined, false);

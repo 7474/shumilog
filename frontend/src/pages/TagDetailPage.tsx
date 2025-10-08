@@ -104,9 +104,15 @@ export function TagDetailPage() {
     }
   };
 
-  const handleLogSuccess = () => {
+  const handleLogSuccess = (logId?: string) => {
     setShowLogForm(false);
-    navigate('/logs');
+    if (logId) {
+      // Navigate to the newly created log's detail page
+      navigate(`/logs/${logId}`);
+    } else {
+      // Fallback to logs list if no ID is provided
+      navigate('/logs');
+    }
   };
 
   const formatTagHashtag = (tagName: string): string => {

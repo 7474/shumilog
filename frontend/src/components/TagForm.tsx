@@ -38,7 +38,7 @@ type TagFormValues = z.infer<typeof formSchema>;
 
 interface TagFormProps {
   tag?: Tag;
-  onSuccess: () => void;
+  onSuccess: (tagId?: string) => void;
   onCancel?: () => void;
 }
 
@@ -68,7 +68,10 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to save tag');
       }
-      onSuccess();
+
+      const resultTag = await response.json();
+      // Pass the tag ID to onSuccess (either existing tag ID or newly created tag ID)
+      onSuccess(tag ? tag.id : resultTag.id);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);

@@ -279,31 +279,31 @@ export function TagsPage() {
                 {/* Clickable card content area */}
                 <Link to={`/tags/${encodeURIComponent(tag.name)}`}>
                   <div className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2">
-                        <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
-                        <span>{tag.name}</span>
-                      </CardTitle>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2 flex-1">
+                          <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
+                          <span>{tag.name}</span>
+                        </CardTitle>
+                        {/* Action button - positioned next to title */}
+                        {isAuthenticated && (
+                          <Button
+                            onClick={(e) => handleCreateLogWithTag(tag, e)}
+                            size="sm"
+                            variant="ghost"
+                            className="text-sky-600 hover:bg-sky-50 hover:text-sky-700 shrink-0"
+                            title="このタグでログを作成"
+                          >
+                            <Plus size={18} />
+                          </Button>
+                        )}
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="pt-0">
                       <p className="text-gray-700 line-clamp-2">{tag.description || ''}</p>
                     </CardContent>
                   </div>
                 </Link>
-
-                {/* Action buttons - always visible for authenticated users */}
-                {isAuthenticated && (
-                  <CardFooter className="bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 py-3 px-4">
-                    <Button
-                      onClick={(e) => handleCreateLogWithTag(tag, e)}
-                      size="sm"
-                      className="btn-fresh w-full"
-                    >
-                      <Plus size={16} className="mr-2" />
-                      このタグでログを作成
-                    </Button>
-                  </CardFooter>
-                )}
               </Card>
             ))}
           </div>

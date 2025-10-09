@@ -174,7 +174,7 @@ export function TagDetailPage() {
   return (
     <div className="space-y-4">
       {/* ヘッダー: 戻るボタンと操作ボタン */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+      <div className="flex flex-wrap items-center gap-3">
         <Link to="/tags">
           <Button variant="outline" className="flex items-center gap-2">
             <ArrowLeft size={16} />
@@ -182,7 +182,7 @@ export function TagDetailPage() {
           </Button>
         </Link>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 ml-auto">
           {/* プライマリアクション: このタグでログを作成（認証済みユーザーのみ） */}
           {isAuthenticated && (
             <Button

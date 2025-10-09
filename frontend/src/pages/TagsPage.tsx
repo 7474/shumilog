@@ -234,7 +234,7 @@ export function TagsPage() {
               </Button>
             )}
           </form>
-          {searchQuery && <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中...</p>}
+          {searching && searchQuery && <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中...</p>}
         </CardContent>
       </Card>
 

@@ -525,6 +525,9 @@ paths:
                 required:
                   - items
                   - total
+                  - limit
+                  - offset
+                  - has_more
                 properties:
                   items:
                     type: array
@@ -532,6 +535,12 @@ paths:
                       $ref: '#/components/schemas/Log'
                   total:
                     type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  has_more:
+                    type: boolean
 
     post:
       summary: Create new log

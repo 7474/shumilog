@@ -250,6 +250,27 @@ describe('TagService', () => {
       expect(result1.items.map(t => t.id).sort()).toEqual(result3.items.map(t => t.id).sort());
     });
 
+    it('should support 1-character search using LIKE fallback', async () => {
+      // Single character search should work with LIKE fallback
+      const result = await tagService.searchTags({ search: 'A' });
+
+      // Should find tags containing 'A' (Anime, Attack on Titan, Manga, etc.)
+      expect(result.items.length).toBeGreaterThan(0);
+      expect(result.items.some(tag => tag.name.toLowerCase().includes('a'))).toBe(true);
+    });
+
+    it('should support 2-character search using LIKE fallback', async () => {
+      // Two character search should work with LIKE fallback
+      const result = await tagService.searchTags({ search: 'an' });
+
+      // Should find tags containing 'an' (Anime, Manga, etc.)
+      expect(result.items.length).toBeGreaterThan(0);
+      expect(result.items.some(tag => 
+        tag.name.toLowerCase().includes('an') || 
+        tag.description?.toLowerCase().includes('an')
+      )).toBe(true);
+    });
+
     it('should return tags ordered by updated_at DESC (newest first)', async () => {
       // Clear and create tags with delays to ensure different timestamps
       await clearTestData();
@@ -421,6 +442,27 @@ describe('TagService', () => {
       expect(result1.length).toBe(result3.length);
       expect(result1.map(t => t.id).sort()).toEqual(result2.map(t => t.id).sort());
       expect(result1.map(t => t.id).sort()).toEqual(result3.map(t => t.id).sort());
+    });
+
+    it('should support 1-character search using LIKE fallback', async () => {
+      // Single character search should work with LIKE fallback
+      const result = await tagService.getTagSuggestions('A');
+
+      // Should find tags containing 'A' (Anime, Animation, etc.)
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.some(tag => tag.name.toLowerCase().includes('a'))).toBe(true);
+    });
+
+    it('should support 2-character search using LIKE fallback', async () => {
+      // Two character search should work with LIKE fallback
+      const result = await tagService.getTagSuggestions('an');
+
+      // Should find tags containing 'an' (Anime, Animation, etc.)
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.some(tag => 
+        tag.name.toLowerCase().includes('an') || 
+        tag.description?.toLowerCase().includes('an')
+      )).toBe(true);
     });
   });
 

@@ -160,15 +160,22 @@ export function MyLogsPage() {
         
         <div className="flex flex-wrap gap-2 ml-auto">
           {/* プライマリアクション: 新しいログを作成 */}
-          {!showForm && (
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
-            >
-              <PenLine size={16} className="mr-2" />
-              新しいログを作成
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
+          >
+            {showForm ? (
+              <>
+                <X size={16} className="mr-2" />
+                キャンセル
+              </>
+            ) : (
+              <>
+                <PenLine size={16} className="mr-2" />
+                新しいログを作成
+              </>
+            )}
+          </Button>
 
           {/* その他の操作 - ドロップダウンメニュー */}
           <DropdownMenu>

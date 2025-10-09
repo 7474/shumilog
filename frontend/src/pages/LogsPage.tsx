@@ -135,25 +135,28 @@ export function LogsPage() {
           <p className="text-gray-600 mt-1">あなたの趣味活動を記録しましょう</p>
         </div>
         <div className="flex flex-wrap gap-2 ml-auto">
-          {!showForm && (
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
-              disabled={!isAuthenticated}
-            >
-              {!isAuthenticated? (
-                <>
-                  <Lock size={16} className="mr-2" />
-                  ログインして作成
-                </>
-              ) : (
-                <>
-                  <PenLine size={16} className="mr-2" />
-                  新しいログを作成
-                </>
-              )}
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
+            disabled={!isAuthenticated}
+          >
+            {!isAuthenticated ? (
+              <>
+                <Lock size={16} className="mr-2" />
+                ログインして作成
+              </>
+            ) : showForm ? (
+              <>
+                <X size={16} className="mr-2" />
+                キャンセル
+              </>
+            ) : (
+              <>
+                <PenLine size={16} className="mr-2" />
+                新しいログを作成
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

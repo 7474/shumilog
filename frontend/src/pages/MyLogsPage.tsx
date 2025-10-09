@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, PenLine, X, FileText, BookOpen, LogOut } from 'lucide-react';
+import { PenLine, X, FileText, LogOut } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -17,7 +17,7 @@ export function MyLogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
-  const { isAuthenticated, clearAuth } = useAuth();
+  const { clearAuth } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -55,7 +55,7 @@ export function MyLogsPage() {
     fetchLogs(undefined, true);
   }, []);
 
-  const handleSuccess = (logId?: string) => {
+  const handleSuccess = (_logId?: string) => {
     setShowForm(false);
     setSelectedLog(undefined);
     fetchLogs(searchQuery || undefined, false);
@@ -135,6 +135,19 @@ export function MyLogsPage() {
               新しいログを作成
             </>
           )}
+        </Button>
+      </div>
+
+      {/* ナビゲーション領域 */}
+      <div className="flex justify-end items-center py-2 border-b border-gray-200">
+        <Button
+          onClick={handleLogout}
+          variant="ghost"
+          size="sm"
+          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+        >
+          <LogOut size={14} className="mr-1.5" />
+          <span className="text-xs">ログアウト</span>
         </Button>
       </div>
 
@@ -227,21 +240,6 @@ export function MyLogsPage() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* ログアウト */}
-      <div className="pt-8 border-t border-gray-200">
-        <div className="flex justify-center">
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            size="sm"
-            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-          >
-            <LogOut size={16} className="mr-2" />
-            <span>ログアウト</span>
-          </Button>
-        </div>
       </div>
     </div>
   );

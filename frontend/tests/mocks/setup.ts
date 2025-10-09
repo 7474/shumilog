@@ -2,23 +2,15 @@ import { vi } from 'vitest';
 
 // 1. Create a mock object for the API
 export const mockApi = {
-  logs: {
-    $get: vi.fn(),
-    ':id': {
-      $delete: vi.fn(),
-    },
-  },
-  tags: {
-    $get: vi.fn(),
-  },
+  GET: vi.fn(),
+  POST: vi.fn(),
+  PUT: vi.fn(),
+  DELETE: vi.fn(),
 };
 
 // 2. Mock the entire API service module
 vi.mock('@/services/api', () => ({
   api: mockApi,
-  client: {
-    api: mockApi,
-  },
 }));
 
 // 3. Create a mock for the useAuth hook's return value

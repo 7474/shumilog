@@ -23,11 +23,11 @@ const renderWithRouter = (initialEntries: string[]) => {
 
 describe('Tag Management Integration Test', () => {
   beforeEach(() => {
-    mockApi.tags.$get.mockClear();
+    mockApi.GET.mockClear();
   });
 
   afterEach(() => {
-    mockApi.tags.$get.mockRestore();
+    mockApi.GET.mockRestore();
   });
 
   it('should display a list of tags', async () => {
@@ -36,11 +36,10 @@ describe('Tag Management Integration Test', () => {
       { id: '2', name: 'TypeScript' },
     ];
 
-    const mockResponse = {
-      ok: true,
-      json: () => Promise.resolve({ items: tags }),
-    };
-    mockApi.tags.$get.mockResolvedValue(mockResponse);
+    mockApi.GET.mockResolvedValue({
+      data: { items: tags },
+      error: undefined,
+    });
 
     renderWithRouter(['/tags']);
 
@@ -49,7 +48,7 @@ describe('Tag Management Integration Test', () => {
       expect(screen.getByText('TypeScript')).toBeInTheDocument();
     });
 
-    expect(mockApi.tags.$get).toHaveBeenCalledTimes(1);
+    expect(mockApi.GET).toHaveBeenCalledTimes(1);
   });
 
   it('should not display "説明なし" for tags without description', async () => {
@@ -59,11 +58,10 @@ describe('Tag Management Integration Test', () => {
       { id: '3', name: 'Vue' }, // No description field
     ];
 
-    const mockResponse = {
-      ok: true,
-      json: () => Promise.resolve({ items: tags }),
-    };
-    mockApi.tags.$get.mockResolvedValue(mockResponse);
+    mockApi.GET.mockResolvedValue({
+      data: { items: tags },
+      error: undefined,
+    });
 
     renderWithRouter(['/tags']);
 

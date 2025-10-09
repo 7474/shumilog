@@ -4,10 +4,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { LogForm } from '@/components/LogForm';
 import { useAuth } from '@/hooks/useAuth';
 
-const { mockPost, mockPut } = vi.hoisted(() => {
+const { mockPOST, mockPUT } = vi.hoisted(() => {
   return {
-    mockPost: vi.fn(),
-    mockPut: vi.fn(),
+    mockPOST: vi.fn(),
+    mockPUT: vi.fn(),
   };
 });
 
@@ -19,12 +19,8 @@ vi.mock('@/hooks/useAuth', () => ({
 // Mock the API service
 vi.mock('@/services/api', () => ({
   api: {
-    logs: {
-      $post: mockPost,
-      ':id': {
-        $put: mockPut,
-      },
-    },
+    POST: mockPOST,
+    PUT: mockPUT,
   },
 }));
 
@@ -42,18 +38,26 @@ describe('LogForm', () => {
     vi.clearAllMocks();
 
     // Mock implementations to return a successful response
-    mockPost.mockImplementation(async () => {
-      return new Response(JSON.stringify({ id: 'new-log-id', title: 'New Log Title' }), {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    mockPOST.mockImplementation(async () => {
+      return {
+        data: { id: 'new-log-id', title: 'New Log Title' },
+        error: undefined,
+        response: new Response(JSON.stringify({ id: 'new-log-id', title: 'New Log Title' }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      };
     });
 
-    mockPut.mockImplementation(async () => {
-      return new Response(JSON.stringify({ id: 'log-1', title: 'Updated Log Title' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    mockPUT.mockImplementation(async () => {
+      return {
+        data: { id: 'log-1', title: 'Updated Log Title' },
+        error: undefined,
+        response: new Response(JSON.stringify({ id: 'log-1', title: 'Updated Log Title' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      };
     });
   });
 
@@ -92,7 +96,7 @@ describe('LogForm', () => {
     expect(screen.getByRole('button', { name: /ログを更新/i })).toBeInTheDocument();
   });
 
-  it('should call api.logs.$post on form submission for new log', async () => {
+  it('should call api.POST on form submission for new log', async () => {
     render(
       <MemoryRouter>
         <LogForm onSuccess={mockOnSuccess} />
@@ -108,8 +112,8 @@ describe('LogForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /ログを作成/i }));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith({
-        json: {
+      expect(mockPOST).toHaveBeenCalledWith('/logs', {
+        body: {
           title: 'New Log Title',
           content_md: 'New content.',
         },
@@ -140,9 +144,9 @@ describe('LogForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /ログを更新/i }));
 
     await waitFor(() => {
-      expect(mockPut).toHaveBeenCalledWith({
-        param: { id: 'log-1' },
-        json: {
+      expect(mockPUT).toHaveBeenCalledWith('/logs/{id}', {
+        params: { path: { id: 'log-1' } },
+        body: {
           title: 'Updated Log Title',
           content_md: 'Log content',
         },

@@ -154,8 +154,8 @@ describe('LogCard', () => {
     // URLに最適化パラメータが含まれていることを確認
     const src = img?.getAttribute('src');
     expect(src).toContain('/logs/1/images/image_1');
-    expect(src).toContain('width=400');
-    expect(src).toContain('height=225');
+    expect(src).toContain('width=80');
+    expect(src).toContain('height=80');
     expect(src).toContain('fit=cover');
   });
 

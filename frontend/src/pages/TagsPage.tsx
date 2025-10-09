@@ -285,7 +285,7 @@ export function TagsPage() {
                 {/* Clickable card content area */}
                 <Link to={`/tags/${encodeURIComponent(tag.name)}`}>
                   <div className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <CardHeader className="pb-3">
+                    <CardHeader>
                       <div className="flex items-start justify-between gap-3">
                         <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2 flex-1">
                           <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
@@ -306,7 +306,7 @@ export function TagsPage() {
                       </div>
                     </CardHeader>
                     {tag.description && (
-                      <CardContent className="pt-0">
+                      <CardContent className="pt-3">
                         <p className="text-gray-700 line-clamp-2">{getMarkdownSummary(tag.description || '', 150)}</p>
                       </CardContent>
                     )}

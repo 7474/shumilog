@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2, Edit } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag, Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -219,7 +219,7 @@ export function TagDetailPage() {
                   </>
                 ) : (
                   <>
-                    <PenLine size={16} className="mr-2" />
+                    <Edit size={16} className="mr-2" />
                     編集
                   </>
                 )}

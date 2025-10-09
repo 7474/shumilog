@@ -33,10 +33,34 @@ npm run generate:types
 ```typescript
 import { Log, Tag, User } from '@/api-types';
 
-// 型安全なAPIクライアント使用
-const response = await api.logs.$get();
-const data: { items: Log[]; total: number } = await response.json();
+// openapi-fetchによる型安全なAPIクライアント
+const { data, error } = await api.GET('/logs', {
+  params: { query: { search: 'anime' } }
+});
+
+if (data) {
+  // dataは自動的に型付けされる: { items: Log[], total: number }
+  data.items.forEach(log => console.log(log.title));
+}
 ```
+
+## 実装詳細
+
+### APIクライアント
+
+**openapi-fetch**を使用して、OpenAPI仕様から自動生成された型定義に基づく完全な型安全性を実現しています。
+
+```typescript
+// frontend/src/services/api.ts
+import createClient from 'openapi-fetch';
+import type { paths } from '@/types/api';
+
+export const api = createClient<paths>({
+  baseUrl: import.meta.env.VITE_API_BASE_URL,
+  credentials: 'include',
+});
+```
+
 
 ## メリット
 

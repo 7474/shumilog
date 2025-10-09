@@ -144,7 +144,7 @@ export function LogsPage() {
 
       {/* 検索フォーム */}
       <Card className="card-fresh">
-        <CardContent className="pt-4">
+        <CardContent>
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input
               type="text"

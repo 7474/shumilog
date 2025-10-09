@@ -21,12 +21,15 @@ export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedTag, setSelectedTag] = useState<Tag | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [showLogForm, setShowLogForm] = useState(false);
   const [logFormTag, setLogFormTag] = useState<Tag | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -34,16 +37,19 @@ export function TagsPage() {
     try {
       if (isInitialLoad) {
         setLoading(true);
+        setOffset(0);
       } else {
         setSearching(true);
       }
       const { data, error: fetchError } = await api.GET('/tags', {
-        params: { query: search ? { search } : {} },
+        params: { query: search ? { search, limit: 20, offset: 0 } : { limit: 20, offset: 0 } },
       });
       if (fetchError || !data) {
         throw new Error('Failed to fetch tags');
       }
       setTags(data.items);
+      setHasMore(data.has_more);
+      setOffset(data.limit); // Next offset will be current limit (20)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
@@ -52,6 +58,31 @@ export function TagsPage() {
       } else {
         setSearching(false);
       }
+    }
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    
+    try {
+      setLoadingMore(true);
+      const { data, error: fetchError } = await api.GET('/tags', {
+        params: { 
+          query: searchQuery 
+            ? { search: searchQuery, limit: 20, offset } 
+            : { limit: 20, offset }
+        },
+      });
+      if (fetchError || !data) {
+        throw new Error('Failed to fetch more tags');
+      }
+      setTags((prev) => [...prev, ...data.items]);
+      setHasMore(data.has_more);
+      setOffset(offset + data.limit);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -288,41 +319,61 @@ export function TagsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid-responsive">
-            {tags.map((tag) => (
-              <Card key={tag.id} className="card-fresh overflow-hidden">
-                {/* Clickable card content area */}
-                <Link to={`/tags/${encodeURIComponent(tag.name)}`}>
-                  <div className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-3">
-                        <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2 flex-1">
-                          <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
-                          <span>{tag.name}</span>
-                        </CardTitle>
-                        {/* Action button - positioned next to title */}
-                        {isAuthenticated && (
-                          <Button
-                            onClick={(e) => handleCreateLogWithTag(tag, e)}
-                            size="sm"
-                            variant="ghost"
-                            className="text-sky-600 hover:bg-sky-50 hover:text-sky-700 shrink-0"
-                            title="このタグでログを作成"
-                          >
-                            <PenLine size={18} />
-                          </Button>
-                        )}
-                      </div>
-                    </CardHeader>
-                    {tag.description && (
-                      <CardContent className="pt-3">
-                        <p className="text-gray-700 line-clamp-2">{getMarkdownSummary(tag.description || '', 150)}</p>
-                      </CardContent>
-                    )}
-                  </div>
-                </Link>
-              </Card>
-            ))}
+          <div className="space-y-4">
+            <div className="grid-responsive">
+              {tags.map((tag) => (
+                <Card key={tag.id} className="card-fresh overflow-hidden">
+                  {/* Clickable card content area */}
+                  <Link to={`/tags/${encodeURIComponent(tag.name)}`}>
+                    <div className="cursor-pointer hover:bg-gray-50 transition-colors">
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-3">
+                          <CardTitle className="text-lg font-bold text-gray-900 flex items-center space-x-2 flex-1">
+                            <span className="w-4 h-4 rounded-full bg-gradient-to-r from-sky-400 to-fresh-400"></span>
+                            <span>{tag.name}</span>
+                          </CardTitle>
+                          {/* Action button - positioned next to title */}
+                          {isAuthenticated && (
+                            <Button
+                              onClick={(e) => handleCreateLogWithTag(tag, e)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-sky-600 hover:bg-sky-50 hover:text-sky-700 shrink-0"
+                              title="このタグでログを作成"
+                            >
+                              <PenLine size={18} />
+                            </Button>
+                          )}
+                        </div>
+                      </CardHeader>
+                      {tag.description && (
+                        <CardContent className="pt-3">
+                          <p className="text-gray-700 line-clamp-2">{getMarkdownSummary(tag.description || '', 150)}</p>
+                        </CardContent>
+                      )}
+                    </div>
+                  </Link>
+                </Card>
+              ))}
+            </div>
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="btn-fresh"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      読み込み中...
+                    </>
+                  ) : (
+                    'もっと見る'
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

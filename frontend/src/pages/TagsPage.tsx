@@ -215,7 +215,7 @@ export function TagsPage() {
 
       {/* 検索ボックス */}
       <Card className="card-fresh">
-        <CardContent className="pt-4">
+        <CardContent>
           <div className="flex items-center space-x-2">
             <Search size={20} className="text-gray-400" />
             <Input

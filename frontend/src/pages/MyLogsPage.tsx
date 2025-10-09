@@ -20,22 +20,26 @@ export function MyLogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
   const { clearAuth } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
 
   const fetchLogs = async (search?: string, isInitialLoad = false) => {
     try {
       if (isInitialLoad) {
         setLoading(true);
+        setOffset(0);
       } else {
         setSearching(true);
       }
       const { data, error: fetchError, response } = await api.GET('/users/me/logs', {
-        params: { query: search ? { search } : {} },
+        params: { query: search ? { search, limit: 20, offset: 0 } : { limit: 20, offset: 0 } },
       });
       if (fetchError || !data) {
         if (response?.status === 401) {
@@ -46,6 +50,8 @@ export function MyLogsPage() {
         throw new Error('Failed to fetch logs');
       }
       setLogs(data.items);
+      setHasMore(data.has_more);
+      setOffset(data.limit);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
@@ -54,6 +60,31 @@ export function MyLogsPage() {
       } else {
         setSearching(false);
       }
+    }
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    
+    try {
+      setLoadingMore(true);
+      const { data, error: fetchError } = await api.GET('/users/me/logs', {
+        params: { 
+          query: searchQuery 
+            ? { search: searchQuery, limit: 20, offset } 
+            : { limit: 20, offset }
+        },
+      });
+      if (fetchError || !data) {
+        throw new Error('Failed to fetch more logs');
+      }
+      setLogs((prev) => [...prev, ...data.items]);
+      setHasMore(data.has_more);
+      setOffset(offset + data.limit);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -257,6 +288,24 @@ export function MyLogsPage() {
             {logs.map((log) => (
               <LogCard key={log.id} log={log} />
             ))}
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="btn-fresh"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      読み込み中...
+                    </>
+                  ) : (
+                    'もっと見る'
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

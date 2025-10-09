@@ -155,7 +155,7 @@ export function MyLogsPage() {
 
       {/* 統計情報 */}
       <Card className="card-fresh bg-gradient-to-br from-fresh-50 to-sky-50">
-        <CardContent className="pt-4">
+        <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-fresh-600">{logs.length}</div>

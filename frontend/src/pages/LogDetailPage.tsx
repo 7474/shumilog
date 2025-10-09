@@ -175,7 +175,7 @@ export function LogDetailPage() {
 
       {/* 編集モード */}
       {isEditing && isOwner ? (
-        <Card className="card-fresh">
+        <Card className="card-fresh space-y-4">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
@@ -201,7 +201,7 @@ export function LogDetailPage() {
         /* 閲覧モード */
         <>
           {/* ログ詳細カード */}
-          <Card className="card-fresh">
+          <Card className="card-fresh space-y-4">
             <CardHeader className="space-y-4">
               {/* タイトル */}
               <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900">

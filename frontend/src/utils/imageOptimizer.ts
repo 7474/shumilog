@@ -4,7 +4,7 @@
  * Cloudflare Workersの画像リサイジング機能を使用して、
  * サムネイルなどの最適化された画像URLを生成します。
  * 
- * @see https://developers.cloudflare.com/images/image-resizing/
+ * @see https://developers.cloudflare.com/images/transform-images/transform-via-url/
  */
 
 export interface ImageResizeOptions {
@@ -47,6 +47,8 @@ export interface ImageResizeOptions {
 /**
  * Cloudflare Image Resizing用のURLを生成します
  * 
+ * Cloudflareの画像最適化は `/cdn-cgi/image/<OPTIONS>/<SOURCE-IMAGE>` のフォーマットを使用します。
+ * 
  * @param originalUrl - 元の画像URL
  * @param options - リサイジングオプション
  * @returns 最適化された画像URL
@@ -64,24 +66,33 @@ export function getOptimizedImageUrl(
     format = 'auto',
   } = options;
 
-  // オプションをクエリパラメータに変換
-  const params = new URLSearchParams();
+  // オプションをカンマ区切りの文字列に変換
+  const optionParts: string[] = [];
   
   if (width) {
-    params.append('width', width.toString());
+    optionParts.push(`width=${width}`);
   }
   
   if (height) {
-    params.append('height', height.toString());
+    optionParts.push(`height=${height}`);
   }
   
-  params.append('fit', fit);
-  params.append('quality', quality.toString());
-  params.append('format', format);
+  optionParts.push(`fit=${fit}`);
+  optionParts.push(`quality=${quality}`);
+  optionParts.push(`format=${format}`);
 
-  // URLにパラメータを追加
-  const separator = originalUrl.includes('?') ? '&' : '?';
-  return `${originalUrl}${separator}${params.toString()}`;
+  const optionsString = optionParts.join(',');
+
+  // フロントエンドのベースURLを取得（環境変数から、なければ現在のオリジンを使用）
+  const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+  
+  // Cloudflare Image Resizing URLフォーマット: https://<ZONE>/cdn-cgi/image/<OPTIONS>/<SOURCE-IMAGE>
+  // 元のURLが相対パスの場合は絶対URLに変換
+  const absoluteUrl = originalUrl.startsWith('http') 
+    ? originalUrl 
+    : `${frontendUrl}${originalUrl}`;
+
+  return `${frontendUrl}/cdn-cgi/image/${optionsString}/${absoluteUrl}`;
 }
 
 /**

@@ -14,6 +14,16 @@ APIリクエストの送信先となるバックエンドのベースURLを指�
 - 本番環境: `https://api.shumilog.dev/api`
 - 開発環境: `https://api.shumilog.dev/api` (development環境のWorker)
 
+#### `VITE_FRONTEND_URL`
+
+Cloudflare Image Resizingで使用するフロントエンドのベースURLを指定します。
+この環境変数が設定されていない場合、ブラウザの`window.location.origin`が使用されます。
+
+**設定例:**
+- 本番環境: `https://shumilog.dev`
+- Preview環境: `https://<branch>.<project>.pages.dev`
+- 開発環境: `http://localhost:5173`
+
 ### Cloudflare Pagesでの設定方法
 
 1. Cloudflare Pagesダッシュボードにアクセス
@@ -24,9 +34,12 @@ APIリクエストの送信先となるバックエンドのベースURLを指�
    | 変数名 | 値 | 環境 |
    |--------|-----|------|
    | `VITE_API_BASE_URL` | `https://api.shumilog.dev/api` | Production |
+   | `VITE_FRONTEND_URL` | `https://shumilog.dev` | Production |
    | `VITE_API_BASE_URL` | `https://api.shumilog.dev/api` | Preview (optional) |
 
 5. 保存後、次回のデプロイから新しい環境変数が適用されます
+
+**注意:** Cloudflare Image Resizingを使用するには、Cloudflareアカウントで画像最適化機能を有効にする必要があります。詳細は[Cloudflare Image Resizing](https://developers.cloudflare.com/images/transform-images/)を参照してください。
 
 ### ビルドコマンド
 
@@ -50,9 +63,12 @@ frontend
 ```bash
 # frontend/.env
 VITE_API_BASE_URL=http://localhost:8787/api
+VITE_FRONTEND_URL=http://localhost:5173
 ```
 
 開発サーバーはViteのプロキシ機能により、`/api/*`へのリクエストを自動的にローカルのWorkerにプロキシします。
+
+Cloudflare Image Resizingはローカル開発環境では機能しませんが、URLフォーマットは本番環境と同じになります。
 
 ## トラブルシューティング
 
@@ -82,3 +98,5 @@ APIリクエストでCORSエラーが発生する場合:
 
 - [Vite環境変数ドキュメント](https://vitejs.dev/guide/env-and-mode.html)
 - [Cloudflare Pages環境変数](https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables)
+- [Cloudflare Image Resizing](https://developers.cloudflare.com/images/transform-images/)
+- [Cloudflare Image Resizing URL フォーマット](https://developers.cloudflare.com/images/transform-images/transform-via-url/)

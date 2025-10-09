@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getOptimizedImageUrl,
   getLogCardThumbnailUrl,
@@ -6,14 +6,25 @@ import {
 } from '@/utils/imageOptimizer';
 
 describe('imageOptimizer', () => {
+  beforeEach(() => {
+    // window.location.originをモック
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { origin: 'https://shumilog.dev' },
+    });
+  });
+
   describe('getOptimizedImageUrl', () => {
-    it('デフォルトオプションでURLを生成する', () => {
+    it('デフォルトオプションでCloudflare Image Resizing URLを生成する', () => {
       const originalUrl = 'http://example.com/image.jpg';
       const result = getOptimizedImageUrl(originalUrl);
       
+      // Cloudflareのフォーマット: https://<ZONE>/cdn-cgi/image/<OPTIONS>/<SOURCE-IMAGE>
+      expect(result).toMatch(/^https:\/\/shumilog\.dev\/cdn-cgi\/image\//);
       expect(result).toContain('fit=scale-down');
       expect(result).toContain('quality=85');
       expect(result).toContain('format=auto');
+      expect(result).toContain('http://example.com/image.jpg');
     });
 
     it('widthとheightを指定したURLを生成する', () => {
@@ -23,6 +34,7 @@ describe('imageOptimizer', () => {
         height: 600,
       });
       
+      expect(result).toMatch(/\/cdn-cgi\/image\//);
       expect(result).toContain('width=800');
       expect(result).toContain('height=600');
     });
@@ -54,15 +66,17 @@ describe('imageOptimizer', () => {
       expect(result).toContain('format=webp');
     });
 
-    it('既にクエリパラメータがあるURLに追加できる', () => {
+    it('元のURLにクエリパラメータがあっても正しく処理する', () => {
       const originalUrl = 'http://example.com/image.jpg?foo=bar';
       const result = getOptimizedImageUrl(originalUrl, {
         width: 800,
       });
       
+      // 元のURLのクエリパラメータは保持される
       expect(result).toContain('foo=bar');
       expect(result).toContain('width=800');
-      expect(result).toContain('&');
+      // Cloudflareのフォーマットを使用
+      expect(result).toMatch(/\/cdn-cgi\/image\//);
     });
 
     it('すべてのオプションを指定したURLを生成する', () => {
@@ -75,11 +89,20 @@ describe('imageOptimizer', () => {
         format: 'avif',
       });
       
+      expect(result).toMatch(/\/cdn-cgi\/image\//);
       expect(result).toContain('width=1024');
       expect(result).toContain('height=768');
       expect(result).toContain('fit=contain');
       expect(result).toContain('quality=95');
       expect(result).toContain('format=avif');
+    });
+
+    it('相対パスのURLを絶対URLに変換する', () => {
+      const originalUrl = '/api/logs/log_1/images/image_1';
+      const result = getOptimizedImageUrl(originalUrl);
+      
+      expect(result).toMatch(/^https:\/\/shumilog\.dev\/cdn-cgi\/image\//);
+      expect(result).toContain('https://shumilog.dev/api/logs/log_1/images/image_1');
     });
   });
 
@@ -88,6 +111,7 @@ describe('imageOptimizer', () => {
       const imageUrl = 'http://example.com/image.jpg';
       const result = getLogCardThumbnailUrl(imageUrl);
       
+      expect(result).toMatch(/\/cdn-cgi\/image\//);
       expect(result).toContain('width=80');
       expect(result).toContain('height=80');
       expect(result).toContain('fit=cover');
@@ -108,6 +132,7 @@ describe('imageOptimizer', () => {
       const imageUrl = 'http://example.com/image.jpg';
       const result = getLogDetailImageUrl(imageUrl);
       
+      expect(result).toMatch(/\/cdn-cgi\/image\//);
       expect(result).toContain('width=1920');
       expect(result).toContain('fit=scale-down');
       expect(result).toContain('quality=85');

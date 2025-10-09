@@ -121,8 +121,8 @@ export function MyLogsPage() {
   return (
     <div className="space-y-4">
       {/* ページヘッダー */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div>
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+        <div className="flex-1 min-w-[200px]">
           <h1 className="text-3xl font-bold text-gray-900">マイログ</h1>
           <p className="text-gray-600 mt-1">あなたの趣味活動の記録を振り返る</p>
         </div>

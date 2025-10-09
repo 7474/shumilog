@@ -70,16 +70,18 @@ export function LogCard({ log }: LogCardProps) {
         </div>
 
         {/* サムネイル画像（右側・控えめな表示） */}
-        {firstImage && (
-          <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
-            <img
-              src={getLogCardThumbnailUrl(`${baseUrl}/logs/${log.id}/images/${firstImage.id}`)}
-              alt={log.title || 'ログ画像'}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        )}
+        <div className="flex-shrink-0 w-20 h-20">
+          {firstImage && (
+            <div className="w-full h-full rounded-lg overflow-hidden bg-gray-100">
+              <img
+                src={getLogCardThumbnailUrl(`${baseUrl}/logs/${log.id}/images/${firstImage.id}`)}
+                alt={log.title || 'ログ画像'}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+        </div>
       </div>
     </Link>
   );

@@ -16,7 +16,7 @@ export function LogCard({ log }: LogCardProps) {
       to={`/logs/${log.id}`}
       className="block p-4 bg-white border border-gray-200 rounded-lg hover:border-sky-300 hover:shadow-md transition-all"
     >
-      <div className="space-y-2">
+      <div className="space-y-1">
         {/* タイトルとサムネイルエリア */}
         <div className="flex gap-3">
           <div className="flex-1 min-w-0">

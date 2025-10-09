@@ -81,6 +81,28 @@ describe('Log Search Functionality', () => {
       expect(result1.logs.length).toBeGreaterThan(0);
     });
 
+    it('should support 1-character search using LIKE fallback', async () => {
+      // Single character search should work with LIKE fallback
+      const result = await logService.searchLogs({ 
+        search: 'A',
+        is_public: true 
+      });
+
+      // Should find logs containing 'A' (Attack, amazing, etc.)
+      expect(result.logs.length).toBeGreaterThan(0);
+    });
+
+    it('should support 2-character search using LIKE fallback', async () => {
+      // Two character search should work with LIKE fallback
+      const result = await logService.searchLogs({ 
+        search: 'Ma',
+        is_public: true 
+      });
+
+      // Should find logs containing 'Ma' (Manga, amazing, etc.)
+      expect(result.logs.length).toBeGreaterThan(0);
+    });
+
     it('should combine search with other filters', async () => {
       const result = await logService.searchLogs({ 
         search: 'Attack',

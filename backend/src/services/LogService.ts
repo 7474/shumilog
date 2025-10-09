@@ -219,25 +219,47 @@ export class LogService {
     
     // Use FTS5 if search query is provided, otherwise use regular query
     if (search) {
-      // FTS5-based search query
-      sql = `
-        SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
-        FROM logs l
-        JOIN users u ON l.user_id = u.id
-        JOIN logs_fts fts ON l.id = fts.log_id
-      `;
-      
-      countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l JOIN logs_fts fts ON l.id = fts.log_id`;
+      // Trigram tokenizer requires at least 3 characters
+      // For shorter queries, use LIKE fallback
+      const useFTS = search.length >= 3;
       
       const conditions: string[] = [];
       const countConditions: string[] = [];
       
-      // FTS5 MATCH condition - wrap in quotes to treat as phrase and escape internal quotes
-      const searchQuery = `"${search.replace(/"/g, '""')}"`;
-      conditions.push('logs_fts MATCH ?');
-      params.push(searchQuery);
-      countConditions.push('logs_fts MATCH ?');
-      countParams.push(searchQuery);
+      if (useFTS) {
+        // FTS5-based search query
+        sql = `
+          SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
+          FROM logs l
+          JOIN users u ON l.user_id = u.id
+          JOIN logs_fts fts ON l.id = fts.log_id
+        `;
+        
+        countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l JOIN logs_fts fts ON l.id = fts.log_id`;
+        
+        // FTS5 MATCH condition - wrap in quotes to treat as phrase and escape internal quotes
+        const searchQuery = `"${search.replace(/"/g, '""')}"`;
+        conditions.push('logs_fts MATCH ?');
+        params.push(searchQuery);
+        countConditions.push('logs_fts MATCH ?');
+        countParams.push(searchQuery);
+      } else {
+        // LIKE-based search for short queries (1-2 characters)
+        sql = `
+          SELECT DISTINCT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
+          FROM logs l
+          JOIN users u ON l.user_id = u.id
+        `;
+        
+        countSql = `SELECT COUNT(DISTINCT l.id) as total FROM logs l`;
+        
+        // LIKE condition for title or content
+        const likePattern = `%${search}%`;
+        conditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
+        params.push(likePattern, likePattern);
+        countConditions.push('(l.title LIKE ? OR l.content_md LIKE ?)');
+        countParams.push(likePattern, likePattern);
+      }
       
       // Add tag filter if provided
       if (tag_ids && tag_ids.length > 0) {

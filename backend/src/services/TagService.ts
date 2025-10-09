@@ -177,22 +177,43 @@ export class TagService {
     const params: any[] = [];
 
     if (search) {
-      // Use FTS5 for search - wrap in quotes to treat as phrase
-      const searchQuery = `"${search.replace(/"/g, '""')}"`;
-      selectSql = `
-        SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at 
-        FROM tags t
-        JOIN tags_fts fts ON t.id = fts.tag_id
-        WHERE tags_fts MATCH ?
-        ORDER BY t.updated_at DESC
-      `;
-      countSql = `
-        SELECT COUNT(*) as total 
-        FROM tags t
-        JOIN tags_fts fts ON t.id = fts.tag_id
-        WHERE tags_fts MATCH ?
-      `;
-      params.push(searchQuery);
+      // Trigram tokenizer requires at least 3 characters
+      // For shorter queries, use LIKE fallback
+      const useFTS = search.length >= 3;
+      
+      if (useFTS) {
+        // Use FTS5 for search - wrap in quotes to treat as phrase
+        const searchQuery = `"${search.replace(/"/g, '""')}"`;
+        selectSql = `
+          SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at 
+          FROM tags t
+          JOIN tags_fts fts ON t.id = fts.tag_id
+          WHERE tags_fts MATCH ?
+          ORDER BY t.updated_at DESC
+        `;
+        countSql = `
+          SELECT COUNT(*) as total 
+          FROM tags t
+          JOIN tags_fts fts ON t.id = fts.tag_id
+          WHERE tags_fts MATCH ?
+        `;
+        params.push(searchQuery);
+      } else {
+        // LIKE-based search for short queries (1-2 characters)
+        const likePattern = `%${search}%`;
+        selectSql = `
+          SELECT id, name, description, metadata, created_by, created_at, updated_at 
+          FROM tags 
+          WHERE name LIKE ? OR description LIKE ?
+          ORDER BY updated_at DESC
+        `;
+        countSql = `
+          SELECT COUNT(*) as total 
+          FROM tags 
+          WHERE name LIKE ? OR description LIKE ?
+        `;
+        params.push(likePattern, likePattern);
+      }
     } else {
       // No search, return all tags
       selectSql = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags ORDER BY updated_at DESC';
@@ -296,19 +317,39 @@ export class TagService {
    * Get tag suggestions based on input using FTS5
    */
   async getTagSuggestions(query: string, limit = 5): Promise<Tag[]> {
-    const searchQuery = `"${query.replace(/"/g, '""')}"`;
-    const rows = await this.db.query(
-      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
-              COUNT(lta.tag_id) as usage_count
-       FROM tags t
-       JOIN tags_fts fts ON t.id = fts.tag_id
-       LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
-       WHERE tags_fts MATCH ?
-       GROUP BY t.id
-       ORDER BY usage_count DESC, t.name ASC
-       LIMIT ?`,
-      [searchQuery, limit]
-    );
+    let rows;
+    
+    // Trigram tokenizer requires at least 3 characters
+    // For shorter queries, use LIKE fallback
+    if (query.length >= 3) {
+      const searchQuery = `"${query.replace(/"/g, '""')}"`;
+      rows = await this.db.query(
+        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+                COUNT(lta.tag_id) as usage_count
+         FROM tags t
+         JOIN tags_fts fts ON t.id = fts.tag_id
+         LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
+         WHERE tags_fts MATCH ?
+         GROUP BY t.id
+         ORDER BY usage_count DESC, t.name ASC
+         LIMIT ?`,
+        [searchQuery, limit]
+      );
+    } else {
+      // LIKE-based search for short queries (1-2 characters)
+      const likePattern = `%${query}%`;
+      rows = await this.db.query(
+        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+                COUNT(lta.tag_id) as usage_count
+         FROM tags t
+         LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
+         WHERE t.name LIKE ? OR t.description LIKE ?
+         GROUP BY t.id
+         ORDER BY usage_count DESC, t.name ASC
+         LIMIT ?`,
+        [likePattern, likePattern, limit]
+      );
+    }
     
     return rows.map(row => TagModel.fromRow(row));
   }

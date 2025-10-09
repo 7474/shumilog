@@ -333,6 +333,7 @@ export interface paths {
                             total: number;
                             limit: number;
                             offset: number;
+                            has_more: boolean;
                         };
                     };
                 };

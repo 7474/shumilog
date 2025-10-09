@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2, Edit } from 'lucide-react';
+import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2, Edit, MoreVertical } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag, Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
@@ -166,17 +173,37 @@ export function TagDetailPage() {
 
   return (
     <div className="space-y-4">
-      {/* ヘッダー */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex items-center space-x-4">
-          <Link to="/tags">
-            <Button variant="outline" size="sm">
-              <ArrowLeft size={16} className="mr-2" />
-              一覧に戻る
-            </Button>
-          </Link>
-        </div>
+      {/* ヘッダー: 戻るボタンと操作ボタン */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <Link to="/tags">
+          <Button variant="outline" className="flex items-center gap-2">
+            <ArrowLeft size={16} />
+            <span>タグ一覧に戻る</span>
+          </Button>
+        </Link>
+
         <div className="flex flex-wrap gap-2">
+          {/* プライマリアクション: このタグでログを作成（認証済みユーザーのみ） */}
+          {isAuthenticated && (
+            <Button
+              onClick={() => setShowLogForm(!showLogForm)}
+              size="sm"
+              className={showLogForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
+            >
+              {showLogForm ? (
+                <>
+                  <X size={16} className="mr-2" />
+                  キャンセル
+                </>
+              ) : (
+                <>
+                  <PenLine size={16} className="mr-2" />
+                  このタグでログを作成
+                </>
+              )}
+            </Button>
+          )}
+
           {/* Xへの共有ボタン（常に表示） */}
           <ShareToXButton
             text={`#${tag.name}`}
@@ -187,67 +214,46 @@ export function TagDetailPage() {
             className="text-sky-600 border-sky-200 hover:bg-sky-50"
           />
 
+          {/* 編集・削除操作（認証済みユーザーのみ）- ドロップダウンメニュー */}
           {isAuthenticated && (
-            <>
-              <Button
-                onClick={() => setShowLogForm(!showLogForm)}
-                size="sm"
-                className={showLogForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
-              >
-                {showLogForm ? (
-                  <>
-                    <X size={16} className="mr-2" />
-                    キャンセル
-                  </>
-                ) : (
-                  <>
-                    <PenLine size={16} className="mr-2" />
-                    このタグでログを作成
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={() => setShowEditForm(!showEditForm)}
-                size="sm"
-                variant="outline"
-                className={
-                  showEditForm
-                    ? 'bg-gray-500 hover:bg-gray-600 text-white border-gray-500'
-                    : 'text-sky-600 border-sky-200 hover:bg-sky-50'
-                }
-              >
-                {showEditForm ? (
-                  <>
-                    <X size={16} className="mr-2" />
-                    キャンセル
-                  </>
-                ) : (
-                  <>
-                    <Edit size={16} className="mr-2" />
-                    編集
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleDelete}
-                size="sm"
-                variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                    削除中...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} className="mr-2" />
-                    削除
-                  </>
-                )}
-              </Button>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 hover:bg-gray-50"
+                >
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setShowEditForm(!showEditForm)}
+                  className="cursor-pointer"
+                >
+                  <Edit size={16} className="mr-2" />
+                  <span>{showEditForm ? 'キャンセル' : '編集'}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      <span>削除中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} className="mr-2" />
+                      <span>削除</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PenLine, X, FileText, LogOut } from 'lucide-react';
+import { PenLine, X, FileText, LogOut, MoreVertical } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -7,6 +7,12 @@ import { LogCard } from '@/components/LogCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -120,35 +126,48 @@ export function MyLogsPage() {
           <h1 className="text-3xl font-bold text-gray-900">マイログ</h1>
           <p className="text-gray-600 mt-1">あなたの趣味活動の記録を振り返る</p>
         </div>
-        <Button
-          onClick={() => setShowForm(!showForm)}
-          className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
-        >
-          {showForm ? (
-            <>
-              <X size={16} className="mr-2" />
-              キャンセル
-            </>
-          ) : (
-            <>
-              <PenLine size={16} className="mr-2" />
-              新しいログを作成
-            </>
-          )}
-        </Button>
-      </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {/* プライマリアクション: 新しいログを作成 */}
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
+          >
+            {showForm ? (
+              <>
+                <X size={16} className="mr-2" />
+                キャンセル
+              </>
+            ) : (
+              <>
+                <PenLine size={16} className="mr-2" />
+                新しいログを作成
+              </>
+            )}
+          </Button>
 
-      {/* ナビゲーション領域 */}
-      <div className="flex justify-end items-center py-2 border-b border-gray-200">
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          size="sm"
-          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-        >
-          <LogOut size={14} className="mr-1.5" />
-          <span className="text-xs">ログアウト</span>
-        </Button>
+          {/* その他の操作 - ドロップダウンメニュー */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="default"
+                variant="outline"
+                className="border-gray-300 hover:bg-gray-50"
+              >
+                <MoreVertical size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer"
+              >
+                <LogOut size={16} className="mr-2" />
+                <span>ログアウト</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* ログ作成フォーム */}

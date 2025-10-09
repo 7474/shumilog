@@ -67,7 +67,7 @@ npm run db:seed
 
   ```bash
   cd backend
-  npm run dev:worker
+  npm run dev
   ```
 
 - **ターミナル B – フロントエンド UI**
@@ -128,7 +128,7 @@ curl -X GET http://localhost:8787/api/users/me \
 
 | 場所 | コマンド | 目的 |
 |------|----------|------|
-| `backend/` | `npm run dev:worker` | ローカルD1永続化を使用してWranglerでWorkerを実行 |
+| `backend/` | `npm run dev` | ローカルD1永続化を使用してWranglerでWorkerを実行 |
 | `backend/` | `npm run test:contract` | VitestでAPIコントラクトスイートを実行 |
 | `backend/` | `npm run db:migrate` | 再シードなしでマイグレーションを適用 |
 | `backend/` | `npm run db:seed` | スキーマを再作成し、実用的なシードデータ（4ユーザー、8タグ、10ログ）を読み込み |
@@ -211,8 +211,10 @@ shumilog/
 │   │   ├── pages/           # ページコンポーネント
 │   │   ├── services/        # API クライアント
 │   │   ├── hooks/           # カスタムReactフック
-│   │   └── lib/             # ユーティリティと設定
-│   ├── tailwind.config.cjs  # Tailwind CSS設定
+│   │   ├── lib/             # ユーティリティと設定
+│   │   ├── api-types.ts     # OpenAPI仕様から生成される型定義
+│   │   └── models.ts        # アプリケーション固有の型定義
+│   ├── vite.config.ts       # Vite設定（Tailwind CSS 4.1+含む）
 │   └── components.json      # shadcn/ui設定
 ├── specs/                   # 製品計画、リサーチ、タスク管理
 ├── tests/                   # リポジトリレベルの統合スモークテスト

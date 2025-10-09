@@ -54,7 +54,8 @@ src/
 ├── hooks/              # カスタムReactフック
 ├── lib/                # ユーティリティ関数
 ├── services/           # API クライアント
-├── models.ts           # TypeScript型定義
+├── api-types.ts        # OpenAPI仕様から生成される型定義
+├── models.ts           # アプリケーション固有の型定義
 ├── Router.tsx          # ルーティング設定
 ├── index.css           # Tailwind CSSインポート
 └── main.tsx            # Reactエントリーポイント
@@ -142,7 +143,7 @@ const result = await api.POST('/logs', {
 
 ## 設定ファイル
 
-- `vite.config.ts` - Vite設定（@tailwindcss/viteプラグインを含む）
+- `vite.config.ts` - Vite設定（Tailwind CSS 4.1+ 統合を含む）
 - `components.json` - shadcn/ui設定
 
 ## APIプロキシ

@@ -201,6 +201,7 @@ paths:
                   - total
                   - limit
                   - offset
+                  - has_more
                 properties:
                   items:
                     type: array
@@ -212,6 +213,8 @@ paths:
                     type: integer
                   offset:
                     type: integer
+                  has_more:
+                    type: boolean
 
     post:
       summary: Create new tag

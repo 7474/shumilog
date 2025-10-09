@@ -52,8 +52,7 @@ tags.get('/', async (c) => {
     total: result.total,
     limit: result.limit,
     offset: result.offset,
-    has_next: result.has_next,
-    has_prev: result.has_prev
+    has_more: result.has_next
   });
 });
 

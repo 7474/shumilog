@@ -1,18 +1,34 @@
 import { Link } from 'react-router-dom';
 import { Log } from '@/api-types';
 import { getMarkdownSummary } from '@/utils/markdownUtils';
+import { getLogCardThumbnailUrl } from '@/utils/imageOptimizer';
 
 interface LogCardProps {
   log: Log;
 }
 
 export function LogCard({ log }: LogCardProps) {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+  const firstImage = log.images && log.images.length > 0 ? log.images[0] : null;
+
   return (
     <Link
       to={`/logs/${log.id}`}
       className="block p-4 bg-white border border-gray-200 rounded-lg hover:border-sky-300 hover:shadow-md transition-all"
     >
       <div className="space-y-2">
+        {/* サムネイル画像 */}
+        {firstImage && (
+          <div className="w-full h-48 rounded-lg overflow-hidden bg-gray-100">
+            <img
+              src={getLogCardThumbnailUrl(`${baseUrl}/logs/${log.id}/images/${firstImage.id}`)}
+              alt={log.title || 'ログ画像'}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        )}
+
         {/* タイトル */}
         {log.title && <h4 className="font-semibold text-gray-900 line-clamp-1">{log.title}</h4>}
 

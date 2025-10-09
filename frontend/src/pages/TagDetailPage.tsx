@@ -162,17 +162,37 @@ export function TagDetailPage() {
 
   return (
     <div className="space-y-4">
-      {/* ヘッダー */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex items-center space-x-4">
-          <Link to="/tags">
-            <Button variant="outline" size="sm">
-              <ArrowLeft size={16} className="mr-2" />
-              一覧に戻る
-            </Button>
-          </Link>
-        </div>
+      {/* ヘッダー: 戻るボタンと操作ボタン */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <Link to="/tags">
+          <Button variant="outline" className="flex items-center gap-2">
+            <ArrowLeft size={16} />
+            <span>タグ一覧に戻る</span>
+          </Button>
+        </Link>
+
         <div className="flex flex-wrap gap-2">
+          {/* プライマリアクション: このタグでログを作成（認証済みユーザーのみ） */}
+          {isAuthenticated && (
+            <Button
+              onClick={() => setShowLogForm(!showLogForm)}
+              size="sm"
+              className={showLogForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
+            >
+              {showLogForm ? (
+                <>
+                  <X size={16} className="mr-2" />
+                  キャンセル
+                </>
+              ) : (
+                <>
+                  <PenLine size={16} className="mr-2" />
+                  このタグでログを作成
+                </>
+              )}
+            </Button>
+          )}
+
           {/* Xへの共有ボタン（常に表示） */}
           <ShareToXButton
             text={`#${tag.name}`}
@@ -183,25 +203,9 @@ export function TagDetailPage() {
             className="text-sky-600 border-sky-200 hover:bg-sky-50"
           />
 
+          {/* 編集・削除操作（認証済みユーザーのみ） */}
           {isAuthenticated && (
             <>
-              <Button
-                onClick={() => setShowLogForm(!showLogForm)}
-                size="sm"
-                className={showLogForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
-              >
-                {showLogForm ? (
-                  <>
-                    <X size={16} className="mr-2" />
-                    キャンセル
-                  </>
-                ) : (
-                  <>
-                    <PenLine size={16} className="mr-2" />
-                    このタグでログを作成
-                  </>
-                )}
-              </Button>
               <Button
                 onClick={() => setShowEditForm(!showEditForm)}
                 size="sm"
@@ -209,7 +213,7 @@ export function TagDetailPage() {
                 className={
                   showEditForm
                     ? 'bg-gray-500 hover:bg-gray-600 text-white border-gray-500'
-                    : 'text-sky-600 border-sky-200 hover:bg-sky-50'
+                    : 'border-gray-300 hover:bg-gray-50'
                 }
               >
                 {showEditForm ? (

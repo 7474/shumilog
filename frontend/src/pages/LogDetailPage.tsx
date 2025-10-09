@@ -127,7 +127,7 @@ export function LogDetailPage() {
 
   return (
     <div className="space-y-4">
-      {/* ヘッダー: 戻るボタンと編集/削除ボタン */}
+      {/* ヘッダー: 戻るボタンと操作ボタン */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <Link to="/logs">
           <Button variant="outline" className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export function LogDetailPage() {
         </Link>
 
         <div className="flex flex-wrap gap-2">
-          {/* 公開ログの場合はXへの共有ボタンを表示 */}
+          {/* Xへの共有ボタン（公開ログのみ） */}
           {log.is_public && (
             <ShareToXButton
               text={log.title}
@@ -149,23 +149,25 @@ export function LogDetailPage() {
             />
           )}
 
+          {/* 編集・削除操作（オーナーのみ、編集中は非表示） */}
           {isOwner && !isEditing && (
             <>
               <Button
                 onClick={() => setIsEditing(true)}
-                className="btn-fresh flex items-center gap-2"
                 size="sm"
+                variant="outline"
+                className="border-gray-300 hover:bg-gray-50"
               >
-                <Edit size={16} />
+                <Edit size={16} className="mr-2" />
                 <span>編集</span>
               </Button>
               <Button
                 onClick={() => setShowDeleteConfirm(true)}
-                variant="destructive"
-                className="flex items-center gap-2"
                 size="sm"
+                variant="outline"
+                className="text-red-600 border-red-200 hover:bg-red-50"
               >
-                <Trash2 size={16} />
+                <Trash2 size={16} className="mr-2" />
                 <span>削除</span>
               </Button>
             </>

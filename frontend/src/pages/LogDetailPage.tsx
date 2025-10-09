@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, X, AlertTriangle, FileText, Globe, Lock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, X, AlertTriangle, FileText, Globe, Lock, Loader2, MoreVertical } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { RelatedLogs } from '@/components/RelatedLogs';
@@ -149,28 +156,36 @@ export function LogDetailPage() {
             />
           )}
 
-          {/* 編集・削除操作（オーナーのみ、編集中は非表示） */}
+          {/* 編集・削除操作（オーナーのみ、編集中は非表示）- ドロップダウンメニュー */}
           {isOwner && !isEditing && (
-            <>
-              <Button
-                onClick={() => setIsEditing(true)}
-                size="sm"
-                variant="outline"
-                className="border-gray-300 hover:bg-gray-50"
-              >
-                <Edit size={16} className="mr-2" />
-                <span>編集</span>
-              </Button>
-              <Button
-                onClick={() => setShowDeleteConfirm(true)}
-                size="sm"
-                variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <Trash2 size={16} className="mr-2" />
-                <span>削除</span>
-              </Button>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 hover:bg-gray-50"
+                >
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setIsEditing(true)}
+                  className="cursor-pointer"
+                >
+                  <Edit size={16} className="mr-2" />
+                  <span>編集</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  <span>削除</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>

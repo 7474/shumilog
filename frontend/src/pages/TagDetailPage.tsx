@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2, Edit } from 'lucide-react';
+import { ArrowLeft, PenLine, X, Trash2, FileText, Tag as TagIcon, Loader2, Edit, MoreVertical } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag, Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
@@ -203,51 +210,46 @@ export function TagDetailPage() {
             className="text-sky-600 border-sky-200 hover:bg-sky-50"
           />
 
-          {/* 編集・削除操作（認証済みユーザーのみ） */}
+          {/* 編集・削除操作（認証済みユーザーのみ）- ドロップダウンメニュー */}
           {isAuthenticated && (
-            <>
-              <Button
-                onClick={() => setShowEditForm(!showEditForm)}
-                size="sm"
-                variant="outline"
-                className={
-                  showEditForm
-                    ? 'bg-gray-500 hover:bg-gray-600 text-white border-gray-500'
-                    : 'border-gray-300 hover:bg-gray-50'
-                }
-              >
-                {showEditForm ? (
-                  <>
-                    <X size={16} className="mr-2" />
-                    キャンセル
-                  </>
-                ) : (
-                  <>
-                    <Edit size={16} className="mr-2" />
-                    編集
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleDelete}
-                size="sm"
-                variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                    削除中...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} className="mr-2" />
-                    削除
-                  </>
-                )}
-              </Button>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 hover:bg-gray-50"
+                >
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setShowEditForm(!showEditForm)}
+                  className="cursor-pointer"
+                >
+                  <Edit size={16} className="mr-2" />
+                  <span>{showEditForm ? 'キャンセル' : '編集'}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      <span>削除中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} className="mr-2" />
+                      <span>削除</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>

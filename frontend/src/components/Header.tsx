@@ -9,7 +9,7 @@ export function Header() {
   return (
     <header className="mobile-header">
       <div className="container-mobile py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-y-2">
           <Link to="/" className="flex items-center space-x-3 text-decoration-none">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-fresh-400 to-sky-500 flex items-center justify-center shadow-lg p-1.5">
               <svg
@@ -68,7 +68,7 @@ export function Header() {
             </div>
           </Link>
 
-          <nav className="flex items-center space-x-2">
+          <nav className="flex items-center space-x-2 ml-auto">
             {isAuthenticated && (
               <Link to="/my/logs">
                 <Button variant="ghost" size="sm" className="text-gray-700 hover:text-fresh-600">

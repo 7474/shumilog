@@ -156,25 +156,25 @@ export function TagsPage() {
           <p className="text-gray-600 mt-1">ログを整理するためのタグを管理しましょう</p>
         </div>
         <div className="flex flex-wrap gap-2 ml-auto">
-          <Button
-            onClick={() => setShowForm(!showForm)}
-            className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
-            disabled={!isAuthenticated}
-          >
-            {!isAuthenticated ? (
-              <>
-                <Lock size={16} className="mr-2" />
-                ログインして作成
-              </>
-            ) : showForm ? (
-              <></>
-            ) : (
-              <>
-                <Plus size={16} className="mr-2" />
-                新しいタグを作成
-              </>
-            )}
-          </Button>
+          {!showForm && (
+            <Button
+              onClick={() => setShowForm(!showForm)}
+              className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
+              disabled={!isAuthenticated}
+            >
+              {!isAuthenticated ? (
+                <>
+                  <Lock size={16} className="mr-2" />
+                  ログインして作成
+                </>
+              ) : (
+                <>
+                  <Plus size={16} className="mr-2" />
+                  新しいタグを作成
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 

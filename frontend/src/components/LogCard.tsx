@@ -17,11 +17,16 @@ export function LogCard({ log }: LogCardProps) {
       className="block p-4 bg-white border border-gray-200 rounded-lg hover:border-sky-300 hover:shadow-md transition-all"
     >
       <div className="space-y-2">
-        {/* タイトルとサムネイルエリア */}
+        {/* タイトル、コンテンツとサムネイルエリア */}
         <div className="flex gap-3">
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 space-y-2">
             {/* タイトル */}
             {log.title && <h4 className="font-semibold text-gray-900 line-clamp-1">{log.title}</h4>}
+            
+            {/* コンテンツプレビュー */}
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {getMarkdownSummary(log.content_md, 150)}
+            </p>
           </div>
 
           {/* サムネイル画像（右上・控えめな表示） */}
@@ -36,11 +41,6 @@ export function LogCard({ log }: LogCardProps) {
             </div>
           )}
         </div>
-
-        {/* コンテンツプレビュー */}
-        <p className="text-sm text-gray-600 line-clamp-2">
-          {getMarkdownSummary(log.content_md, 150)}
-        </p>
 
         {/* タグ */}
         {log.associated_tags && log.associated_tags.length > 0 && (

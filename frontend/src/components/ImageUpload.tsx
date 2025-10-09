@@ -75,7 +75,7 @@ export function ImageUpload({
   return (
     <div className="space-y-3">
       <div>
-        <div className="block text-sm text-gray-600 mb-2">画像を追加（任意）</div>
+        <div className="block text-sm text-gray-600 mb-2">画像</div>
         <div className="flex items-center gap-2">
           <input
             ref={fileInputRef}
@@ -93,9 +93,8 @@ export function ImageUpload({
             className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
           >
             <Upload className="w-3.5 h-3.5" />
-            画像を選択
+            画像を追加
           </Button>
-          <span className="text-xs text-gray-400">JPEG, PNG, GIF, WebP (最大10MB)</span>
         </div>
       </div>
 

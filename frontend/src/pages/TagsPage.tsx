@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
+import { getMarkdownSummary } from '@/utils/markdownUtils';
 
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
@@ -306,7 +307,7 @@ export function TagsPage() {
                     </CardHeader>
                     {tag.description && (
                       <CardContent className="pt-0">
-                        <p className="text-gray-700 line-clamp-2">{tag.description || ''}</p>
+                        <p className="text-gray-700 line-clamp-2">{getMarkdownSummary(tag.description || '', 150)}</p>
                       </CardContent>
                     )}
                   </div>

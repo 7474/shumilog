@@ -83,16 +83,20 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
     try {
       setError(null);
       setIsSubmitting(true);
-      const response = log
-        ? await api.logs[':id'].$put({ param: { id: log.id }, json: values })
-        : await api.logs.$post({ json: values });
+      const result = log
+        ? await api.PUT('/logs/{id}', {
+            params: { path: { id: log.id } },
+            body: values,
+          })
+        : await api.POST('/logs', {
+            body: values,
+          });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save log');
+      if (result.error || !result.data) {
+        throw new Error((result.error as any)?.error || 'Failed to save log');
       }
 
-      const resultLog = await response.json();
+      const resultLog = result.data;
 
       // Upload images if needed
       if (selectedImages.length > 0) {

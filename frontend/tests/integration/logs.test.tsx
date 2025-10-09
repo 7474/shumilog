@@ -25,11 +25,11 @@ const renderWithRouter = (initialEntries: string[]) => {
 
 describe('Log Management Integration Test', () => {
   beforeEach(() => {
-    mockApi.logs.$get.mockClear();
+    mockApi.GET.mockClear();
   });
 
   afterEach(() => {
-    mockApi.logs.$get.mockRestore();
+    mockApi.GET.mockRestore();
   });
 
   it('should display a list of logs', async () => {
@@ -68,11 +68,10 @@ describe('Log Management Integration Test', () => {
       },
     ];
 
-    const mockResponse = {
-      ok: true,
-      json: () => Promise.resolve({ items: logs }),
-    };
-    mockApi.logs.$get.mockResolvedValue(mockResponse);
+    mockApi.GET.mockResolvedValue({
+      data: { items: logs },
+      error: undefined,
+    });
 
     renderWithRouter(['/']);
 
@@ -81,6 +80,6 @@ describe('Log Management Integration Test', () => {
       expect(screen.getByText(/Second log entry/)).toBeInTheDocument();
     });
 
-    expect(mockApi.logs.$get).toHaveBeenCalledTimes(1);
+    expect(mockApi.GET).toHaveBeenCalledTimes(1);
   });
 });

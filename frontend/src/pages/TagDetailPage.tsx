@@ -47,11 +47,12 @@ export function TagDetailPage() {
       try {
         // Decode the URL-encoded tag name
         const decodedName = decodeURIComponent(name);
-        const response = await api.tags[':id'].$get({ param: { id: decodedName } });
-        if (!response.ok) {
+        const { data, error: fetchError } = await api.GET('/tags/{id}', {
+          params: { path: { id: decodedName } },
+        });
+        if (fetchError || !data) {
           throw new Error('Failed to fetch tag');
         }
-        const data = await response.json();
         setTag(data as TagDetail);
       } catch (err) {
         console.error('Failed to fetch tag:', err);
@@ -69,11 +70,12 @@ export function TagDetailPage() {
 
     try {
       const decodedName = decodeURIComponent(name);
-      const response = await api.tags[':id'].$get({ param: { id: decodedName } });
-      if (!response.ok) {
+      const { data, error: fetchError } = await api.GET('/tags/{id}', {
+        params: { path: { id: decodedName } },
+      });
+      if (fetchError || !data) {
         throw new Error('Failed to fetch tag');
       }
-      const data = await response.json();
       setTag(data as TagDetail);
     } catch (err) {
       console.error('Failed to fetch tag:', err);
@@ -97,8 +99,10 @@ export function TagDetailPage() {
       try {
         setIsDeleting(true);
         const decodedName = decodeURIComponent(name);
-        const response = await api.tags[':id'].$delete({ param: { id: decodedName } });
-        if (!response.ok) {
+        const { error } = await api.DELETE('/tags/{id}', {
+          params: { path: { id: decodedName } },
+        });
+        if (error) {
           throw new Error('Failed to delete tag');
         }
         navigate('/tags');

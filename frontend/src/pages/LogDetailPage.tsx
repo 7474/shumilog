@@ -32,12 +32,13 @@ export function LogDetailPage() {
       }
 
       try {
-        const response = await api.logs[':logId'].$get({ param: { logId: id } });
-        if (!response.ok) {
+        const { data, error: fetchError } = await api.GET('/logs/{logId}', {
+          params: { path: { logId: id } },
+        });
+        if (fetchError || !data) {
           throw new Error('Failed to fetch log');
         }
-        const result = await response.json();
-        setLog(result);
+        setLog(data);
       } catch (err) {
         console.error('Failed to fetch log:', err);
         setError('Failed to load log');
@@ -55,10 +56,11 @@ export function LogDetailPage() {
     const fetchLog = async () => {
       if (!id) return;
       try {
-        const response = await api.logs[':logId'].$get({ param: { logId: id } });
-        if (response.ok) {
-          const result = await response.json();
-          setLog(result);
+        const { data } = await api.GET('/logs/{logId}', {
+          params: { path: { logId: id } },
+        });
+        if (data) {
+          setLog(data);
         }
       } catch (err) {
         console.error('Failed to refetch log:', err);
@@ -72,8 +74,10 @@ export function LogDetailPage() {
 
     try {
       setIsDeleting(true);
-      const response = await api.logs[':id'].$delete({ param: { id } });
-      if (!response.ok) {
+      const { error } = await api.DELETE('/logs/{id}', {
+        params: { path: { id } },
+      });
+      if (error) {
         throw new Error('Failed to delete log');
       }
       // Navigate back to logs page after successful deletion

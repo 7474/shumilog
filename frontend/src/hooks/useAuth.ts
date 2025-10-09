@@ -9,11 +9,10 @@ export function useAuth() {
 
   const verifyUser = useCallback(async () => {
     try {
-      const res = await api.users.me.$get();
-      if (res.ok) {
-        const userData = await res.json();
+      const { data, error } = await api.GET('/users/me', {});
+      if (!error && data) {
         setIsAuthenticated(true);
-        setUser(userData);
+        setUser(data);
       } else {
         setIsAuthenticated(false);
         setUser(null);

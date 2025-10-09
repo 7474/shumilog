@@ -3,25 +3,16 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { TagForm } from '../../src/components/TagForm';
 import { Tag } from '../../src/models';
 
-// Mock the API service
-const mockCreateTag = vi.fn();
-const mockUpdateTag = vi.fn();
+// Mock the API service using vi.hoisted to ensure mocks are available
+const { mockPOST, mockPUT } = vi.hoisted(() => ({
+  mockPOST: vi.fn(),
+  mockPUT: vi.fn(),
+}));
+
 vi.mock('../../src/services/api', () => ({
   api: {
-    tags: {
-      $post: (args: { json: any }) => {
-        return Promise.resolve(
-          new Response(JSON.stringify(mockCreateTag(args.json)), { status: 200 })
-        );
-      },
-      ':id': {
-        $put: (args: { param: { id: string }; json: any }) => {
-          return Promise.resolve(
-            new Response(JSON.stringify(mockUpdateTag(args.param.id, args.json)), { status: 200 })
-          );
-        },
-      },
-    },
+    POST: mockPOST,
+    PUT: mockPUT,
   },
 }));
 
@@ -34,6 +25,7 @@ describe('TagForm', () => {
   });
 
   it('should render create form correctly', () => {
+    mockPOST.mockResolvedValue({ data: { id: '1', name: 'New Tag' }, error: undefined });
     render(<TagForm onSuccess={mockOnSuccess} />);
     expect(screen.getByLabelText(/タグ名/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/説明/i)).toBeInTheDocument();
@@ -41,6 +33,7 @@ describe('TagForm', () => {
   });
 
   it('should render edit form correctly', () => {
+    mockPUT.mockResolvedValue({ data: { id: '1', name: 'Updated Tag' }, error: undefined });
     const tag: Tag = {
       id: '1',
       name: 'Test Tag',
@@ -56,14 +49,16 @@ describe('TagForm', () => {
   });
 
   it('should call createTag on form submission for new tag', async () => {
-    mockCreateTag.mockResolvedValue({ id: '1', name: 'New Tag' });
+    mockPOST.mockResolvedValue({ data: { id: '1', name: 'New Tag' }, error: undefined });
     render(<TagForm onSuccess={mockOnSuccess} />);
 
     fireEvent.change(screen.getByLabelText(/タグ名/i), { target: { value: 'New Tag' } });
     fireEvent.click(screen.getByRole('button', { name: /タグを作成/i }));
 
     await waitFor(() => {
-      expect(mockCreateTag).toHaveBeenCalledWith({ name: 'New Tag', description: '' });
+      expect(mockPOST).toHaveBeenCalledWith('/tags', {
+        body: { name: 'New Tag', description: '' },
+      });
       expect(mockOnSuccess).toHaveBeenCalled();
     });
   });
@@ -76,19 +71,23 @@ describe('TagForm', () => {
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
     };
-    mockUpdateTag.mockResolvedValue({ id: '1', name: 'Updated Tag' });
+    mockPUT.mockResolvedValue({ data: { id: '1', name: 'Updated Tag' }, error: undefined });
     render(<TagForm tag={tag} onSuccess={mockOnSuccess} />);
 
     fireEvent.change(screen.getByLabelText(/タグ名/i), { target: { value: 'Updated Tag' } });
     fireEvent.click(screen.getByRole('button', { name: /タグを更新/i }));
 
     await waitFor(() => {
-      expect(mockUpdateTag).toHaveBeenCalledWith('1', { name: 'Updated Tag', description: '' });
+      expect(mockPUT).toHaveBeenCalledWith('/tags/{id}', {
+        params: { path: { id: '1' } },
+        body: { name: 'Updated Tag', description: '' },
+      });
       expect(mockOnSuccess).toHaveBeenCalled();
     });
   });
 
   it('should show validation error for empty name', async () => {
+    mockPOST.mockResolvedValue({ data: { id: '1', name: 'New Tag' }, error: undefined });
     render(<TagForm onSuccess={mockOnSuccess} />);
     fireEvent.click(screen.getByRole('button', { name: /タグを作成/i }));
 

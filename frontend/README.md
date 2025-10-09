@@ -105,20 +105,36 @@ npm run generate:types
 
 ### 使用方法
 
-自動生成された型定義をインポートして使用します：
+**openapi-fetch**による型安全なAPIクライアントを使用します：
 
 ```typescript
 import { Log, Tag, User } from '@/api-types';
 
-const response = await api.logs.$get();
-const data: { items: Log[]; total: number } = await response.json();
+// GET リクエスト
+const { data, error } = await api.GET('/logs', {
+  params: { query: { search: 'anime' } }
+});
+
+if (data) {
+  // dataは自動的に型付けされる
+  data.items.forEach(log => console.log(log.title));
+}
+
+// POST リクエスト
+const result = await api.POST('/logs', {
+  body: {
+    title: 'タイトル',
+    content_md: '# 内容',
+  }
+});
 ```
 
 ### メリット
 
+- ✅ **完全な型安全性**: レスポンス型がunknownではなく具体的な型に
+- ✅ **コンパイル時検証**: パス・クエリ・ボディパラメータの型チェック
 - ✅ **自動化**: OpenAPI仕様の更新だけで型定義も自動更新
-- ✅ **型安全性**: TypeScriptコンパイラによるコンパイル時の型チェック
-- ✅ **メンテナンスフリー**: 手動での型定義保守が不要
+- ✅ **軽量**: わずか6kbのライブラリサイズ
 - ✅ **IDEサポート**: 自動補完とインラインドキュメント
 
 詳細は [フロントエンドAPI検証ガイド](../docs/frontend-api-validation.md) を参照してください。

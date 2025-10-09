@@ -23,7 +23,7 @@ const renderWithRouter = (initialEntries: string[]) => {
 describe('Login Flow Integration Test', () => {
   // Reset mocks before each test to ensure a clean state
   beforeEach(() => {
-    mockApi.logs.$get.mockClear();
+    mockApi.GET.mockClear();
     mockUseAuth.login.mockClear();
     // Reset auth state to default
     mockUseAuth.isAuthenticated = false;
@@ -33,7 +33,7 @@ describe('Login Flow Integration Test', () => {
 
   afterEach(() => {
     // Restore all mocks to their original implementation
-    mockApi.logs.$get.mockRestore();
+    mockApi.GET.mockRestore();
     mockUseAuth.login.mockRestore();
   });
 
@@ -51,12 +51,10 @@ describe('Login Flow Integration Test', () => {
     mockUseAuth.user = { id: '1', name: 'Test User' };
 
     // 2. Setup API Mock
-    mockApi.logs.$get.mockResolvedValue(
-      new Response(JSON.stringify({ items: [] }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    );
+    mockApi.GET.mockResolvedValue({
+      data: { items: [] },
+      error: undefined,
+    });
 
     // 3. Render
     renderWithRouter(['/']);
@@ -65,7 +63,7 @@ describe('Login Flow Integration Test', () => {
     await waitFor(() => {
       expect(screen.getByText('まだログがありません')).toBeInTheDocument();
     });
-    expect(mockApi.logs.$get).toHaveBeenCalledTimes(1);
+    expect(mockApi.GET).toHaveBeenCalledTimes(1);
   });
 
   it('should call login function on button click', async () => {

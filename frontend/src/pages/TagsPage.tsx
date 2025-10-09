@@ -183,7 +183,7 @@ export function TagsPage() {
 
       {/* タグ作成フォーム */}
       {showForm && (
-        <Card className="card-fresh">
+        <Card className="card-fresh space-y-4">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               {selectedTag ? <PenLine size={20} /> : <Plus size={20} />}

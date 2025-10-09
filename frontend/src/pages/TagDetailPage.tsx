@@ -278,7 +278,7 @@ export function TagDetailPage() {
 
       {/* タグ編集フォーム */}
       {showEditForm && (
-        <Card className="card-fresh">
+        <Card className="card-fresh space-y-4">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <PenLine size={20} />

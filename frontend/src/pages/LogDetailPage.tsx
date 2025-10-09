@@ -272,12 +272,7 @@ export function LogDetailPage() {
                       log.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {log.is_public ? (
-                      <>
-                        <Globe size={12} />
-                        公開
-                      </>
-                    ) : (
+                    {!log.is_public && (
                       <>
                         <Lock size={12} />
                         非公開

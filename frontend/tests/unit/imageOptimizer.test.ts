@@ -88,8 +88,8 @@ describe('imageOptimizer', () => {
       const imageUrl = 'http://example.com/image.jpg';
       const result = getLogCardThumbnailUrl(imageUrl);
       
-      expect(result).toContain('width=400');
-      expect(result).toContain('height=225');
+      expect(result).toContain('width=80');
+      expect(result).toContain('height=80');
       expect(result).toContain('fit=cover');
       expect(result).toContain('quality=80');
       expect(result).toContain('format=auto');

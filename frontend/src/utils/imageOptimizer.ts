@@ -86,14 +86,15 @@ export function getOptimizedImageUrl(
 
 /**
  * ログカード用のサムネイルURLを生成します
+ * 中心をスクエアにクロップした控えめなサイズのサムネイルを生成します
  * 
  * @param imageUrl - 元の画像URL
  * @returns サムネイル用に最適化された画像URL
  */
 export function getLogCardThumbnailUrl(imageUrl: string): string {
   return getOptimizedImageUrl(imageUrl, {
-    width: 400,
-    height: 225,
+    width: 80,
+    height: 80,
     fit: 'cover',
     quality: 80,
     format: 'auto',

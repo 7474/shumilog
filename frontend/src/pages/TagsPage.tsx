@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Search, Lock, PenLine, X, Tag as TagIcon, Plus } from 'lucide-react';
+import { Lock, PenLine, X, Tag as TagIcon, Plus } from 'lucide-react';
 import { api } from '@/services/api';
 import { Tag } from '@/api-types';
 import { TagForm } from '@/components/TagForm';
 import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -59,14 +59,15 @@ export function TagsPage() {
     fetchTags(undefined, true);
   }, []);
 
-  // 検索クエリが変更されたときにタグを再取得（デバウンス処理付き）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchTags(searchQuery || undefined, false);
-    }, 300);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchTags(searchQuery || undefined, false);
+  };
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    fetchTags(undefined, false);
+  };
 
   const handleSuccess = async (tagId?: string) => {
     setShowForm(false);
@@ -213,11 +214,10 @@ export function TagsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 検索ボックス */}
+      {/* 検索フォーム */}
       <Card className="card-fresh">
         <CardContent>
-          <div className="flex items-center space-x-2">
-            <Search size={20} className="text-gray-400" />
+          <form onSubmit={handleSearch} className="flex gap-2">
             <Input
               type="text"
               placeholder="タグを検索（名前または説明）..."
@@ -225,21 +225,16 @@ export function TagsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
             />
+            <Button type="submit" className="btn-fresh">
+              検索
+            </Button>
             {searchQuery && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchQuery('')}
-                className="text-gray-600"
-              >
-                <X size={16} className="mr-1" />
+              <Button type="button" variant="outline" onClick={handleClearSearch}>
                 クリア
               </Button>
             )}
-          </div>
-          {searchQuery && (
-            <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中...</p>
-          )}
+          </form>
+          {searching && searchQuery && <p className="text-sm text-gray-600 mt-2">「{searchQuery}」で検索中...</p>}
         </CardContent>
       </Card>
 

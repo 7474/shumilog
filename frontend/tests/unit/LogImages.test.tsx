@@ -48,9 +48,18 @@ describe('LogImages', () => {
 
     // In test environment, VITE_API_BASE_URL is set to http://localhost:8787/api
     const expectedBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-    expect(images[0]).toHaveAttribute('src', `${expectedBaseUrl}/logs/log_1/images/image_1`);
-    expect(images[1]).toHaveAttribute('src', `${expectedBaseUrl}/logs/log_1/images/image_2`);
+    
+    // 画像URLには最適化パラメータが含まれている
+    const src1 = images[0].getAttribute('src');
+    expect(src1).toContain(`${expectedBaseUrl}/logs/log_1/images/image_1`);
+    expect(src1).toContain('width=1920');
+    expect(src1).toContain('fit=scale-down');
+    
+    const src2 = images[1].getAttribute('src');
+    expect(src2).toContain(`${expectedBaseUrl}/logs/log_1/images/image_2`);
+    expect(src2).toContain('width=1920');
 
+    // リンク先は元のURLのまま
     const links = container.querySelectorAll('a');
     expect(links[0]).toHaveAttribute('href', `${expectedBaseUrl}/logs/log_1/images/image_1`);
     expect(links[1]).toHaveAttribute('href', `${expectedBaseUrl}/logs/log_1/images/image_2`);
@@ -64,15 +73,17 @@ describe('LogImages', () => {
     const { container } = render(<LogImages logId="log_1" images={mockImages} />);
     const images = container.querySelectorAll('img');
 
-    expect(images[0]).toHaveAttribute(
-      'src',
-      'https://api.shumilog.dev/api/logs/log_1/images/image_1'
-    );
-    expect(images[1]).toHaveAttribute(
-      'src',
-      'https://api.shumilog.dev/api/logs/log_1/images/image_2'
-    );
+    // 画像URLには最適化パラメータが含まれている
+    const src1 = images[0].getAttribute('src');
+    expect(src1).toContain('https://api.shumilog.dev/api/logs/log_1/images/image_1');
+    expect(src1).toContain('width=1920');
+    expect(src1).toContain('fit=scale-down');
+    
+    const src2 = images[1].getAttribute('src');
+    expect(src2).toContain('https://api.shumilog.dev/api/logs/log_1/images/image_2');
+    expect(src2).toContain('width=1920');
 
+    // リンク先は元のURLのまま
     const links = container.querySelectorAll('a');
     expect(links[0]).toHaveAttribute(
       'href',

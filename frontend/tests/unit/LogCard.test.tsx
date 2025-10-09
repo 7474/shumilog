@@ -128,4 +128,80 @@ describe('LogCard', () => {
     // 実際のコンテンツは表示されていることを確認
     expect(screen.getByText(/これはAI生成のテストコンテンツです。/)).toBeInTheDocument();
   });
+
+  it('renders thumbnail image when log has images', () => {
+    const logWithImage: Log = {
+      ...mockLog,
+      images: [
+        {
+          id: 'image_1',
+          log_id: '1',
+          r2_key: 'logs/1/image1.jpg',
+          file_name: 'image1.jpg',
+          content_type: 'image/jpeg',
+          file_size: 1024,
+          display_order: 0,
+          created_at: '2024-01-15T10:00:00Z',
+        },
+      ],
+    };
+    const { container } = renderWithRouter(<LogCard log={logWithImage} />);
+    
+    const img = container.querySelector('img[loading="lazy"]');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('alt', 'Test Log Title');
+    
+    // URLに最適化パラメータが含まれていることを確認
+    const src = img?.getAttribute('src');
+    expect(src).toContain('/logs/1/images/image_1');
+    expect(src).toContain('width=400');
+    expect(src).toContain('height=225');
+    expect(src).toContain('fit=cover');
+  });
+
+  it('does not render thumbnail when log has no images', () => {
+    const logWithoutImages: Log = {
+      ...mockLog,
+      images: [],
+    };
+    const { container } = renderWithRouter(<LogCard log={logWithoutImages} />);
+    
+    const img = container.querySelector('img[loading="lazy"]');
+    expect(img).not.toBeInTheDocument();
+  });
+
+  it('renders only first image as thumbnail when log has multiple images', () => {
+    const logWithMultipleImages: Log = {
+      ...mockLog,
+      images: [
+        {
+          id: 'image_1',
+          log_id: '1',
+          r2_key: 'logs/1/image1.jpg',
+          file_name: 'image1.jpg',
+          content_type: 'image/jpeg',
+          file_size: 1024,
+          display_order: 0,
+          created_at: '2024-01-15T10:00:00Z',
+        },
+        {
+          id: 'image_2',
+          log_id: '1',
+          r2_key: 'logs/1/image2.jpg',
+          file_name: 'image2.jpg',
+          content_type: 'image/jpeg',
+          file_size: 2048,
+          display_order: 1,
+          created_at: '2024-01-15T10:01:00Z',
+        },
+      ],
+    };
+    const { container } = renderWithRouter(<LogCard log={logWithMultipleImages} />);
+    
+    const imgs = container.querySelectorAll('img[loading="lazy"]');
+    expect(imgs).toHaveLength(1);
+    
+    const src = imgs[0]?.getAttribute('src');
+    expect(src).toContain('/logs/1/images/image_1');
+  });
 });

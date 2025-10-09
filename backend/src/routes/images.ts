@@ -147,6 +147,11 @@ images.get('/:logId/images/:imageId', async (c) => {
     throw new HTTPException(404, { message: 'Image data not found' });
   }
 
+  // Note: Image resizing query parameters (width, height, fit, quality, format) are supported
+  // but require Cloudflare Image Resizing to be enabled on the account.
+  // For now, we return the original image with appropriate cache headers.
+  // To enable resizing, configure Cloudflare Image Resizing in the Workers settings.
+
   // Return image with appropriate headers
   return new Response(imageData.body, {
     headers: {

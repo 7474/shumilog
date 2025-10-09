@@ -1,12 +1,10 @@
-import { hc } from 'hono/client';
-import type { AppType } from '@backend/index';
+import createClient from 'openapi-fetch';
+import type { paths } from '@/types/api';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
-export const client = hc<AppType>(baseUrl, {
-  init: {
-    credentials: 'include',
-  },
-});
 
-// The backend already mounts routes at /api, so we use the root client directly
-export const api = client;
+// OpenAPI型定義に基づく型安全なAPIクライアント
+export const api = createClient<paths>({
+  baseUrl,
+  credentials: 'include',
+});

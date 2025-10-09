@@ -28,17 +28,17 @@ export function MyLogsPage() {
       } else {
         setSearching(true);
       }
-      const query = search ? { search } : {};
-      const response = await api.users.me.logs.$get({ query });
-      if (!response.ok) {
-        if (response.status === 401) {
+      const { data, error: fetchError, response } = await api.GET('/users/me/logs', {
+        params: { query: search ? { search } : {} },
+      });
+      if (fetchError || !data) {
+        if (response?.status === 401) {
           // Not authenticated, redirect to login
           navigate('/login');
           return;
         }
         throw new Error('Failed to fetch logs');
       }
-      const data = await response.json();
       setLogs(data.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -78,8 +78,8 @@ export function MyLogsPage() {
 
   const handleLogout = async () => {
     try {
-      const res = await api.auth.logout.$post();
-      if (res.ok) {
+      const { error } = await api.POST('/auth/logout', {});
+      if (!error) {
         clearAuth();
         navigate('/');
       } else {

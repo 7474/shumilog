@@ -37,12 +37,12 @@ export function TagsPage() {
       } else {
         setSearching(true);
       }
-      const queryParams = search ? { query: { search } } : undefined;
-      const response = await api.tags.$get(queryParams);
-      if (!response.ok) {
+      const { data, error: fetchError } = await api.GET('/tags', {
+        params: { query: search ? { search } : {} },
+      });
+      if (fetchError || !data) {
         throw new Error('Failed to fetch tags');
       }
-      const data = await response.json();
       setTags(data.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -78,10 +78,11 @@ export function TagsPage() {
       // For newly created tags, navigate to the detail page
       // We need to fetch the tag to get its name for the URL
       try {
-        const response = await api.tags[':id'].$get({ param: { id: tagId } });
-        if (response.ok) {
-          const tag = await response.json();
-          navigate(`/tags/${encodeURIComponent(tag.name)}`);
+        const { data } = await api.GET('/tags/{id}', {
+          params: { path: { id: tagId } },
+        });
+        if (data) {
+          navigate(`/tags/${encodeURIComponent(data.name)}`);
           return;
         }
       } catch (err) {

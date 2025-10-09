@@ -60,16 +60,20 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
     try {
       setError(null);
       setIsSubmitting(true);
-      const response = tag
-        ? await api.tags[':id'].$put({ param: { id: tag.id }, json: values })
-        : await api.tags.$post({ json: values });
+      const result = tag
+        ? await api.PUT('/tags/{id}', {
+            params: { path: { id: tag.id } },
+            body: values,
+          })
+        : await api.POST('/tags', {
+            body: values,
+          });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save tag');
+      if (result.error || !result.data) {
+        throw new Error((result.error as any)?.error || 'Failed to save tag');
       }
 
-      const resultTag = await response.json();
+      const resultTag = result.data;
       // Pass the tag ID to onSuccess (either existing tag ID or newly created tag ID)
       onSuccess(tag ? tag.id : resultTag.id);
     } catch (err) {
@@ -92,19 +96,18 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
       setError(null);
       setIsLoadingSupport(true);
 
-      const response = await api.support.tags.$post({
-        json: {
+      const result = await api.POST('/support/tags', {
+        body: {
           tag_name: tagName,
           support_type: 'ai_enhanced',
         },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'サポート情報の取得に失敗しました');
+      if (result.error || !result.data) {
+        throw new Error((result.error as any)?.error || 'サポート情報の取得に失敗しました');
       }
 
-      const data = await response.json();
+      const data = result.data;
       const currentDescription = form.getValues('description') || '';
       const textarea = descriptionRef.current;
 

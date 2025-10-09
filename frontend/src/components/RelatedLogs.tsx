@@ -17,17 +17,18 @@ export function RelatedLogs({ logId }: RelatedLogsProps) {
     const fetchRelatedLogs = async () => {
       try {
         setLoading(true);
-        const response = await api.logs[':logId'].related.$get({
-          param: { logId },
-          query: { limit: '10' },
+        const { data, error: fetchError } = await api.GET('/logs/{logId}/related', {
+          params: {
+            path: { logId },
+            query: { limit: 10 },
+          },
         });
 
-        if (!response.ok) {
+        if (fetchError || !data) {
           throw new Error('Failed to fetch related logs');
         }
 
-        const result = await response.json();
-        setRelatedLogs(result.items);
+        setRelatedLogs(data.items);
       } catch (err) {
         console.error('Failed to fetch related logs:', err);
         setError('関連ログの取得に失敗しました');

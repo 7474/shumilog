@@ -28,12 +28,12 @@ export function LogsPage() {
       } else {
         setSearching(true);
       }
-      const query = search ? { search } : {};
-      const response = await api.logs.$get({ query });
-      if (!response.ok) {
+      const { data, error: fetchError } = await api.GET('/logs', {
+        params: { query: search ? { search } : {} },
+      });
+      if (fetchError) {
         throw new Error('Failed to fetch logs');
       }
-      const data = await response.json();
       setLogs(data.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');

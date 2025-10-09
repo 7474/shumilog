@@ -167,10 +167,7 @@ export function TagsPage() {
                 ログインして作成
               </>
             ) : showForm ? (
-              <>
-                <X size={16} className="mr-2" />
-                キャンセル
-              </>
+              <></>
             ) : (
               <>
                 <Plus size={16} className="mr-2" />

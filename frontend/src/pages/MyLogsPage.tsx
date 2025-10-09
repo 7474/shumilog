@@ -165,10 +165,7 @@ export function MyLogsPage() {
             className={showForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
           >
             {showForm ? (
-              <>
-                <X size={16} className="mr-2" />
-                キャンセル
-              </>
+              <></>
             ) : (
               <>
                 <PenLine size={16} className="mr-2" />

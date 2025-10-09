@@ -146,10 +146,7 @@ export function LogsPage() {
                 ログインして作成
               </>
             ) : showForm ? (
-              <>
-                <X size={16} className="mr-2" />
-                キャンセル
-              </>
+              <></>
             ) : (
               <>
                 <PenLine size={16} className="mr-2" />
@@ -164,10 +161,21 @@ export function LogsPage() {
       {showForm && (
         <Card className="card-fresh space-y-4">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <PenLine size={20} />
-              <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <PenLine size={20} />
+                <span>{selectedLog ? 'ログを編集' : '新しいログを作成'}</span>
+              </CardTitle>
+              <Button
+                type="button"
+                onClick={handleCancel}
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={20} />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <LogForm log={selectedLog} onSuccess={handleSuccess} onCancel={handleCancel} />

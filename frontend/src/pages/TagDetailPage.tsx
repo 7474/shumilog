@@ -280,10 +280,21 @@ export function TagDetailPage() {
       {showEditForm && (
         <Card className="card-fresh space-y-4">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <PenLine size={20} />
-              <span>タグを編集</span>
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <PenLine size={20} />
+                <span>タグを編集</span>
+              </CardTitle>
+              <Button
+                type="button"
+                onClick={handleEditCancel}
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={20} />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <TagForm tag={tag} onSuccess={handleEditSuccess} onCancel={handleEditCancel} />

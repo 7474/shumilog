@@ -304,9 +304,11 @@ export function TagsPage() {
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-gray-700 line-clamp-2">{tag.description || ''}</p>
-                    </CardContent>
+                    {tag.description && (
+                      <CardContent className="pt-0">
+                        <p className="text-gray-700 line-clamp-2">{tag.description || ''}</p>
+                      </CardContent>
+                    )}
                   </div>
                 </Link>
               </Card>

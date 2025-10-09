@@ -7,7 +7,6 @@ import {
   Bot,
   PenLine,
   Plus,
-  X,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -245,18 +244,6 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
               </>
             )}
           </Button>
-          {onCancel && (
-            <Button
-              type="button"
-              onClick={onCancel}
-              variant="outline"
-              className="flex-1 sm:flex-none px-6 py-2.5 border-gray-300 hover:bg-gray-50"
-              disabled={isSubmitting}
-            >
-              <X size={16} className="mr-2" />
-              キャンセル
-            </Button>
-          )}
         </div>
       </form>
     </Form>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PenLine, X, Loader2 } from 'lucide-react';
+import { PenLine, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -185,18 +185,6 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
               </>
             )}
           </Button>
-          {onCancel && (
-            <Button
-              type="button"
-              onClick={onCancel}
-              variant="outline"
-              className="border-gray-300 hover:bg-gray-50"
-              disabled={isSubmitting || uploadingImages}
-            >
-              <X size={16} className="mr-2" />
-              キャンセル
-            </Button>
-          )}
         </div>
       </form>
     </Form>

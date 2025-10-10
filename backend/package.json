@@ -18,6 +18,7 @@
     "dev:create-session": "tsx src/scripts/create-session.ts"
   },
   "dependencies": {
+    "@mixmark-io/domino": "^2.2.0",
     "@types/turndown": "^5.0.5",
     "hono": "^4.9.10",
     "turndown": "^7.2.1",

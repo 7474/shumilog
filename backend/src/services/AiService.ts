@@ -4,6 +4,7 @@
  */
 
 import TurndownService from 'turndown';
+import * as domino from '@mixmark-io/domino';
 
 export interface AiBinding {
   run(model: string, inputs: any): Promise<any>;
@@ -46,7 +47,12 @@ export class AiService {
   convertHtmlToMarkdown(html: string): string {
     console.log('[AiService] convertHtmlToMarkdown called with HTML length:', html.length);
     
-    const markdown = this.turndownService.turndown(html);
+    // dominoを使ってDOMドキュメントを作成
+    // これによりCloudflare Workers環境でもDOM操作が可能になる
+    const doc = domino.createDocument(html);
+    
+    // ドキュメント全体をTurndownServiceに渡してMarkdownに変換
+    const markdown = this.turndownService.turndown(doc.documentElement);
     
     console.log('[AiService] convertHtmlToMarkdown result:', {
       htmlLength: html.length,

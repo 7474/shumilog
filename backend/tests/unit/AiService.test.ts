@@ -148,6 +148,69 @@ describe('AiService', () => {
     });
   });
 
+  describe('convertHtmlToMarkdown', () => {
+    it('should convert HTML to Markdown without errors', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const html = '<html><head><title>Test</title></head><body><h1>Test Header</h1><p>Test paragraph with <strong>bold</strong> text.</p></body></html>';
+      
+      const markdown = aiService.convertHtmlToMarkdown(html);
+
+      expect(markdown).toBeTruthy();
+      expect(markdown).toContain('Test Header');
+      expect(markdown).toContain('**bold**');
+    });
+
+    it('should handle complex Wikipedia HTML structure', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const html = `
+        <html>
+          <head><title>進撃の巨人</title></head>
+          <body>
+            <h1>進撃の巨人</h1>
+            <p>進撃の巨人は、<a href="/wiki/諫山創">諫山創</a>による日本の<a href="/wiki/漫画">漫画</a>作品。</p>
+            <h2>概要</h2>
+            <p>人類と巨人の戦いを描く作品。</p>
+            <ul>
+              <li>作者: 諫山創</li>
+              <li>掲載誌: 別冊少年マガジン</li>
+            </ul>
+          </body>
+        </html>
+      `;
+      
+      const markdown = aiService.convertHtmlToMarkdown(html);
+
+      expect(markdown).toBeTruthy();
+      expect(markdown).toContain('進撃の巨人');
+      expect(markdown).toContain('諫山創');
+      expect(markdown).toContain('## 概要');
+      // TurndownService converts <ul><li> to * (asterisk) format
+      expect(markdown).toContain('*   作者:');
+    });
+
+    it('should not throw "document is not defined" error', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const html = '<h1>Test</h1>';
+      
+      // This should not throw an error
+      expect(() => {
+        aiService.convertHtmlToMarkdown(html);
+      }).not.toThrow('document is not defined');
+    });
+  });
+
   describe('formatAsMarkdown', () => {
     it('should wrap AI markdown output with comments and add Wikipedia source', () => {
       const mockAi: AiBinding = {

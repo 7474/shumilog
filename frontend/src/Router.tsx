@@ -5,7 +5,6 @@ import { MyLogsPage } from './pages/MyLogsPage';
 import { TagsPage } from './pages/TagsPage';
 import { TagDetailPage } from './pages/TagDetailPage';
 import { LogDetailPage } from './pages/LogDetailPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/AppLayout';
 
 const router = createBrowserRouter([

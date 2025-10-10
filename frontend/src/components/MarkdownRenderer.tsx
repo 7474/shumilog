@@ -13,7 +13,6 @@ interface MarkdownRendererProps {
  */
 function createHashtagRenderer() {
   const renderer = new marked.Renderer();
-  const originalText = renderer.text.bind(renderer);
 
   renderer.text = (textToken) => {
     let text = typeof textToken === 'string' ? textToken : textToken.text;
@@ -39,7 +38,7 @@ function createHashtagRenderer() {
   return renderer;
 }
 
-export function MarkdownRenderer({ content, className = '', tags }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className = '', tags: _tags }: MarkdownRendererProps) {
   // Configure marked for GitHub Flavored Markdown with custom renderer
   marked.setOptions({
     gfm: true,

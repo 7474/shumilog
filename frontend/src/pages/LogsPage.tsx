@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Lock, PenLine, X, FileText } from 'lucide-react';
+import { Lock, PenLine, X, FileText } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -7,7 +7,7 @@ import { LogCard } from '@/components/LogCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 export function LogsPage() {
@@ -18,8 +18,7 @@ export function LogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | undefined>(undefined);
-  const { isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
+  const { isAuthenticated, user: _user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
@@ -119,7 +118,7 @@ export function LogsPage() {
         <X size={48} className="text-red-500" />
         <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
         <p className="text-gray-600">{error}</p>
-        <Button onClick={fetchLogs} variant="outline">
+        <Button onClick={() => fetchLogs()} variant="outline">
           再試行
         </Button>
       </div>

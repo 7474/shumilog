@@ -109,8 +109,8 @@ export function TagsPage() {
       // For newly created tags, navigate to the detail page
       // We need to fetch the tag to get its name for the URL
       try {
-        const { data } = await api.GET('/tags/{id}', {
-          params: { path: { id: tagId } },
+        const { data } = await api.GET('/tags/{tagId}', {
+          params: { path: { tagId: tagId } },
         });
         if (data) {
           navigate(`/tags/${encodeURIComponent(data.name)}`);
@@ -171,7 +171,7 @@ export function TagsPage() {
         <X size={48} className="text-red-500" />
         <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
         <p className="text-gray-600">{error}</p>
-        <Button onClick={fetchTags} variant="outline">
+        <Button onClick={() => fetchTags()} variant="outline">
           再試行
         </Button>
       </div>

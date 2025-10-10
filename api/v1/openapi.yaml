@@ -863,6 +863,7 @@ components:
   schemas:
     User:
       type: object
+      additionalProperties: false
       required:
         - id
         - twitter_username
@@ -892,6 +893,7 @@ components:
 
     Tag:
       type: object
+      additionalProperties: false
       required:
         - id
         - name
@@ -924,6 +926,7 @@ components:
 
     TagCreate:
       type: object
+      additionalProperties: false
       required:
         - name
       properties:
@@ -946,6 +949,7 @@ components:
 
     TagUpdate:
       type: object
+      additionalProperties: false
       properties:
         name:
           type: string
@@ -987,12 +991,14 @@ components:
 
     Log:
       type: object
+      additionalProperties: false
       required:
         - id
         - user
         - associated_tags
         - title
         - content_md
+        - is_public
         - images
         - created_at
         - updated_at
@@ -1013,6 +1019,9 @@ components:
         content_md:
           type: string
           description: Content in Markdown format
+        is_public:
+          type: boolean
+          description: Whether this log is publicly visible
         images:
           type: array
           items:
@@ -1027,6 +1036,7 @@ components:
 
     LogCreate:
       type: object
+      additionalProperties: false
       required:
         - content_md
       properties:
@@ -1056,6 +1066,7 @@ components:
 
     LogUpdate:
       type: object
+      additionalProperties: false
       properties:
         tag_ids:
           type: array
@@ -1083,15 +1094,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/Log'
         - type: object
-          required:
-            - is_public
-          properties:
-            is_public:
-              type: boolean
-              description: Whether this log is publicly visible
+          description: Detailed log information (same as Log schema)
 
     LogImage:
       type: object
+      additionalProperties: false
       required:
         - id
         - log_id

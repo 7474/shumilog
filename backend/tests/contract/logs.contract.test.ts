@@ -178,7 +178,6 @@ describe('Contract: Logs routes', () => {
       expect(response.status).toBe(201);
       const log = await response.json();
       expect(log.is_public).toBe(true);
-      expect(log.privacy).toBe('public');
     });
 
     it('creates a new log using tag_names and auto-creates missing tags', async () => {

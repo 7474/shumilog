@@ -4,6 +4,7 @@ import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { SessionService } from '../services/SessionService.js';
 import { UserService } from '../services/UserService.js';
 import { LogService } from '../services/LogService.js';
+import { toLogResponse } from './logs.js';
 
 const users = new Hono();
 
@@ -57,7 +58,7 @@ users.get('/me/logs', async (c) => {
   const result = await logService.getUserLogs(user.id, limit, offset);
 
   return c.json({
-    items: result.logs,
+    items: result.logs.map(toLogResponse),
     total: result.total,
     limit,
     offset,

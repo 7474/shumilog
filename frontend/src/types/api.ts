@@ -1464,11 +1464,6 @@ export interface components {
             content_md: string;
             /** @description Whether this log is publicly visible */
             is_public: boolean;
-            /**
-             * @description Privacy status of the log (derived from is_public)
-             * @enum {string}
-             */
-            privacy: "public" | "private";
             /** @description Images attached to this log */
             images: components["schemas"]["LogImage"][];
             /** Format: date-time */

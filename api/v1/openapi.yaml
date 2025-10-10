@@ -999,7 +999,6 @@ components:
         - title
         - content_md
         - is_public
-        - privacy
         - images
         - created_at
         - updated_at
@@ -1023,10 +1022,6 @@ components:
         is_public:
           type: boolean
           description: Whether this log is publicly visible
-        privacy:
-          type: string
-          enum: [public, private]
-          description: Privacy status of the log (derived from is_public)
         images:
           type: array
           items:

@@ -121,7 +121,6 @@ export const toLogResponse = (log: Log) => ({
   title: log.title ?? null,
   content_md: log.content_md,
   is_public: Boolean(log.is_public),
-  privacy: log.is_public ? 'public' : 'private',
   created_at: log.created_at,
   updated_at: log.updated_at,
   user: {

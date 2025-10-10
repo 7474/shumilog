@@ -863,6 +863,7 @@ components:
   schemas:
     User:
       type: object
+      additionalProperties: false
       required:
         - id
         - twitter_username
@@ -892,6 +893,7 @@ components:
 
     Tag:
       type: object
+      additionalProperties: false
       required:
         - id
         - name
@@ -924,6 +926,7 @@ components:
 
     TagCreate:
       type: object
+      additionalProperties: false
       required:
         - name
       properties:
@@ -946,6 +949,7 @@ components:
 
     TagUpdate:
       type: object
+      additionalProperties: false
       properties:
         name:
           type: string
@@ -987,6 +991,7 @@ components:
 
     Log:
       type: object
+      additionalProperties: false
       required:
         - id
         - user
@@ -1036,6 +1041,7 @@ components:
 
     LogCreate:
       type: object
+      additionalProperties: false
       required:
         - content_md
       properties:
@@ -1065,6 +1071,7 @@ components:
 
     LogUpdate:
       type: object
+      additionalProperties: false
       properties:
         tag_ids:
           type: array
@@ -1096,6 +1103,7 @@ components:
 
     LogImage:
       type: object
+      additionalProperties: false
       required:
         - id
         - log_id

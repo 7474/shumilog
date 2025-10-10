@@ -1462,6 +1462,13 @@ export interface components {
             title: string | null;
             /** @description Content in Markdown format */
             content_md: string;
+            /** @description Whether this log is publicly visible */
+            is_public: boolean;
+            /**
+             * @description Privacy status of the log (derived from is_public)
+             * @enum {string}
+             */
+            privacy: "public" | "private";
             /** @description Images attached to this log */
             images: components["schemas"]["LogImage"][];
             /** Format: date-time */
@@ -1497,10 +1504,7 @@ export interface components {
             content_md?: string;
             is_public?: boolean;
         };
-        LogDetail: components["schemas"]["Log"] & {
-            /** @description Whether this log is publicly visible */
-            is_public: boolean;
-        };
+        LogDetail: components["schemas"]["Log"] & Record<string, never>;
         LogImage: {
             /** @description Unique image identifier */
             id: string;

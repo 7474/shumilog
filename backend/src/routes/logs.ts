@@ -116,7 +116,7 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
   return parsed;
 };
 
-const toLogResponse = (log: Log) => ({
+export const toLogResponse = (log: Log) => ({
   id: log.id,
   title: log.title ?? null,
   content_md: log.content_md,

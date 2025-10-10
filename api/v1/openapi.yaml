@@ -993,6 +993,8 @@ components:
         - associated_tags
         - title
         - content_md
+        - is_public
+        - privacy
         - images
         - created_at
         - updated_at
@@ -1013,6 +1015,13 @@ components:
         content_md:
           type: string
           description: Content in Markdown format
+        is_public:
+          type: boolean
+          description: Whether this log is publicly visible
+        privacy:
+          type: string
+          enum: [public, private]
+          description: Privacy status of the log (derived from is_public)
         images:
           type: array
           items:
@@ -1083,12 +1092,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/Log'
         - type: object
-          required:
-            - is_public
-          properties:
-            is_public:
-              type: boolean
-              description: Whether this log is publicly visible
+          description: Detailed log information (same as Log schema)
 
     LogImage:
       type: object

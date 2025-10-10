@@ -3,6 +3,8 @@
  * ユニットテスト時はこのクラスをモックする
  */
 
+import TurndownService from 'turndown';
+
 export interface AiBinding {
   run(model: string, inputs: any): Promise<any>;
 }
@@ -24,7 +26,36 @@ export interface AiEnhancedTagOutput {
 const AI_MODEL = '@cf/openai/gpt-oss-120b';
 
 export class AiService {
-  constructor(private ai: AiBinding) {}
+  private turndownService: TurndownService;
+
+  constructor(private ai: AiBinding) {
+    // HTMLからMarkdownへの変換サービスを初期化
+    this.turndownService = new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced'
+    });
+  }
+
+  /**
+   * WikipediaのHTMLをMarkdownに変換
+   * トークン消費を削減するため、HTMLからMarkdownへ変換する
+   * 
+   * @param html Wikipedia HTML内容
+   * @returns Markdown形式の内容
+   */
+  convertHtmlToMarkdown(html: string): string {
+    console.log('[AiService] convertHtmlToMarkdown called with HTML length:', html.length);
+    
+    const markdown = this.turndownService.turndown(html);
+    
+    console.log('[AiService] convertHtmlToMarkdown result:', {
+      htmlLength: html.length,
+      markdownLength: markdown.length,
+      reductionPercent: ((1 - markdown.length / html.length) * 100).toFixed(2) + '%'
+    });
+    
+    return markdown;
+  }
 
   /**
    * Wikipediaの内容を基に、AIを使用してタグの編集サポート内容を生成
@@ -40,6 +71,9 @@ export class AiService {
       wikipediaContentLength: input.wikipediaContent.length
     });
 
+    // HTMLをMarkdownに変換してトークン消費を削減
+    const markdownContent = this.convertHtmlToMarkdown(input.wikipediaContent);
+
     const instructionPrompt = this.buildInstructionPrompt(input.requestedTagName);
     
     try {
@@ -52,7 +86,7 @@ export class AiService {
           },
           {
             role: 'user',
-            content: `参照情報（Wikipedia HTML）:\n\n${input.wikipediaContent}`
+            content: `参照情報（Wikipedia Markdown）:\n\n${markdownContent}`
           },
           {
             role: 'user',
@@ -88,7 +122,7 @@ export class AiService {
    * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
   private buildInstructionPrompt(requestedTagName: string): string {
-    const prompt = `上記の参照情報（Wikipedia HTML）を基に、タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。
+    const prompt = `上記の参照情報（Wikipedia Markdown）を基に、タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。
 
 【注意】参照記事のタイトルとタグ名が異なる場合（転送・リダイレクトされた場合）は、記事全体を参照しつつ、タグ名「${requestedTagName}」に該当する内容を優先的に抽出してください。
 

@@ -116,6 +116,7 @@ describe('LogForm', () => {
         body: {
           title: 'New Log Title',
           content_md: 'New content.',
+          is_public: true,
         },
       });
       expect(mockOnSuccess).toHaveBeenCalled();
@@ -144,11 +145,12 @@ describe('LogForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /ログを更新/i }));
 
     await waitFor(() => {
-      expect(mockPUT).toHaveBeenCalledWith('/logs/{id}', {
-        params: { path: { id: 'log-1' } },
+      expect(mockPUT).toHaveBeenCalledWith('/logs/{logId}', {
+        params: { path: { logId: 'log-1' } },
         body: {
           title: 'Updated Log Title',
           content_md: 'Log content',
+          is_public: false,
         },
       });
       expect(mockOnSuccess).toHaveBeenCalled();

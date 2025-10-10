@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "wrangler dev --local",
     "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "deploy": "wrangler deploy",
     "test": "vitest run",
     "test:watch": "vitest watch",

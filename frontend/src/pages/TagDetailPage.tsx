@@ -26,10 +26,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
 
 interface TagDetail extends Tag {
-  associations: Tag[];
-  usage_count: number;
+  log_count: number;
   recent_logs: Log[];
-  recent_referring_tags: Tag[];
+  associated_tags: Tag[];
 }
 
 export function TagDetailPage() {
@@ -54,8 +53,8 @@ export function TagDetailPage() {
       try {
         // Decode the URL-encoded tag name
         const decodedName = decodeURIComponent(name);
-        const { data, error: fetchError } = await api.GET('/tags/{id}', {
-          params: { path: { id: decodedName } },
+        const { data, error: fetchError } = await api.GET('/tags/{tagId}', {
+          params: { path: { tagId: decodedName } },
         });
         if (fetchError || !data) {
           throw new Error('Failed to fetch tag');
@@ -77,8 +76,8 @@ export function TagDetailPage() {
 
     try {
       const decodedName = decodeURIComponent(name);
-      const { data, error: fetchError } = await api.GET('/tags/{id}', {
-        params: { path: { id: decodedName } },
+      const { data, error: fetchError } = await api.GET('/tags/{tagId}', {
+        params: { path: { tagId: decodedName } },
       });
       if (fetchError || !data) {
         throw new Error('Failed to fetch tag');
@@ -106,8 +105,8 @@ export function TagDetailPage() {
       try {
         setIsDeleting(true);
         const decodedName = decodeURIComponent(name);
-        const { error } = await api.DELETE('/tags/{id}', {
-          params: { path: { id: decodedName } },
+        const { error } = await api.DELETE('/tags/{tagId}', {
+          params: { path: { tagId: decodedName } },
         });
         if (error) {
           throw new Error('Failed to delete tag');
@@ -318,7 +317,7 @@ export function TagDetailPage() {
                 <FileText size={16} />
                 説明
               </h3>
-              <MarkdownRenderer content={tag.description} tags={tag.associations} />
+              <MarkdownRenderer content={tag.description} tags={tag.associated_tags} />
             </div>
           )}
 
@@ -328,7 +327,7 @@ export function TagDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="flex items-start space-x-2">
                 <span className="text-gray-500 font-medium min-w-[100px]">📊 使用回数:</span>
-                <span className="text-gray-900">{tag.usage_count} 回</span>
+                <span className="text-gray-900">{tag.log_count} 回</span>
               </div>
               <div className="flex items-start space-x-2">
                 <span className="text-gray-500 font-medium min-w-[100px]">📅 作成日:</span>
@@ -354,11 +353,11 @@ export function TagDetailPage() {
           </div>
 
           {/* 関連タグ */}
-          {tag.associations && tag.associations.length > 0 && (
+          {tag.associated_tags && tag.associated_tags.length > 0 && (
             <div className="border-t border-gray-100 pt-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">🔗 関連タグ</h3>
               <div className="flex flex-wrap gap-2">
-                {tag.associations.map((associatedTag) => (
+                {tag.associated_tags.map((associatedTag) => (
                   <Link
                     key={associatedTag.id}
                     to={`/tags/${encodeURIComponent(associatedTag.name)}`}
@@ -366,23 +365,6 @@ export function TagDetailPage() {
                     <span className="inline-flex items-center space-x-1 px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm hover:bg-sky-100 transition-colors cursor-pointer">
                       <span className="w-2 h-2 rounded-full bg-sky-400"></span>
                       <span>{associatedTag.name}</span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 新着の被参照関連タグ */}
-          {tag.recent_referring_tags && tag.recent_referring_tags.length > 0 && (
-            <div className="border-t border-gray-100 pt-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">🔖 新着の被参照関連タグ</h3>
-              <div className="flex flex-wrap gap-2">
-                {tag.recent_referring_tags.map((referringTag) => (
-                  <Link key={referringTag.id} to={`/tags/${encodeURIComponent(referringTag.name)}`}>
-                    <span className="inline-flex items-center space-x-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100 transition-colors cursor-pointer">
-                      <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                      <span>{referringTag.name}</span>
                     </span>
                   </Link>
                 ))}

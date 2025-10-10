@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, X, AlertTriangle, FileText, Globe, Lock, Loader2, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, X, AlertTriangle, FileText, Lock, Loader2, MoreVertical } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
@@ -57,7 +57,7 @@ export function LogDetailPage() {
     fetchLog();
   }, [id]);
 
-  const handleEditSuccess = (logId?: string) => {
+  const handleEditSuccess = (_logId?: string) => {
     setIsEditing(false);
     // Refetch log to get updated data
     const fetchLog = async () => {
@@ -81,8 +81,8 @@ export function LogDetailPage() {
 
     try {
       setIsDeleting(true);
-      const { error } = await api.DELETE('/logs/{id}', {
-        params: { path: { id } },
+      const { error } = await api.DELETE('/logs/{logId}', {
+        params: { path: { logId: id } },
       });
       if (error) {
         throw new Error('Failed to delete log');
@@ -151,7 +151,7 @@ export function LogDetailPage() {
           {/* Xへの共有ボタン（公開ログのみ） */}
           {log.is_public && (
             <ShareToXButton
-              text={log.title}
+              text={log.title || ''}
               url={window.location.href}
               hashtags={log.associated_tags?.map(tag => tag.name) || []}
               size="sm"

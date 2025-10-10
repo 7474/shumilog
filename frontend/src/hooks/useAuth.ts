@@ -17,7 +17,7 @@ export function useAuth() {
         setIsAuthenticated(false);
         setUser(null);
       }
-    } catch (error) {
+    } catch (_error) {
       setIsAuthenticated(false);
       setUser(null);
     } finally {

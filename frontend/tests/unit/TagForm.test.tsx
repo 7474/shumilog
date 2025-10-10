@@ -78,8 +78,8 @@ describe('TagForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /タグを更新/i }));
 
     await waitFor(() => {
-      expect(mockPUT).toHaveBeenCalledWith('/tags/{id}', {
-        params: { path: { id: '1' } },
+      expect(mockPUT).toHaveBeenCalledWith('/tags/{tagId}', {
+        params: { path: { tagId: '1' } },
         body: { name: 'Updated Tag', description: '' },
       });
       expect(mockOnSuccess).toHaveBeenCalled();

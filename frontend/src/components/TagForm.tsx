@@ -41,7 +41,7 @@ interface TagFormProps {
   onCancel?: () => void;
 }
 
-export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
+export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingSupport, setIsLoadingSupport] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,8 +60,8 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
       setError(null);
       setIsSubmitting(true);
       const result = tag
-        ? await api.PUT('/tags/{id}', {
-            params: { path: { id: tag.id } },
+        ? await api.PUT('/tags/{tagId}', {
+            params: { path: { tagId: tag.id } },
             body: values,
           })
         : await api.POST('/tags', {
@@ -98,7 +98,7 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
       const result = await api.POST('/support/tags', {
         body: {
           tag_name: tagName,
-          support_type: 'ai_enhanced',
+          support_type: 'wikipedia_summary',
         },
       });
 
@@ -215,10 +215,13 @@ export function TagForm({ tag, onSuccess, onCancel }: TagFormProps) {
               </div>
               <FormControl>
                 <Textarea
-                  ref={descriptionRef}
                   placeholder="このタグが表すものを説明してください..."
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-colors bg-white shadow-sm min-h-[100px] resize-y"
                   {...field}
+                  ref={(e) => {
+                    field.ref(e);
+                    descriptionRef.current = e;
+                  }}
                 />
               </FormControl>
               <FormMessage className="text-sm text-red-600" />

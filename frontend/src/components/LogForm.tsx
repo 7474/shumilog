@@ -21,6 +21,7 @@ import { ImageUpload } from './ImageUpload';
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content_md: z.string().min(1, 'Content is required'),
+  is_public: z.boolean(),
 });
 
 type LogFormValues = z.infer<typeof formSchema>;
@@ -32,7 +33,7 @@ interface LogFormProps {
   onCancel?: () => void;
 }
 
-export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormProps) {
+export function LogForm({ log, initialContent, onSuccess, onCancel: _onCancel }: LogFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -42,6 +43,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
     defaultValues: {
       title: log?.title ?? '',
       content_md: log?.content_md ?? initialContent ?? '',
+      is_public: log?.is_public ?? true,
     },
   });
 
@@ -84,8 +86,8 @@ export function LogForm({ log, initialContent, onSuccess, onCancel }: LogFormPro
       setError(null);
       setIsSubmitting(true);
       const result = log
-        ? await api.PUT('/logs/{id}', {
-            params: { path: { id: log.id } },
+        ? await api.PUT('/logs/{logId}', {
+            params: { path: { logId: log.id } },
             body: values,
           })
         : await api.POST('/logs', {

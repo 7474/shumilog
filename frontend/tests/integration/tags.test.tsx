@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import userEvent from '@testing-library/user-event';
 
 import { TagsPage } from '../../src/pages/TagsPage';
 

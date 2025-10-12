@@ -119,63 +119,26 @@ export class AiService {
     
     return markdown;
   }
-
+  
   /**
    * タグ名からAI拡張コンテンツを生成（Wikipedia取得とメタデータ抽出を含む）
    * 
    * @param tagName タグ名
    * @returns AI生成された内容とWikipedia URL
    */
-  async generateTagContentFromName(tagName: string): Promise<{ content: string; wikipediaUrl: string }> {
+  async generateTagContentFromName(tagName: string): Promise<{ content: string; }> {
     console.log('[AiService] generateTagContentFromName called with tagName:', tagName);
 
     try {
-      // Wikipediaから全文を取得（HTMLエンドポイントを使用）
-      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(tagName)}`;
-      
-      const response = await fetch(apiUrl, {
-        headers: {
-          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
-          'Accept': 'text/html; charset=utf-8; profile="https://www.mediawiki.org/wiki/Specs/HTML/2.1.0"'
-        }
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Wikipedia page not found');
-        }
-        throw new Error(`Wikipedia API error: ${response.status}`);
-      }
-
-      // HTMLコンテンツを取得
-      const htmlContent = await response.text();
-      
-      if (!htmlContent) {
-        throw new Error('No content available');
-      }
-
-      // Wikipedia URLを構築
-      const wikipediaUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
-
-      // HTMLからメタデータを抽出
-      const metadata = this.extractMetadataFromWikipedia(htmlContent);
-
-      // HTMLをMarkdownに変換してトークン消費を削減
-      const markdownContent = this.convertHtmlToMarkdown(htmlContent);
-
       // AI指示プロンプトを構築
-      const instructionPrompt = this.buildInstructionPrompt(tagName, metadata);
-      
+      const instructionPrompt = this.buildInstructionPrompt(tagName);
+
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
       const aiResponse = await this.ai.run(AI_MODEL, {
         input: [
           {
             role: 'system',
             content: 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。与えられた情報から、タグの説明と関連タグを簡潔に生成してください。'
-          },
-          {
-            role: 'user',
-            content: `参照情報（Wikipedia Markdown）:\n\n${markdownContent}`
           },
           {
             role: 'user',
@@ -192,13 +155,12 @@ export class AiService {
 
       // AI応答をパース
       const aiOutput = this.parseAiResponse(aiResponse, tagName);
-      
+
       // AI生成内容をMarkdown形式に変換
-      const content = this.formatAsMarkdown(aiOutput, wikipediaUrl);
-      
+      const content = this.formatAsMarkdown(aiOutput);
+
       return {
         content,
-        wikipediaUrl
       };
     } catch (error) {
       console.error('[AiService] generateTagContentFromName failed:', error);
@@ -210,64 +172,6 @@ export class AiService {
   }
 
   /**
-   * Wikipediaの内容を基に、AIを使用してタグの編集サポート内容を生成
-   * 
-   * @param input タグ名、Wikipedia内容、URL
-   * @returns AI生成された要約と関連タグ
-   * @deprecated Use generateTagContentFromName instead for cleaner interface
-   */
-  async generateEnhancedTagContent(input: AiEnhancedTagInput): Promise<AiEnhancedTagOutput> {
-    console.log('[AiService] generateEnhancedTagContent called with input:', {
-      tagName: input.tagName,
-      requestedTagName: input.requestedTagName,
-      wikipediaUrl: input.wikipediaUrl,
-      wikipediaContentLength: input.wikipediaContent.length,
-      hasMetadata: !!input.metadata
-    });
-
-    // HTMLをMarkdownに変換してトークン消費を削減
-    const markdownContent = this.convertHtmlToMarkdown(input.wikipediaContent);
-
-    const instructionPrompt = this.buildInstructionPrompt(input.requestedTagName, input.metadata);
-    
-    try {
-      console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
-      const response = await this.ai.run(AI_MODEL, {
-        input: [
-          {
-            role: 'system',
-            content: 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。与えられた情報から、タグの説明と関連タグを簡潔に生成してください。'
-          },
-          {
-            role: 'user',
-            content: `参照情報（Wikipedia Markdown）:\n\n${markdownContent}`
-          },
-          {
-            role: 'user',
-            content: instructionPrompt
-          }
-        ],
-      });
-
-      console.log('[AiService] AI response received:', {
-        hasResponse: !!response,
-        responseType: typeof response,
-        responseKeys: response ? Object.keys(response) : []
-      });
-
-      // AI応答をパース
-      const result = this.parseAiResponse(response, input.tagName);
-      console.log('[AiService] generateEnhancedTagContent result:', {
-        markdownLength: result.markdown.length
-      });
-      return result;
-    } catch (error) {
-      console.error('[AiService] AI request failed:', error);
-      throw new Error('Failed to generate AI-enhanced content');
-    }
-  }
-
-  /**
    * 指示プロンプトを構築（Wikipedia内容は含めない）
    * 
    * 【重要】連載・シリーズ作品のサブタイトル情報の抽出は重要要素です。
@@ -275,31 +179,8 @@ export class AiService {
    * サブタイトル情報を省略せず、すべて列挙するよう明示的に指示しています。
    * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
-  private buildInstructionPrompt(requestedTagName: string, metadata?: ExtractedMetadata): string {
-    let metadataSection = '';
-    
-    // メタデータがある場合は、それを指示に含める
-    if (metadata && (metadata.officialSites.length > 0 || metadata.relatedLinks.length > 0)) {
-      metadataSection = '\n\n【参照可能なメタデータ情報】\n';
-      
-      if (metadata.officialSites.length > 0) {
-        metadataSection += '\n公式サイト:\n';
-        metadata.officialSites.forEach((url, index) => {
-          metadataSection += `${index + 1}. ${url}\n`;
-        });
-      }
-      
-      if (metadata.relatedLinks.length > 0) {
-        metadataSection += '\n関連リンク:\n';
-        metadata.relatedLinks.forEach((link, index) => {
-          metadataSection += `${index + 1}. ${link.title}: ${link.url}\n`;
-        });
-      }
-      
-      metadataSection += '\n上記のメタデータ情報を参考にして、公式サイトや重要な関連リンクがある場合は、説明の最後に「### 参考リンク」セクションを追加してください。\n';
-    }
-    
-    const prompt = `上記の参照情報（Wikipedia Markdown）を基に、タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。${metadataSection}
+  private buildInstructionPrompt(requestedTagName: string): string {
+    const prompt = `タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。主に日本語版のWikipedia記事を情報源としてください。
 
 【注意】参照記事のタイトルとタグ名が異なる場合（転送・リダイレクトされた場合）は、記事全体を参照しつつ、タグ名「${requestedTagName}」に該当する内容を優先的に抽出してください。
 
@@ -320,6 +201,8 @@ export class AiService {
    - 特にシーズン、期、章、巻、エピソード、各話タイトルなどの情報はすべて列挙してください
    - 各話・エピソードのタイトルも重要な情報として含めてください
    - 【ハッシュタグ正規化ルール適用】サブセクション内のハッシュタグも上記の正規化ルールを適用してください
+4. Wikipediaを情報源とした場合は、その記事に出展としてリンクしてください
+   - Wikipediaの記事を参照する場合はCCライセンスに準拠するための対応です
 
 【出力例】
 アニメーション作品の総称で、日本の独自文化として世界的に人気があります。
@@ -340,7 +223,9 @@ export class AiService {
 - #{第1話 二千年後の君へ}
 - #{第2話 その日}
 
-この形式を厳密に守ってMarkdownで出力してください。特に連載・シリーズのサブタイトル情報（各話・エピソードタイトルを含む）は省略しないでください。`;
+----
+出展: [Wikipedia](https://ja.wikipedia.org/wiki/アニメ)
+`;
 
     console.log('[AiService] buildInstructionPrompt called:', {
       requestedTagName: requestedTagName,
@@ -382,7 +267,7 @@ export class AiService {
     });
 
     // AI応答をそのまま返す（加工しない）
-    const markdown = content.trim() || `${tagName}に関する情報`;
+    const markdown = content.trim() || `${tagName}に関する情報（AI処理失敗）`;
 
     const result = {
       markdown
@@ -399,19 +284,15 @@ export class AiService {
    * AI生成コンテンツをMarkdown形式に変換
    * AI生成部分をMarkdownコメントでラップし、Wikipedia出典を追加
    */
-  formatAsMarkdown(output: AiEnhancedTagOutput, wikipediaUrl: string): string {
+  formatAsMarkdown(output: AiEnhancedTagOutput): string {
     console.log('[AiService] formatAsMarkdown called with:', {
       markdownLength: output.markdown.length,
-      wikipediaUrl
     });
 
     // AI生成コンテンツをコメントでラップ
     let markdown = '<!-- AI生成コンテンツ開始 -->\n\n';
     markdown += output.markdown;
     markdown += '\n\n<!-- AI生成コンテンツ終了 -->\n\n';
-    
-    // Wikipedia出典を追加（標準的なMarkdownリンク形式を使用）
-    markdown += `出典: [Wikipedia](${wikipediaUrl})`;
     
     console.log('[AiService] formatAsMarkdown result:', {
       markdownLength: markdown.length,

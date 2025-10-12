@@ -335,9 +335,10 @@ describe('AiService', () => {
       expect(markdown).toContain('- #サブタグ1');
       expect(markdown).toContain('- #サブタグ2');
       
-      // Wikipedia出典を確認
-      expect(markdown).toContain('出典: [Wikipedia]');
-      expect(markdown).toContain('https://ja.wikipedia.org/wiki/テスト');
+      // Wikipedia出典を確認（正しいMarkdown形式で生成されることを確認）
+      expect(markdown).toContain('出典: [Wikipedia](https://ja.wikipedia.org/wiki/テスト)');
+      // 不正な形式（<>で囲まれた形式）が含まれないことを確認
+      expect(markdown).not.toContain('[Wikipedia](<https://ja.wikipedia.org/wiki/テスト>)');
     });
 
     it('should handle simple markdown without subsections', () => {
@@ -395,6 +396,29 @@ describe('AiService', () => {
       // 空白を含まないタグは # 形式で保持されていることを確認
       expect(markdown).toContain('#シンプルタグ');
       expect(markdown).toContain('#ミカサ');
+    });
+
+    it('should generate valid markdown link without angle brackets for URLs with encoded characters', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const output = {
+        markdown: `月刊アフタヌーンに関する情報
+
+**関連タグ**: #講談社 #漫画雑誌`
+      };
+
+      const markdown = aiService.formatAsMarkdown(
+        output,
+        'https://ja.wikipedia.org/wiki/%E6%9C%88%E5%88%8A%E3%82%A2%E3%83%95%E3%82%BF%E3%83%8C%E3%83%BC%E3%83%B3'
+      );
+
+      // 正しいMarkdown形式（<>なし）であることを確認
+      expect(markdown).toContain('出典: [Wikipedia](https://ja.wikipedia.org/wiki/%E6%9C%88%E5%88%8A%E3%82%A2%E3%83%95%E3%82%BF%E3%83%8C%E3%83%BC%E3%83%B3)');
+      // 不正な形式（<>で囲まれた形式）が含まれないことを確認
+      expect(markdown).not.toContain('[Wikipedia](<https://');
     });
   });
 

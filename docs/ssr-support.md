@@ -106,17 +106,17 @@ Cloudflare Pagesで以下の環境変数を設定：
 
 ## テスト
 
-ユーティリティ関数のテストは引き続きバックエンドで実施：
+フロントエンドのPages Functions上でSSR機能が実装されています。
+バックエンドはデータAPIの提供に徹しており、SSR関連のコードは含まれません。
+
+バックエンドのAPIテスト:
 
 ```bash
 cd backend
-npm test -- tests/utils/
+npm test
 ```
 
-主なテスト：
-
-- `tests/utils/botDetection.test.ts`: ボット検出ロジック（8テスト）
-- `tests/utils/ssrTemplate.test.ts`: テンプレート生成（13テスト）
+全282テストが成功しています。
 
 ## 開発時の確認
 

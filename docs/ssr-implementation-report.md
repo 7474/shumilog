@@ -26,11 +26,14 @@ OGPボット（Twitter、Facebook、Slackなど）がリンクをプレビュー
 - 生成されたHTMLに300秒のCDNキャッシュを設定
 - パフォーマンスとスケーラビリティを向上
 
-### 2. バックエンドのユーティリティ
+### 2. バックエンドの役割
 
-テスト用に以下のユーティリティを保持：
-- `backend/src/utils/botDetection.ts` - ボット検出ロジック（テスト用）
-- `backend/src/utils/ssrTemplate.ts` - テンプレート生成ロジック（テスト用）
+バックエンドは純粋なデータAPI提供に徹しています：
+- ログデータの取得 (`/api/logs/:id`)
+- タグデータの取得 (`/api/tags/:name`)
+- その他のRESTful APIエンドポイント
+
+SSR関連の処理は一切含まれません。
 
 ### 3. テスト
 
@@ -200,7 +203,7 @@ OGPボット（Twitter、Facebook、Slackなど）がリンクをプレビュー
 - ログ・タグページのSSR対応（Pages Functions上で実行）
 - セキュアなHTMLテンプレート生成
 - バックエンドAPIからのデータ取得
-- 包括的なテスト（ユーティリティ関数）
+- バックエンドの純粋化（API提供のみに徹する）
 - ドキュメント整備
 
 ✅ **アーキテクチャの利点**:
@@ -210,7 +213,7 @@ OGPボット（Twitter、Facebook、Slackなど）がリンクをプレビュー
 - シンプルな構成（バックエンドは純粋なデータAPI）
 
 ✅ **テスト結果**:
-- Backend: ✓ lint, ✓ build, ✓ tests
+- Backend: ✓ lint, ✓ build, ✓ 282 tests (データAPIのみ)
 - Frontend: ✓ lint, ✓ build
 
 ✅ **期待される効果**:

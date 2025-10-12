@@ -264,9 +264,16 @@ APIレスポンスの高速化について詳しくは[API応答高速化計画]
 
 ### フロントエンド (Cloudflare Pages)
 
-フロントエンドのデプロイには環境変数の設定が必要です。詳細は[フロントエンドデプロイメントガイド](./docs/frontend-deployment.md)を参照してください。
+**SSR対応のデプロイ手順**: [Cloudflare Pages デプロイメントガイド（SSR対応）](./docs/cloudflare-pages-deployment.md)を参照してください。
 
-**重要:** 本番環境では必ず`VITE_API_BASE_URL`環境変数を設定してください。
+このガイドでは以下を説明しています：
+- Cloudflare Pagesプロジェクトの作成
+- ビルド設定（Pages Functions含む）
+- 環境変数の設定
+- SSR機能の確認方法
+- トラブルシューティング
+
+**従来のデプロイ情報**: [フロントエンドデプロイメントガイド](./docs/frontend-deployment.md)も参照可能です。
 
 ### バックエンド (Cloudflare Workers)
 

@@ -18,6 +18,7 @@ import { RelatedLogs } from '@/components/RelatedLogs';
 import { LogImages } from '@/components/LogImages';
 import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
+import { useOgp, extractPlainText } from '@/hooks/useOgp';
 
 export function LogDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -100,6 +101,21 @@ export function LogDetailPage() {
 
   // Check if current user is the log owner
   const isOwner = user && log && log.user.id === user.id;
+
+  // OGPメタデータの設定（SSRと同じ内容）
+  useOgp(log && log.is_public ? {
+    title: log.title || 'ログ',
+    description: extractPlainText(log.content_md || '', 200),
+    url: window.location.href,
+    image: log.images && log.images.length > 0
+      ? `${window.location.origin}/api/logs/${log.id}/images/${log.images[0].id}`
+      : undefined,
+    type: 'article',
+  } : {
+    title: 'Shumilog',
+    description: 'Your Personal Hobby Logger',
+    url: window.location.href,
+  });
 
   if (loading) {
     return (

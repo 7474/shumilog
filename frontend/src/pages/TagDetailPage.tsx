@@ -24,6 +24,7 @@ import { LogCard } from '@/components/LogCard';
 import { TagForm } from '@/components/TagForm';
 import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
+import { useOgp, extractPlainText } from '@/hooks/useOgp';
 
 interface TagDetail extends Tag {
   log_count: number;
@@ -135,6 +136,20 @@ export function TagDetailPage() {
     // タグ名に空白が含まれる場合は #{tagName} 形式、そうでなければ #tagName 形式
     return tagName.includes(' ') ? `#{${tagName}}` : `#${tagName}`;
   };
+
+  // OGPメタデータの設定（SSRと同じ内容）
+  useOgp(tag ? {
+    title: `#${tag.name}`,
+    description: tag.description 
+      ? extractPlainText(tag.description, 200)
+      : `${tag.name}に関するログを探す`,
+    url: window.location.href,
+    type: 'website',
+  } : {
+    title: 'Shumilog',
+    description: 'Your Personal Hobby Logger',
+    url: window.location.href,
+  });
 
   if (loading) {
     return (

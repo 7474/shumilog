@@ -19,6 +19,7 @@ Auto-generated from all feature plans. Last updated: 2025-01-08
 - Cloudflare D1 (SQLiteベースデータベース)
 - React 19 (フロントエンドライブラリ)
 - Vite 7+ (フロントエンドビルドツール)
+- **Cloudflare Pages Functions (SSRフレームワーク)** - OGPボット向けサーバーサイドレンダリング
 - Tailwind CSS 4.1+ (ユーティリティファーストCSSフレームワーク)
 - shadcn/ui (アクセシブルUIコンポーネントライブラリ)
 - Vitest (テストフレームワーク)
@@ -30,8 +31,34 @@ Auto-generated from all feature plans. Last updated: 2025-01-08
 api/                    # 正規API仕様書（信頼できる情報源）
 backend/                # Cloudflare Workers バックエンド
 frontend/               # React 19 + Tailwind CSS フロントエンド
+  ├── functions/        # Cloudflare Pages Functions (SSRフレームワーク)
+  │   └── _middleware.ts # SSRミドルウェア（ボット検出、OGP生成）
 tests/                  # テストファイル
 ```
+
+## SSRフレームワーク (Cloudflare Pages Functions)
+
+shumilogは**Cloudflare Pages Functions**をSSRフレームワークとして採用しています。これは以下の要件を完全に満たす軽量でシンプルなアプローチです：
+
+- ✅ **Cloudflare Pages完全対応** - ネイティブ機能、追加設定不要
+- ✅ **軽量** - ゼロ依存、追加フレームワーク不要
+- ✅ **シンプル** - 標準Web API (Request/Response) のみ使用
+- ✅ **オープン** - オープンソース、完全カスタマイズ可能
+
+### SSRフレームワークの責務
+
+`frontend/functions/_middleware.ts`が以下を担当：
+- OGPボット検出（Twitter、Facebook、Slack等）
+- ログ・タグページのSSR処理
+- OGPメタタグ生成（画像最適化含む）
+- エッジでの高速実行とキャッシュ
+
+### 重要な開発指針
+
+- **Next.js、Remix、Astro等の大規模SSRフレームワークは使用しない** - Pages Functionsで十分
+- SSR機能の追加・変更は`frontend/functions/_middleware.ts`で行う
+- 新しいページタイプのSSR追加時は、パスマッチングと専用ハンドラーを追加
+- 詳細は [`docs/ssr-framework.md`](../docs/ssr-framework.md) を参照
 
 ## デザイン指針
 - **スマートフォンファーストのレスポンシブデザイン** - モバイル端末での利用を最優先

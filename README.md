@@ -236,11 +236,12 @@ shumilog/
 - 画像のプレビューとグリッド表示
 - 画像の並び順カスタマイズ
 
-### SSR対応（OGPボット向け）
+### SSR対応（Cloudflare Pages Functions）
+- **SSRフレームワーク**: Cloudflare Pages Functionsを採用（軽量・シンプル・オープン）
 - Twitter、Facebook、Slackなどのリンクプレビュー対応
 - ログ詳細ページとタグ詳細ページのOGPメタタグ自動生成
 - ボット検出による自動SSR切り替え
-- 詳細は[SSR対応ドキュメント](./docs/ssr-support.md)を参照
+- 詳細は[SSRフレームワーク アーキテクチャ](./docs/ssr-framework.md)および[SSR対応ドキュメント](./docs/ssr-support.md)を参照
 
 ### タグシステム
 - ハッシュタグ形式でのタグ付け

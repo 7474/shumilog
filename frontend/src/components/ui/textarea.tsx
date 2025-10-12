@@ -9,7 +9,12 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          'resize-y overflow-auto overscroll-contain',
+          // Enable vertical resizing and scrolling
+          'resize-y overflow-auto',
+          // Prevent parent scrolling when scrolling within textarea
+          'overscroll-contain',
+          // Set a max height to ensure textarea can scroll
+          'max-h-[60vh]',
           className
         )}
         ref={ref}

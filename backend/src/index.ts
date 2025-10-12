@@ -24,7 +24,6 @@ import imageRoutes from './routes/images.js';
 import healthRoutes from './routes/health.js';
 import devRoutes from './routes/dev.js';
 import supportRoutes from './routes/support.js';
-import ssrRoutes from './routes/ssr.js';
 
 export interface RuntimeEnv {
   DB?: D1Database;
@@ -233,9 +232,6 @@ export function createApp(env: RuntimeEnv = {}) {
 
   app.route('/health', healthRoutes);
   app.route('/dev', devRoutes);
-
-  // SSR routes for OGP bot support (must be before API routes)
-  app.route('', ssrRoutes);
 
   registerApiRoutes(app.basePath('/api'), sessionService, userService);
   

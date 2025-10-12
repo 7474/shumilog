@@ -1,6 +1,6 @@
 /**
  * Cloudflare Pages Functions Middleware
- * OGPボットリクエストをバックエンドのSSRエンドポイントにプロキシします
+ * OGPボット向けにSSRを実行してメタタグを生成します
  */
 
 // OGPボットのUser-Agentパターン
@@ -33,11 +33,181 @@ function isOgpBot(userAgent: string | null): boolean {
 }
 
 /**
- * SSR対象のパスかどうかを判定
+ * HTMLエスケープ
  */
-function isSSRPath(pathname: string): boolean {
-  // ログ詳細ページまたはタグ詳細ページ
-  return pathname.startsWith('/logs/') || pathname.startsWith('/tags/');
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/**
+ * Markdownからプレーンテキストを抽出
+ */
+function extractPlainText(markdown: string, maxLength = 200): string {
+  let text = markdown
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, '$1')
+    .replace(/`{1,3}([^`]+)`{1,3}/g, '$1')
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (text.length > maxLength) {
+    text = text.substring(0, maxLength - 3) + '...';
+  }
+
+  return text;
+}
+
+/**
+ * OGP HTMLを生成
+ */
+function generateOgpHtml(params: {
+  title: string;
+  description: string;
+  url: string;
+  image?: string;
+  type?: string;
+}): string {
+  const { title, description, url, image, type = 'website' } = params;
+  const siteName = 'Shumilog';
+  
+  const truncatedDesc = description.length > 200 
+    ? description.substring(0, 197) + '...' 
+    : description;
+
+  const escapedTitle = escapeHtml(title);
+  const escapedDesc = escapeHtml(truncatedDesc);
+  const escapedUrl = escapeHtml(url);
+  const escapedSiteName = escapeHtml(siteName);
+
+  return `<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#06aedd" />
+    
+    <title>${escapedTitle} - ${escapedSiteName}</title>
+    <meta name="title" content="${escapedTitle}" />
+    <meta name="description" content="${escapedDesc}" />
+    
+    <meta property="og:type" content="${escapeHtml(type)}" />
+    <meta property="og:url" content="${escapedUrl}" />
+    <meta property="og:title" content="${escapedTitle}" />
+    <meta property="og:description" content="${escapedDesc}" />
+    <meta property="og:site_name" content="${escapedSiteName}" />
+    ${image ? `<meta property="og:image" content="${escapeHtml(image)}" />` : ''}
+    
+    <meta property="twitter:card" content="${image ? 'summary_large_image' : 'summary'}" />
+    <meta property="twitter:url" content="${escapedUrl}" />
+    <meta property="twitter:title" content="${escapedTitle}" />
+    <meta property="twitter:description" content="${escapedDesc}" />
+    ${image ? `<meta property="twitter:image" content="${escapeHtml(image)}" />` : ''}
+  </head>
+  <body>
+    <div id="root">
+      <div style="max-width: 800px; margin: 40px auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+        <h1 style="color: #06aedd; margin-bottom: 20px;">${escapedTitle}</h1>
+        <p style="color: #666; line-height: 1.6;">${escapedDesc}</p>
+        <p style="margin-top: 20px; color: #999;">
+          このページをブラウザで表示するには、JavaScriptを有効にしてください。
+        </p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`;
+}
+
+/**
+ * ログ詳細ページのSSR
+ */
+async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string): Promise<Response | null> {
+  try {
+    const apiUrl = `${apiBaseUrl}/api/logs/${logId}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const log = await response.json();
+
+    // 非公開ログはSSRしない
+    if (!log.is_public) {
+      return null;
+    }
+
+    const title = log.title || 'ログ';
+    const description = extractPlainText(log.content_md || '', 200);
+    const url = `${baseUrl}/logs/${logId}`;
+    const image = log.images && log.images.length > 0 ? log.images[0].url : undefined;
+
+    const html = generateOgpHtml({
+      title,
+      description,
+      url,
+      image,
+      type: 'article',
+    });
+
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+      },
+    });
+  } catch (error) {
+    console.error('[SSR] Error generating log SSR:', error);
+    return null;
+  }
+}
+
+/**
+ * タグ詳細ページのSSR
+ */
+async function handleTagSSR(tagName: string, baseUrl: string, apiBaseUrl: string): Promise<Response | null> {
+  try {
+    const apiUrl = `${apiBaseUrl}/api/tags/${encodeURIComponent(tagName)}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const tag = await response.json();
+
+    const title = `#${tag.name}`;
+    const description = tag.description 
+      ? extractPlainText(tag.description, 200)
+      : `${tag.name}に関するログを探す`;
+    const url = `${baseUrl}/tags/${encodeURIComponent(tagName)}`;
+
+    const html = generateOgpHtml({
+      title,
+      description,
+      url,
+      type: 'website',
+    });
+
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+      },
+    });
+  } catch (error) {
+    console.error('[SSR] Error generating tag SSR:', error);
+    return null;
+  }
 }
 
 /**
@@ -52,32 +222,37 @@ export async function onRequest(context: {
   const url = new URL(request.url);
   const userAgent = request.headers.get('User-Agent');
 
-  // ボットかつSSR対象パスの場合、バックエンドにプロキシ
-  if (isOgpBot(userAgent) && isSSRPath(url.pathname)) {
-    // バックエンドAPIのベースURL（環境変数から取得、デフォルトは本番環境）
-    const backendBaseUrl = env.BACKEND_API_URL || 'https://api.shumilog.dev';
-    const backendUrl = `${backendBaseUrl}${url.pathname}`;
+  // ボットでない場合は通常のSPAを返す
+  if (!isOgpBot(userAgent)) {
+    return next();
+  }
 
-    console.log(`[SSR Proxy] Bot detected: ${userAgent}, proxying to: ${backendUrl}`);
+  // API Base URL（環境変数から取得、デフォルトは本番環境のAPI）
+  const apiBaseUrl = env.API_BASE_URL || 'https://api.shumilog.dev';
+  const baseUrl = url.origin;
 
-    try {
-      // バックエンドのSSRエンドポイントにリクエストを転送
-      const backendResponse = await fetch(backendUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': userAgent || 'Unknown Bot',
-        },
-      });
+  console.log(`[SSR] Bot detected: ${userAgent}, generating SSR for: ${url.pathname}`);
 
-      // バックエンドからの応答をそのまま返す
-      return backendResponse;
-    } catch (error) {
-      console.error('[SSR Proxy] Error fetching from backend:', error);
-      // エラー時は通常のSPAを返す
-      return next();
+  // ログ詳細ページのSSR
+  const logMatch = url.pathname.match(/^\/logs\/([^/]+)$/);
+  if (logMatch) {
+    const logId = logMatch[1];
+    const ssrResponse = await handleLogSSR(logId, baseUrl, apiBaseUrl);
+    if (ssrResponse) {
+      return ssrResponse;
     }
   }
 
-  // 通常のリクエストは次のハンドラーへ
+  // タグ詳細ページのSSR
+  const tagMatch = url.pathname.match(/^\/tags\/([^/]+)$/);
+  if (tagMatch) {
+    const tagName = decodeURIComponent(tagMatch[1]);
+    const ssrResponse = await handleTagSSR(tagName, baseUrl, apiBaseUrl);
+    if (ssrResponse) {
+      return ssrResponse;
+    }
+  }
+
+  // SSR生成に失敗した場合は通常のSPAを返す
   return next();
 }

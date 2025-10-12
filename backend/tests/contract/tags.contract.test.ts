@@ -176,10 +176,6 @@ describe('Contract: Tags routes', () => {
   });
 
   describe('PUT /tags/:tagId', () => {
-    // TODO: Issue #XX - Tag endpoint authentication failing in tests
-    // - Auth middleware works for logs but fails for tags 
-    // - Sessions are created properly but auth check fails
-    // - Need to investigate tag routing vs logs routing differences
     it('updates tag fields when requested by owner', async () => {
       const sessionToken = await setupTestEnvironment();
 

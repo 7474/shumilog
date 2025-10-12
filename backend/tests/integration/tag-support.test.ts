@@ -233,53 +233,5 @@ describe('Integration: Tag Support Feature', () => {
       // but we can verify it doesn't crash and the requested tag name is passed to AI
       expect([404, 500]).toContain(response.status);
     });
-
-    it('should support ai_enhanced_with_metadata support type', async () => {
-      // Mock Wikipedia HTML response with external links
-      const mockHtmlWithLinks = `
-<!DOCTYPE html>
-<html>
-<head><title>アニメ - Wikipedia</title></head>
-<body>
-  <h1>アニメ</h1>
-  <p>アニメは、日本で制作されたアニメーション作品の総称です。</p>
-  <h2>外部リンク</h2>
-  <ul>
-    <li><a href="https://example.com/official" class="external">公式サイト</a></li>
-    <li><a href="https://example.com/info" class="external">アニメ情報サイト</a></li>
-  </ul>
-</body>
-</html>
-`;
-
-      // Override fetch to return HTML with links
-      global.fetch = vi.fn((url) => {
-        if (typeof url === 'string' && url.includes('wikipedia.org')) {
-          return Promise.resolve({
-            ok: true,
-            status: 200,
-            text: async () => mockHtmlWithLinks,
-            json: async () => mockWikipediaSummary
-          } as Response);
-        }
-        return Promise.reject(new Error('Unexpected fetch call'));
-      }) as any;
-
-      const response = await app.request('/api/support/tags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          tag_name: 'アニメ',
-          support_type: 'ai_enhanced_with_metadata'
-        })
-      });
-
-      // ai_enhanced_with_metadata requires AI bindings which aren't available in tests
-      // but we can verify the support type is recognized
-      expect([404, 500]).toContain(response.status);
-    });
   });
 });

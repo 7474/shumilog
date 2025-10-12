@@ -39,7 +39,7 @@ support.post('/tags', async (c) => {
     throw new HTTPException(400, { message: 'Support type is required' });
   }
 
-  const validSupportTypes = ['wikipedia_summary', 'ai_enhanced', 'ai_enhanced_with_metadata'];
+  const validSupportTypes = ['wikipedia_summary', 'ai_enhanced'];
   if (!validSupportTypes.includes(supportType)) {
     throw new HTTPException(400, { message: `Invalid support type. Valid types: ${validSupportTypes.join(', ')}` });
   }

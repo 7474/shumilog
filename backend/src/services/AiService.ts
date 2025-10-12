@@ -10,21 +10,24 @@ export interface AiBinding {
   run(model: string, inputs: any): Promise<any>;
 }
 
+/**
+ * @deprecated Use generateTagContentFromName instead
+ */
 export interface AiEnhancedTagInput {
   tagName: string;
   wikipediaContent: string;
   wikipediaUrl: string;
-  requestedTagName: string; // ユーザーがリクエストした元のタグ名
-  metadata?: ExtractedMetadata; // オプショナルなメタデータ
-}
-
-export interface ExtractedMetadata {
-  officialSites: string[]; // 公式サイトのURL一覧
-  relatedLinks: { url: string; title: string }[]; // 関連リンク
+  requestedTagName: string;
+  metadata?: ExtractedMetadata;
 }
 
 export interface AiEnhancedTagOutput {
   markdown: string;
+}
+
+interface ExtractedMetadata {
+  officialSites: string[]; // 公式サイトのURL一覧
+  relatedLinks: { url: string; title: string }[]; // 関連リンク
 }
 
 /**
@@ -118,10 +121,100 @@ export class AiService {
   }
 
   /**
+   * タグ名からAI拡張コンテンツを生成（Wikipedia取得とメタデータ抽出を含む）
+   * 
+   * @param tagName タグ名
+   * @returns AI生成された内容とWikipedia URL
+   */
+  async generateTagContentFromName(tagName: string): Promise<{ content: string; wikipediaUrl: string }> {
+    console.log('[AiService] generateTagContentFromName called with tagName:', tagName);
+
+    try {
+      // Wikipediaから全文を取得（HTMLエンドポイントを使用）
+      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(tagName)}`;
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
+          'Accept': 'text/html; charset=utf-8; profile="https://www.mediawiki.org/wiki/Specs/HTML/2.1.0"'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Wikipedia page not found');
+        }
+        throw new Error(`Wikipedia API error: ${response.status}`);
+      }
+
+      // HTMLコンテンツを取得
+      const htmlContent = await response.text();
+      
+      if (!htmlContent) {
+        throw new Error('No content available');
+      }
+
+      // Wikipedia URLを構築
+      const wikipediaUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
+
+      // HTMLからメタデータを抽出
+      const metadata = this.extractMetadataFromWikipedia(htmlContent);
+
+      // HTMLをMarkdownに変換してトークン消費を削減
+      const markdownContent = this.convertHtmlToMarkdown(htmlContent);
+
+      // AI指示プロンプトを構築
+      const instructionPrompt = this.buildInstructionPrompt(tagName, metadata);
+      
+      console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
+      const aiResponse = await this.ai.run(AI_MODEL, {
+        input: [
+          {
+            role: 'system',
+            content: 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。与えられた情報から、タグの説明と関連タグを簡潔に生成してください。'
+          },
+          {
+            role: 'user',
+            content: `参照情報（Wikipedia Markdown）:\n\n${markdownContent}`
+          },
+          {
+            role: 'user',
+            content: instructionPrompt
+          }
+        ],
+      });
+
+      console.log('[AiService] AI response received:', {
+        hasResponse: !!aiResponse,
+        responseType: typeof aiResponse,
+        responseKeys: aiResponse ? Object.keys(aiResponse) : []
+      });
+
+      // AI応答をパース
+      const aiOutput = this.parseAiResponse(aiResponse, tagName);
+      
+      // AI生成内容をMarkdown形式に変換
+      const content = this.formatAsMarkdown(aiOutput, wikipediaUrl);
+      
+      return {
+        content,
+        wikipediaUrl
+      };
+    } catch (error) {
+      console.error('[AiService] generateTagContentFromName failed:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to generate tag content');
+    }
+  }
+
+  /**
    * Wikipediaの内容を基に、AIを使用してタグの編集サポート内容を生成
    * 
    * @param input タグ名、Wikipedia内容、URL
    * @returns AI生成された要約と関連タグ
+   * @deprecated Use generateTagContentFromName instead for cleaner interface
    */
   async generateEnhancedTagContent(input: AiEnhancedTagInput): Promise<AiEnhancedTagOutput> {
     console.log('[AiService] generateEnhancedTagContent called with input:', {

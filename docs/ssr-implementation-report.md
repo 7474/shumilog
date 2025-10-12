@@ -22,6 +22,13 @@ OGPボット（Twitter、Facebook、Slackなど）がリンクをプレビュー
 - Markdownからプレーンテキストへの変換
 - 説明文の自動切り詰め（200文字）
 
+**OGP画像の最適化**（2025年10月追加）
+- ログに関連画像がある場合、先頭画像をOGP画像として提供
+- Cloudflare Image Resizingを使用して最適なサイズに自動変換
+- Twitter/Facebook推奨サイズ（1200x630px）に最適化
+- アスペクト比を保ちながらcover fitで提供
+- 画像がある場合、Twitter Cardを自動的に`summary_large_image`に設定
+
 **キャッシュ制御**
 - 生成されたHTMLに300秒のCDNキャッシュを設定
 - パフォーマンスとスケーラビリティを向上
@@ -75,20 +82,27 @@ SSR関連の処理は一切含まれません。
 
 ## 生成されるOGPタグの例
 
-### ログ詳細ページ
+### ログ詳細ページ（画像あり）
 ```html
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://shumilog.dev/logs/log_alice_1" />
 <meta property="og:title" content="進撃の巨人 最終話を見た" />
 <meta property="og:description" content="進撃の巨人 最終話の感想 ついに最終話を見ました！エレンの選択には本当に考えさせられました。" />
 <meta property="og:site_name" content="Shumilog" />
-<meta property="og:image" content="https://example.com/image.jpg" />
+<meta property="og:image" content="https://shumilog.dev/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/https://shumilog.dev/api/logs/log_alice_1/images/image_1" />
 
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="進撃の巨人 最終話を見た" />
 <meta property="twitter:description" content="進撃の巨人 最終話の感想..." />
-<meta property="twitter:image" content="https://example.com/image.jpg" />
+<meta property="twitter:image" content="https://shumilog.dev/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/https://shumilog.dev/api/logs/log_alice_1/images/image_1" />
 ```
+
+**画像の最適化について:**
+- ログに関連画像がある場合、先頭画像を自動的にOGP画像として提供
+- Cloudflare Image Resizingを使用してリアルタイムで最適化
+- Twitter/Facebook推奨サイズ（1200x630px）に自動変換
+- アスペクト比を保ちながらcover fitで提供
+- Twitter Cardは自動的に`summary_large_image`に設定され、大きな画像プレビューを表示
 
 ### タグ詳細ページ
 ```html

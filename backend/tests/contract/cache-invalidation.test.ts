@@ -248,4 +248,173 @@ describe('Contract Test: Cache Invalidation on Update', () => {
       expect(authData.content_md).toBe(updatedContent);
     });
   });
+
+  describe('タグ更新時のキャッシュ無効化', () => {
+    it('タグを更新した後、最新の内容が表示される', async () => {
+      // セッションを作成（tag_ownerとしてログイン）
+      const sessionToken = await createTestSession('user_alice');
+
+      // タグを作成
+      const createResponse = await app.request('/tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`,
+        },
+        body: JSON.stringify({
+          name: 'TestTag',
+          description: 'Original description',
+        }),
+      });
+
+      expect(createResponse.status).toBe(201);
+      const createdTag = await createResponse.json();
+      const tagId = createdTag.id;
+
+      // タグを取得（初回）
+      const firstResponse = await app.request(`/tags/${tagId}`, {
+        method: 'GET',
+      });
+      
+      expect(firstResponse.status).toBe(200);
+      const firstData = await firstResponse.json();
+      expect(firstData.description).toBe('Original description');
+
+      // タグを更新
+      const updatedDescription = 'Updated description for cache test';
+      
+      const updateResponse = await app.request(`/tags/${tagId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`,
+        },
+        body: JSON.stringify({
+          description: updatedDescription,
+        }),
+      });
+
+      expect(updateResponse.status).toBe(200);
+      const updatedData = await updateResponse.json();
+      expect(updatedData.description).toBe(updatedDescription);
+
+      // 更新後、再度タグを取得（認証なしでも最新の内容が表示される）
+      const secondResponse = await app.request(`/tags/${tagId}`, {
+        method: 'GET',
+      });
+      
+      expect(secondResponse.status).toBe(200);
+      const secondData = await secondResponse.json();
+      
+      // 更新された内容が表示されることを確認
+      expect(secondData.description).toBe(updatedDescription);
+      expect(secondData.description).not.toBe('Original description');
+    });
+
+    it('タグを作成した後、一覧に最新のタグが表示される', async () => {
+      // セッションを作成
+      const sessionToken = await createTestSession('user_alice');
+
+      // 初回のタグ一覧を取得
+      const firstListResponse = await app.request('/tags', {
+        method: 'GET',
+      });
+      
+      expect(firstListResponse.status).toBe(200);
+      const firstListData = await firstListResponse.json();
+      const initialCount = firstListData.items.length;
+
+      // 新しいタグを作成
+      const newTagName = 'NewTagForCacheTest';
+      const newTagDescription = 'This is a new tag for cache invalidation test.';
+      
+      const createResponse = await app.request('/tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`,
+        },
+        body: JSON.stringify({
+          name: newTagName,
+          description: newTagDescription,
+        }),
+      });
+
+      expect(createResponse.status).toBe(201);
+      const createdData = await createResponse.json();
+      expect(createdData.name).toBe(newTagName);
+
+      // 作成後、再度一覧を取得（新しいタグが含まれることを確認）
+      const secondListResponse = await app.request('/tags', {
+        method: 'GET',
+      });
+      
+      expect(secondListResponse.status).toBe(200);
+      const secondListData = await secondListResponse.json();
+      
+      // 新しいタグが一覧に含まれることを確認
+      expect(secondListData.items.length).toBeGreaterThan(initialCount);
+      const newTag = secondListData.items.find((tag: any) => tag.name === newTagName);
+      expect(newTag).toBeDefined();
+      expect(newTag?.description).toBe(newTagDescription);
+    });
+
+    it('タグ名を変更した後、新しい名前でもアクセスできる', async () => {
+      // セッションを作成
+      const sessionToken = await createTestSession('user_alice');
+
+      // タグを作成
+      const originalName = 'OriginalTagName';
+      const createResponse = await app.request('/tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`,
+        },
+        body: JSON.stringify({
+          name: originalName,
+          description: 'Test tag',
+        }),
+      });
+
+      expect(createResponse.status).toBe(201);
+      const createdTag = await createResponse.json();
+      const tagId = createdTag.id;
+
+      // 元の名前でアクセスできることを確認
+      const firstResponse = await app.request(`/tags/${originalName}`, {
+        method: 'GET',
+      });
+      expect(firstResponse.status).toBe(200);
+
+      // タグ名を変更
+      const newName = 'UpdatedTagName';
+      const updateResponse = await app.request(`/tags/${tagId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`,
+        },
+        body: JSON.stringify({
+          name: newName,
+        }),
+      });
+
+      expect(updateResponse.status).toBe(200);
+
+      // 新しい名前でアクセスできることを確認
+      const newNameResponse = await app.request(`/tags/${newName}`, {
+        method: 'GET',
+      });
+      expect(newNameResponse.status).toBe(200);
+      const newNameData = await newNameResponse.json();
+      expect(newNameData.name).toBe(newName);
+
+      // 古い名前ではアクセスできないことを確認（404）
+      const oldNameResponse = await app.request(`/tags/${originalName}`, {
+        method: 'GET',
+      });
+      expect(oldNameResponse.status).toBe(404);
+    });
+  });
 });

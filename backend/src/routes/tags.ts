@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { getAuthUser } from '../middleware/auth.js';
 import { TagService } from '../services/TagService.js';
 import { UserService } from '../services/UserService.js';
+import { invalidateCache } from '../middleware/cache.js';
 
 const tags = new Hono();
 
@@ -90,6 +91,11 @@ tags.post('/', async (c) => {
       },
       user.id
     );
+
+    // タグ一覧のキャッシュを無効化
+    const baseUrl = new URL(c.req.url).origin;
+    await invalidateCache('/tags', baseUrl);
+    await invalidateCache('/api/tags', baseUrl);
 
     return c.json(newTag, 201);
   } catch (error: any) {
@@ -190,6 +196,26 @@ tags.put('/:tagId', async (c) => {
 
   try {
     const updated = await tagService.updateTag(existing.id, updates);
+    
+    // キャッシュを無効化して、更新後のコンテンツが確実に表示されるようにする
+    const baseUrl = new URL(c.req.url).origin;
+    // タグ詳細のキャッシュを削除（IDとnameの両方でアクセス可能なため両方削除）
+    await invalidateCache(`/tags/${existing.id}`, baseUrl);
+    await invalidateCache(`/api/tags/${existing.id}`, baseUrl);
+    // nameが変更された場合は旧nameのキャッシュも削除、新nameのキャッシュも削除
+    if (updates.name && updates.name !== existing.name) {
+      await invalidateCache(`/tags/${existing.name}`, baseUrl);
+      await invalidateCache(`/api/tags/${existing.name}`, baseUrl);
+      await invalidateCache(`/tags/${updates.name}`, baseUrl);
+      await invalidateCache(`/api/tags/${updates.name}`, baseUrl);
+    } else {
+      await invalidateCache(`/tags/${existing.name}`, baseUrl);
+      await invalidateCache(`/api/tags/${existing.name}`, baseUrl);
+    }
+    // 一覧のキャッシュも削除
+    await invalidateCache('/tags', baseUrl);
+    await invalidateCache('/api/tags', baseUrl);
+    
     return c.json(updated);
   } catch (error: any) {
     const message = typeof error?.message === 'string' ? error.message : 'Failed to update tag';
@@ -228,6 +254,18 @@ tags.delete('/:tagId', async (c) => {
   }
 
   await tagService.deleteTag(existing.id);
+  
+  // キャッシュを無効化
+  const baseUrl = new URL(c.req.url).origin;
+  // タグ詳細のキャッシュを削除（IDとnameの両方）
+  await invalidateCache(`/tags/${existing.id}`, baseUrl);
+  await invalidateCache(`/api/tags/${existing.id}`, baseUrl);
+  await invalidateCache(`/tags/${existing.name}`, baseUrl);
+  await invalidateCache(`/api/tags/${existing.name}`, baseUrl);
+  // 一覧のキャッシュも削除
+  await invalidateCache('/tags', baseUrl);
+  await invalidateCache('/api/tags', baseUrl);
+  
   return c.body(null, 204);
 });
 
@@ -290,6 +328,15 @@ tags.post('/:tagId/associations', async (c) => {
 
   try {
     await tagService.createTagAssociation(tag.id, associatedTagId);
+    
+    // キャッシュを無効化（関連タグが変更されたため）
+    const baseUrl = new URL(c.req.url).origin;
+    // タグ詳細のキャッシュを削除（IDとnameの両方）
+    await invalidateCache(`/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/tags/${tag.name}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.name}`, baseUrl);
+    
     return c.body(null, 201);
   } catch (error: any) {
     const message = typeof error?.message === 'string' ? error.message : 'Failed to create association';
@@ -332,6 +379,15 @@ tags.delete('/:tagId/associations', async (c) => {
 
   try {
     await tagService.removeTagAssociation(tag.id, associatedTagId);
+    
+    // キャッシュを無効化（関連タグが変更されたため）
+    const baseUrl = new URL(c.req.url).origin;
+    // タグ詳細のキャッシュを削除（IDとnameの両方）
+    await invalidateCache(`/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/tags/${tag.name}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.name}`, baseUrl);
+    
     return c.body(null, 204);
   } catch (error) {
     console.error('Failed to remove tag association:', error);

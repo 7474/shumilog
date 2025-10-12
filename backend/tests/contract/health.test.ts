@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { Hono } from 'hono';
 import { toOpenApiResponse } from '../helpers/openapi-setup';
 
@@ -12,27 +12,11 @@ describe('Contract Test: GET /health', () => {
   let app: Hono;
 
   beforeAll(async () => {
-    // This will fail until we implement the endpoint
-    // Import will be added when the route is implemented
-    try {
-      const { createApp } = await import('../../src/index');
-      app = createApp({});
-    } catch (_) {
-      console.log('Expected failure: Health endpoint not implemented yet');
-    }
-  });
-
-  afterAll(async () => {
-    // Cleanup if needed
+    const { createApp } = await import('../../src/index');
+    app = createApp({});
   });
 
   it('should return 200 status with healthy response', async () => {
-    // This test MUST fail initially (TDD approach)
-    if (!app) {
-      expect(false).toBe(true); // Force failure until implementation
-      return;
-    }
-
     const res = await app.request('/health');
     
     expect(res.status).toBe(200);
@@ -56,21 +40,11 @@ describe('Contract Test: GET /health', () => {
   });
 
   it('should have correct content-type header', async () => {
-    if (!app) {
-      expect(false).toBe(true); // Force failure until implementation
-      return;
-    }
-
     const res = await app.request('/health');
     expect(res.headers.get('content-type')).toContain('application/json');
   });
 
   it('should respond quickly (< 100ms)', async () => {
-    if (!app) {
-      expect(false).toBe(true); // Force failure until implementation
-      return;
-    }
-
     const start = Date.now();
     await app.request('/health');
     const duration = Date.now() - start;

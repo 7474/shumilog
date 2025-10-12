@@ -436,7 +436,12 @@ paths:
         as it only requires the tag name, not an existing tag ID.
         
         Currently supported types:
-        - `wikipedia_summary`: Fetches a summary from Wikipedia
+        - `ai_enhanced`: Uses AI to generate enhanced content based on Wikipedia data (recommended)
+        - `wikipedia_summary`: Fetches a summary directly from Wikipedia
+        
+        **Automatic Fallback**: When using `ai_enhanced`, if AI processing fails, 
+        the system automatically falls back to `wikipedia_summary` and sets 
+        `fallback_used: true` in the response.
         
         The response includes Markdown-formatted content where relevant terms are converted to hashtags.
       security:
@@ -457,9 +462,12 @@ paths:
                   example: アニメ
                 support_type:
                   type: string
-                  enum: [wikipedia_summary]
-                  description: Type of support content to retrieve
-                  example: wikipedia_summary
+                  enum: [wikipedia_summary, ai_enhanced]
+                  description: |
+                    Type of support content to retrieve:
+                    - `ai_enhanced`: AI-generated content (falls back to `wikipedia_summary` if AI fails)
+                    - `wikipedia_summary`: Direct Wikipedia summary
+                  example: ai_enhanced
       responses:
         '200':
           description: Support content retrieved successfully
@@ -477,8 +485,15 @@ paths:
                     example: "アニメ（#anime）は日本の文化を代表するメディアです。#manga や #gaming とともに広く親しまれています。"
                   support_type:
                     type: string
-                    description: The type of support that was used
-                    example: wikipedia_summary
+                    description: The type of support that was actually used (may differ from requested type if fallback occurred)
+                    enum: [wikipedia_summary, ai_enhanced]
+                    example: ai_enhanced
+                  fallback_used:
+                    type: boolean
+                    description: |
+                      Indicates whether fallback to `wikipedia_summary` was used.
+                      Only present when `ai_enhanced` was requested but AI processing failed.
+                    example: true
         '400':
           description: Invalid support type or request
         '401':

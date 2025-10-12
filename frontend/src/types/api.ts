@@ -733,7 +733,12 @@ export interface paths {
          *     as it only requires the tag name, not an existing tag ID.
          *
          *     Currently supported types:
-         *     - `wikipedia_summary`: Fetches a summary from Wikipedia
+         *     - `ai_enhanced`: Uses AI to generate enhanced content based on Wikipedia data (recommended)
+         *     - `wikipedia_summary`: Fetches a summary directly from Wikipedia
+         *
+         *     **Automatic Fallback**: When using `ai_enhanced`, if AI processing fails,
+         *     the system automatically falls back to `wikipedia_summary` and sets
+         *     `fallback_used: true` in the response.
          *
          *     The response includes Markdown-formatted content where relevant terms are converted to hashtags.
          *
@@ -754,11 +759,14 @@ export interface paths {
                          */
                         tag_name: string;
                         /**
-                         * @description Type of support content to retrieve
-                         * @example wikipedia_summary
+                         * @description Type of support content to retrieve:
+                         *     - `ai_enhanced`: AI-generated content (falls back to `wikipedia_summary` if AI fails)
+                         *     - `wikipedia_summary`: Direct Wikipedia summary
+                         *
+                         * @example ai_enhanced
                          * @enum {string}
                          */
-                        support_type: "wikipedia_summary";
+                        support_type: "wikipedia_summary" | "ai_enhanced";
                     };
                 };
             };
@@ -776,10 +784,18 @@ export interface paths {
                              */
                             content: string;
                             /**
-                             * @description The type of support that was used
-                             * @example wikipedia_summary
+                             * @description The type of support that was actually used (may differ from requested type if fallback occurred)
+                             * @example ai_enhanced
+                             * @enum {string}
                              */
-                            support_type: string;
+                            support_type: "wikipedia_summary" | "ai_enhanced";
+                            /**
+                             * @description Indicates whether fallback to `wikipedia_summary` was used.
+                             *     Only present when `ai_enhanced` was requested but AI processing failed.
+                             *
+                             * @example true
+                             */
+                            fallback_used?: boolean;
                         };
                     };
                 };

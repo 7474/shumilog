@@ -4,6 +4,8 @@
 
 OGPボット（Twitter、Facebook、Slackなど）がリンクをプレビューする際に、適切なメタデータを取得できるようにSSR（Server-Side Rendering）機能をCloudflare Pages Functions上で実装しました。
 
+**SSRフレームワーク**: このプロジェクトは、Cloudflare Pages FunctionsをSSRフレームワークとして採用しています。詳細なアーキテクチャ、設計思想、実装ガイドについては[SSRフレームワーク アーキテクチャ](./ssr-framework.md)を参照してください。
+
 ## 主な機能
 
 ### 1. ボット検出

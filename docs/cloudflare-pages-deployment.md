@@ -2,6 +2,8 @@
 
 このガイドでは、SSR機能を含むフロントエンドをCloudflare Pagesにデプロイする手順を説明します。
 
+**SSRフレームワーク**: このプロジェクトは、Cloudflare Pages FunctionsをSSRフレームワークとして採用しています。アーキテクチャの詳細は[SSRフレームワーク アーキテクチャ](./ssr-framework.md)を参照してください。
+
 ## 前提条件
 
 - Cloudflareアカウント

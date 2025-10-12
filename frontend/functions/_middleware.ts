@@ -1,5 +1,19 @@
 /**
  * Cloudflare Pages Functions Middleware
+ * 
+ * このファイルは、shumilogの「SSRフレームワーク」として機能します。
+ * Cloudflare Pages Functionsを活用することで、Next.js、Remix、Astro等の
+ * 大規模フレームワークを導入することなく、軽量・シンプル・オープンな
+ * SSR機能を実現しています。
+ * 
+ * 主な機能:
+ * - OGPボット検出（Twitter、Facebook、Slack等）
+ * - ログ・タグページのサーバーサイドレンダリング
+ * - OGPメタタグの動的生成
+ * - 画像の最適化（Cloudflare Image Resizing）
+ * - エッジでの高速実行とキャッシュ
+ * 
+ * 詳細なアーキテクチャ: docs/ssr-framework.md
  * OGPボット向けにSSRを実行してメタタグを生成します
  */
 

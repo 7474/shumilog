@@ -19,6 +19,7 @@
 |---------|------|
 | [spec.md](./spec.md) | **機能仕様書** - 要件、ユーザーストーリー、KPI等の概要 |
 | [design.md](./design.md) | **詳細設計書** - データモデル、UI設計、実装計画の詳細 |
+| [architecture.md](./architecture.md) | **アーキテクチャ図** - システム構成、データフロー、影響範囲 |
 | [data-model.md](./data-model.md) | **データモデル** - メタデータ構造、バリデーション、例 |
 | [research.md](./research.md) | **調査・研究** - 技術調査、設計判断、参考事例 |
 | [quickstart.md](./quickstart.md) | **クイックスタート** - 使用方法、サンプルコード、トラブルシューティング |

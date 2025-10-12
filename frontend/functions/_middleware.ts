@@ -128,6 +128,30 @@ function generateOgpHtml(params: {
 }
 
 /**
+ * OGP用の画像URLを生成します
+ * Cloudflare Image Resizingを使用してOGPに最適なサイズに変換します
+ * 
+ * @param imageUrl - 元の画像URL（完全なURL）
+ * @param baseUrl - フロントエンドのベースURL
+ * @returns OGP用に最適化された画像URL
+ */
+function getOgpImageUrl(imageUrl: string, baseUrl: string): string {
+  const optionParts: string[] = [];
+  
+  // OGP推奨サイズ: 1200x630 (Twitter/Facebook)
+  optionParts.push('width=1200');
+  optionParts.push('height=630');
+  optionParts.push('fit=cover');
+  optionParts.push('quality=85');
+  optionParts.push('format=auto');
+
+  const optionsString = optionParts.join(',');
+
+  // Cloudflare Image Resizing URLフォーマット
+  return `${baseUrl}/cdn-cgi/image/${optionsString}/${imageUrl}`;
+}
+
+/**
  * ログ詳細ページのSSR
  */
 async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string): Promise<Response | null> {
@@ -149,7 +173,16 @@ async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string):
     const title = log.title || 'ログ';
     const description = extractPlainText(log.content_md || '', 200);
     const url = `${baseUrl}/logs/${logId}`;
-    const image = log.images && log.images.length > 0 ? log.images[0].url : undefined;
+    
+    // 先頭の関連画像をOGP画像として使用
+    let image: string | undefined = undefined;
+    if (log.images && log.images.length > 0) {
+      const firstImage = log.images[0];
+      // 画像URLを構築（フロントエンド経由でアクセス）
+      const imageUrl = `${baseUrl}/api/logs/${logId}/images/${firstImage.id}`;
+      // Cloudflare Image Resizingで最適化
+      image = getOgpImageUrl(imageUrl, baseUrl);
+    }
 
     const html = generateOgpHtml({
       title,

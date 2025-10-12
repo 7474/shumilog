@@ -25,12 +25,6 @@ describe('AiService', () => {
         })
       };
 
-      // Wikipedia存在チェックをモック
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ extract: 'Test content' })
-      } as Response);
-
       const aiService = new AiService(mockAi);
       const result = await aiService.generateTagContentFromName('進撃の巨人');
 
@@ -41,16 +35,21 @@ describe('AiService', () => {
       expect(result.content).toContain('公式サイト');
     });
 
-    it('should return appropriate message when Wikipedia page does not exist', async () => {
+    it('should handle AI response when Wikipedia page does not exist', async () => {
       const mockAi: AiBinding = {
-        run: vi.fn()
+        run: vi.fn().mockResolvedValue({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `「30 MINUTES FANTASY」に関するWikipedia記事が見つかりませんでした。`
+                }
+              ]
+            }
+          ]
+        })
       };
-
-      // Wikipedia存在チェックで404を返す
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404
-      } as Response);
 
       const aiService = new AiService(mockAi);
       const result = await aiService.generateTagContentFromName('30 MINUTES FANTASY');
@@ -58,10 +57,8 @@ describe('AiService', () => {
       expect(result.content).toBeTruthy();
       expect(result.content).toContain('Wikipedia記事が見つかりませんでした');
       expect(result.content).toContain('30 MINUTES FANTASY');
-      expect(result.content).toContain('<!-- AI生成コンテンツ開始 -->');
-      expect(result.content).toContain('<!-- AI生成コンテンツ終了 -->');
-      // AIは呼ばれない
-      expect(mockAi.run).not.toHaveBeenCalled();
+      // AIは呼ばれる（プロンプトでWikipedia確認を依頼）
+      expect(mockAi.run).toHaveBeenCalled();
     });
   });
 });

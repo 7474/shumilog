@@ -2,6 +2,94 @@ import { describe, it, expect, vi } from 'vitest';
 import { AiService, type AiBinding } from '../../src/services/AiService';
 
 describe('AiService', () => {
+  describe('generateTagContentFromName', () => {
+    it('should fetch Wikipedia content and generate AI-enhanced content with metadata', async () => {
+      // Mock Wikipedia HTML with external links
+      const mockWikipediaHtml = `
+<!DOCTYPE html>
+<html>
+<head><title>進撃の巨人 - Wikipedia</title></head>
+<body>
+  <h1>進撃の巨人</h1>
+  <p>進撃の巨人は、諫山創による日本の漫画作品。</p>
+  <h2>外部リンク</h2>
+  <ul>
+    <li><a href="https://shingeki.tv/" class="external">公式サイト</a></li>
+    <li><a href="https://example.com/info" class="external">関連情報</a></li>
+  </ul>
+</body>
+</html>
+`;
+
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `人類と巨人の戦いを描くダークファンタジー作品。
+
+**関連タグ**: #マンガ #アニメ #ダークファンタジー
+
+### 参考リンク
+- [公式サイト](https://shingeki.tv/)
+- [関連情報](https://example.com/info)`
+                }
+              ]
+            }
+          ]
+        })
+      };
+
+      // Mock global fetch
+      global.fetch = vi.fn((url) => {
+        if (typeof url === 'string' && url.includes('wikipedia.org')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            text: async () => mockWikipediaHtml
+          } as Response);
+        }
+        return Promise.reject(new Error('Unexpected fetch call'));
+      }) as any;
+
+      const aiService = new AiService(mockAi);
+      const result = await aiService.generateTagContentFromName('進撃の巨人');
+
+      expect(result.content).toBeTruthy();
+      expect(result.content).toContain('人類と巨人の戦い');
+      expect(result.content).toContain('**関連タグ**');
+      expect(result.content).toContain('### 参考リンク');
+      expect(result.content).toContain('公式サイト');
+      expect(result.content).toContain('出典: [Wikipedia]');
+      expect(result.wikipediaUrl).toBe('https://ja.wikipedia.org/wiki/%E9%80%B2%E6%92%83%E3%81%AE%E5%B7%A8%E4%BA%BA');
+    });
+
+    it('should throw error when Wikipedia page not found', async () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      global.fetch = vi.fn((url) => {
+        if (typeof url === 'string' && url.includes('wikipedia.org')) {
+          return Promise.resolve({
+            ok: false,
+            status: 404,
+            text: async () => ''
+          } as Response);
+        }
+        return Promise.reject(new Error('Unexpected fetch call'));
+      }) as any;
+
+      const aiService = new AiService(mockAi);
+      
+      await expect(
+        aiService.generateTagContentFromName('存在しないタグ')
+      ).rejects.toThrow('Wikipedia page not found');
+    });
+  });
+
   describe('generateEnhancedTagContent', () => {
     it('should generate enhanced content from AI response in markdown format', async () => {
       const mockAi: AiBinding = {
@@ -307,6 +395,96 @@ describe('AiService', () => {
       // 空白を含まないタグは # 形式で保持されていることを確認
       expect(markdown).toContain('#シンプルタグ');
       expect(markdown).toContain('#ミカサ');
+    });
+  });
+
+  describe('extractMetadataFromWikipedia', () => {
+    it('should extract official sites and related links from HTML', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const html = `
+        <html>
+          <head><title>アニメ - Wikipedia</title></head>
+          <body>
+            <h1>アニメ</h1>
+            <p>アニメは、日本で制作されたアニメーション作品の総称です。</p>
+            <h2>外部リンク</h2>
+            <ul>
+              <li><a href="https://example.com/official" class="external">公式サイト</a></li>
+              <li><a href="https://example.com/official2" class="external">Official Website</a></li>
+              <li><a href="https://example.com/info" class="external">アニメ情報サイト</a></li>
+            </ul>
+          </body>
+        </html>
+      `;
+      
+      const metadata = aiService.extractMetadataFromWikipedia(html);
+
+      expect(metadata.officialSites).toHaveLength(2);
+      expect(metadata.officialSites).toContain('https://example.com/official');
+      expect(metadata.officialSites).toContain('https://example.com/official2');
+      
+      expect(metadata.relatedLinks).toHaveLength(3);
+      expect(metadata.relatedLinks[0]).toEqual({
+        url: 'https://example.com/official',
+        title: '公式サイト'
+      });
+      expect(metadata.relatedLinks[1]).toEqual({
+        url: 'https://example.com/official2',
+        title: 'Official Website'
+      });
+      expect(metadata.relatedLinks[2]).toEqual({
+        url: 'https://example.com/info',
+        title: 'アニメ情報サイト'
+      });
+    });
+
+    it('should handle HTML without external links', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const html = `
+        <html>
+          <head><title>Test</title></head>
+          <body>
+            <h1>Test</h1>
+            <p>Test content without external links.</p>
+          </body>
+        </html>
+      `;
+      
+      const metadata = aiService.extractMetadataFromWikipedia(html);
+
+      expect(metadata.officialSites).toHaveLength(0);
+      expect(metadata.relatedLinks).toHaveLength(0);
+    });
+
+    it('should limit related links to 10 items', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const links = Array.from({ length: 15 }, (_, i) => 
+        `<li><a href="https://example.com/link${i}" class="external">Link ${i}</a></li>`
+      ).join('\n');
+      
+      const html = `
+        <html>
+          <body>
+            <ul>${links}</ul>
+          </body>
+        </html>
+      `;
+      
+      const metadata = aiService.extractMetadataFromWikipedia(html);
+
+      expect(metadata.relatedLinks.length).toBeLessThanOrEqual(10);
     });
   });
 });

@@ -15,6 +15,12 @@ export interface AiEnhancedTagInput {
   wikipediaContent: string;
   wikipediaUrl: string;
   requestedTagName: string; // ユーザーがリクエストした元のタグ名
+  metadata?: ExtractedMetadata; // オプショナルなメタデータ
+}
+
+export interface ExtractedMetadata {
+  officialSites: string[]; // 公式サイトのURL一覧
+  relatedLinks: { url: string; title: string }[]; // 関連リンク
 }
 
 export interface AiEnhancedTagOutput {
@@ -35,6 +41,54 @@ export class AiService {
       headingStyle: 'atx',
       codeBlockStyle: 'fenced'
     });
+  }
+
+  /**
+   * WikipediaのHTMLからメタデータを抽出
+   * 
+   * @param html Wikipedia HTML内容
+   * @returns 抽出されたメタデータ
+   */
+  extractMetadataFromWikipedia(html: string): ExtractedMetadata {
+    console.log('[AiService] extractMetadataFromWikipedia called with HTML length:', html.length);
+    
+    const doc = domino.createDocument(html);
+    const metadata: ExtractedMetadata = {
+      officialSites: [],
+      relatedLinks: []
+    };
+    
+    // 外部リンクセクションから公式サイトを抽出
+    // Wikipediaの外部リンクは通常 class="external" を持つ
+    const externalLinks = doc.querySelectorAll('a.external');
+    const seenUrls = new Set<string>();
+    
+    externalLinks.forEach((link: any) => {
+      const href = link.getAttribute('href');
+      const text = link.textContent?.trim() || '';
+      
+      if (href && !seenUrls.has(href)) {
+        seenUrls.add(href);
+        
+        // 公式サイトと思われるリンクを判定
+        if (text.includes('公式') || text.includes('オフィシャル') || 
+            text.includes('Official') || href.includes('official')) {
+          metadata.officialSites.push(href);
+        }
+        
+        // すべての外部リンクを関連リンクとして保存（最大10個まで）
+        if (metadata.relatedLinks.length < 10) {
+          metadata.relatedLinks.push({ url: href, title: text });
+        }
+      }
+    });
+    
+    console.log('[AiService] extractMetadataFromWikipedia result:', {
+      officialSitesCount: metadata.officialSites.length,
+      relatedLinksCount: metadata.relatedLinks.length
+    });
+    
+    return metadata;
   }
 
   /**
@@ -74,13 +128,14 @@ export class AiService {
       tagName: input.tagName,
       requestedTagName: input.requestedTagName,
       wikipediaUrl: input.wikipediaUrl,
-      wikipediaContentLength: input.wikipediaContent.length
+      wikipediaContentLength: input.wikipediaContent.length,
+      hasMetadata: !!input.metadata
     });
 
     // HTMLをMarkdownに変換してトークン消費を削減
     const markdownContent = this.convertHtmlToMarkdown(input.wikipediaContent);
 
-    const instructionPrompt = this.buildInstructionPrompt(input.requestedTagName);
+    const instructionPrompt = this.buildInstructionPrompt(input.requestedTagName, input.metadata);
     
     try {
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
@@ -127,8 +182,31 @@ export class AiService {
    * サブタイトル情報を省略せず、すべて列挙するよう明示的に指示しています。
    * 特に各話・エピソードのタイトルは重要な情報として扱います。
    */
-  private buildInstructionPrompt(requestedTagName: string): string {
-    const prompt = `上記の参照情報（Wikipedia Markdown）を基に、タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。
+  private buildInstructionPrompt(requestedTagName: string, metadata?: ExtractedMetadata): string {
+    let metadataSection = '';
+    
+    // メタデータがある場合は、それを指示に含める
+    if (metadata && (metadata.officialSites.length > 0 || metadata.relatedLinks.length > 0)) {
+      metadataSection = '\n\n【参照可能なメタデータ情報】\n';
+      
+      if (metadata.officialSites.length > 0) {
+        metadataSection += '\n公式サイト:\n';
+        metadata.officialSites.forEach((url, index) => {
+          metadataSection += `${index + 1}. ${url}\n`;
+        });
+      }
+      
+      if (metadata.relatedLinks.length > 0) {
+        metadataSection += '\n関連リンク:\n';
+        metadata.relatedLinks.forEach((link, index) => {
+          metadataSection += `${index + 1}. ${link.title}: ${link.url}\n`;
+        });
+      }
+      
+      metadataSection += '\n上記のメタデータ情報を参考にして、公式サイトや重要な関連リンクがある場合は、説明の最後に「### 参考リンク」セクションを追加してください。\n';
+    }
+    
+    const prompt = `上記の参照情報（Wikipedia Markdown）を基に、タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。${metadataSection}
 
 【注意】参照記事のタイトルとタグ名が異なる場合（転送・リダイレクトされた場合）は、記事全体を参照しつつ、タグ名「${requestedTagName}」に該当する内容を優先的に抽出してください。
 

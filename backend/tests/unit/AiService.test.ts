@@ -309,4 +309,94 @@ describe('AiService', () => {
       expect(markdown).toContain('#ミカサ');
     });
   });
+
+  describe('extractMetadataFromWikipedia', () => {
+    it('should extract official sites and related links from HTML', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const html = `
+        <html>
+          <head><title>アニメ - Wikipedia</title></head>
+          <body>
+            <h1>アニメ</h1>
+            <p>アニメは、日本で制作されたアニメーション作品の総称です。</p>
+            <h2>外部リンク</h2>
+            <ul>
+              <li><a href="https://example.com/official" class="external">公式サイト</a></li>
+              <li><a href="https://example.com/official2" class="external">Official Website</a></li>
+              <li><a href="https://example.com/info" class="external">アニメ情報サイト</a></li>
+            </ul>
+          </body>
+        </html>
+      `;
+      
+      const metadata = aiService.extractMetadataFromWikipedia(html);
+
+      expect(metadata.officialSites).toHaveLength(2);
+      expect(metadata.officialSites).toContain('https://example.com/official');
+      expect(metadata.officialSites).toContain('https://example.com/official2');
+      
+      expect(metadata.relatedLinks).toHaveLength(3);
+      expect(metadata.relatedLinks[0]).toEqual({
+        url: 'https://example.com/official',
+        title: '公式サイト'
+      });
+      expect(metadata.relatedLinks[1]).toEqual({
+        url: 'https://example.com/official2',
+        title: 'Official Website'
+      });
+      expect(metadata.relatedLinks[2]).toEqual({
+        url: 'https://example.com/info',
+        title: 'アニメ情報サイト'
+      });
+    });
+
+    it('should handle HTML without external links', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const html = `
+        <html>
+          <head><title>Test</title></head>
+          <body>
+            <h1>Test</h1>
+            <p>Test content without external links.</p>
+          </body>
+        </html>
+      `;
+      
+      const metadata = aiService.extractMetadataFromWikipedia(html);
+
+      expect(metadata.officialSites).toHaveLength(0);
+      expect(metadata.relatedLinks).toHaveLength(0);
+    });
+
+    it('should limit related links to 10 items', () => {
+      const mockAi: AiBinding = {
+        run: vi.fn()
+      };
+
+      const aiService = new AiService(mockAi);
+      const links = Array.from({ length: 15 }, (_, i) => 
+        `<li><a href="https://example.com/link${i}" class="external">Link ${i}</a></li>`
+      ).join('\n');
+      
+      const html = `
+        <html>
+          <body>
+            <ul>${links}</ul>
+          </body>
+        </html>
+      `;
+      
+      const metadata = aiService.extractMetadataFromWikipedia(html);
+
+      expect(metadata.relatedLinks.length).toBeLessThanOrEqual(10);
+    });
+  });
 });

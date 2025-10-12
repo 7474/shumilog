@@ -607,7 +607,7 @@ export class TagService {
   /**
    * Get support content for tag editing based on tag name
    * This doesn't require an existing tag ID, so it can be used when creating new tags
-   * Currently supports: wikipedia_summary, ai_enhanced
+   * Currently supports: wikipedia_summary, ai_enhanced, ai_enhanced_with_metadata
    */
   async getTagSupportByName(tagName: string, supportType: string): Promise<{ content: string; support_type: string }> {
     if (!tagName || typeof tagName !== 'string' || tagName.trim().length === 0) {
@@ -619,6 +619,8 @@ export class TagService {
         return await this.getWikipediaSummary(tagName);
       case 'ai_enhanced':
         return await this.getAiEnhancedSummary(tagName);
+      case 'ai_enhanced_with_metadata':
+        return await this.getAiEnhancedSummaryWithMetadata(tagName);
       default:
         throw new Error(`Unsupported support type: ${supportType}`);
     }
@@ -774,6 +776,69 @@ export class TagService {
         throw new Error(`Failed to generate AI-enhanced summary: ${error.message}`);
       }
       throw new Error('Failed to generate AI-enhanced summary');
+    }
+  }
+
+  /**
+   * AIを使用してWikipediaの内容とメタデータを基に編集サポート内容を生成
+   */
+  private async getAiEnhancedSummaryWithMetadata(tagName: string): Promise<{ content: string; support_type: string }> {
+    if (!this.aiService) {
+      throw new Error('AI service not available');
+    }
+
+    try {
+      // まずWikipediaから全文を取得（HTMLエンドポイントを使用）
+      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(tagName)}`;
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
+          'Accept': 'text/html; charset=utf-8; profile="https://www.mediawiki.org/wiki/Specs/HTML/2.1.0"'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Wikipedia page not found');
+        }
+        throw new Error(`Wikipedia API error: ${response.status}`);
+      }
+
+      // HTMLコンテンツをそのまま取得
+      const htmlContent = await response.text();
+      
+      if (!htmlContent) {
+        throw new Error('No content available');
+      }
+
+      // Wikipedia URLを取得
+      const wikipediaUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(tagName)}`;
+
+      // HTMLからメタデータを抽出
+      const metadata = this.aiService.extractMetadataFromWikipedia(htmlContent);
+
+      // AIサービスを使用して編集サポート内容を生成（メタデータを含める）
+      const aiOutput = await this.aiService.generateEnhancedTagContent({
+        tagName,
+        wikipediaContent: htmlContent,
+        wikipediaUrl,
+        requestedTagName: tagName,
+        metadata: metadata  // メタデータを渡す
+      });
+
+      // AI生成内容をMarkdown形式に変換
+      const content = this.aiService.formatAsMarkdown(aiOutput, wikipediaUrl);
+      
+      return {
+        content,
+        support_type: 'ai_enhanced_with_metadata'
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to generate AI-enhanced summary with metadata: ${error.message}`);
+      }
+      throw new Error('Failed to generate AI-enhanced summary with metadata');
     }
   }
 }

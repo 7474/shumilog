@@ -126,3 +126,31 @@ export function getLogDetailImageUrl(imageUrl: string): string {
     format: 'auto',
   });
 }
+
+/**
+ * OGP用の画像URLを生成します（サーバーサイド用）
+ * TwitterやFacebookのOGPに最適なサイズの画像を生成します
+ * 
+ * 推奨サイズ:
+ * - Twitter: 1200x630px (アスペクト比 1.91:1)
+ * - Facebook: 1200x630px (アスペクト比 1.91:1)
+ * 
+ * @param imageUrl - 元の画像URL（完全なURL）
+ * @param baseUrl - フロントエンドのベースURL
+ * @returns OGP用に最適化された画像URL
+ */
+export function getOgpImageUrl(imageUrl: string, baseUrl: string): string {
+  const optionParts: string[] = [];
+  
+  // OGP推奨サイズ: 1200x630
+  optionParts.push('width=1200');
+  optionParts.push('height=630');
+  optionParts.push('fit=cover');
+  optionParts.push('quality=85');
+  optionParts.push('format=auto');
+
+  const optionsString = optionParts.join(',');
+
+  // Cloudflare Image Resizing URLフォーマット
+  return `${baseUrl}/cdn-cgi/image/${optionsString}/${imageUrl}`;
+}

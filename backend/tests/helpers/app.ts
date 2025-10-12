@@ -378,9 +378,9 @@ export async function seedTestLogs(): Promise<{
     updatedAt: now,
   });
 
-  await associateLogTag('log_public_entry', 'tag_anime');
-  await associateLogTag('log_public_entry', 'tag_manga');
-  await associateLogTag('log_other_public_entry', 'tag_manga');
+  await associateLogTag('log_public_entry', TEST_TAG_IDS.ANIME);
+  await associateLogTag('log_public_entry', TEST_TAG_IDS.MANGA);
+  await associateLogTag('log_other_public_entry', TEST_TAG_IDS.MANGA);
 
   return {
     ownerId,

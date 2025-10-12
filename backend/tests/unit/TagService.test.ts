@@ -74,7 +74,7 @@ describe('TagService', () => {
       const result = await tagService.createTag(createData, createdBy);
 
       expect(result).toMatchObject({
-        id: expect.stringMatching(/^tag_[\w-]+$/),
+        id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/), // UUID format
         name: 'Anime',
         description: undefined,
         metadata: {},
@@ -100,7 +100,7 @@ describe('TagService', () => {
       const result = await tagService.createTag(createData, createdBy);
 
       expect(result).toMatchObject({
-        id: expect.stringMatching(/^tag_[\w-]+$/),
+        id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/), // UUID format
         name: 'Attack on Titan',
         description: 'Popular anime series',
         metadata: {

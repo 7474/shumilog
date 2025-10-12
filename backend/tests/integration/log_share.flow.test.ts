@@ -92,7 +92,7 @@ describe('Integration: Log share flow', () => {
     );
 
     // Step 3: log appears in user filter results with tag filter applied
-    const listResponse = await app.request(`/logs?user_id=${TEST_USER_ID}&tag_ids=tag_anime`, {
+    const listResponse = await app.request(`/logs?user_id=${TEST_USER_ID}&tag_ids=${TEST_TAG_IDS.ANIME}`, {
       method: 'GET'
     });
     expect(listResponse.status).toBe(200);

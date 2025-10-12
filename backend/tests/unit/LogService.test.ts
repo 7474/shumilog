@@ -36,7 +36,7 @@ describe('LogService', () => {
       const result = await logService.createLog(createData, userId);
 
       expect(result).toBeDefined();
-      expect(result.id).toMatch(/^log_\d+$/);
+      expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/); // UUID format
       expect(result.content_md).toBe('This is my first log entry!');
       expect(result.created_at).toBeDefined();
       expect(result.updated_at).toBeDefined();
@@ -54,7 +54,7 @@ describe('LogService', () => {
       const result = await logService.createLog(createData, userId);
 
       expect(result).toBeDefined();
-      expect(result.id).toMatch(/^log_\d+$/);
+      expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/); // UUID format
       expect(result.title).toBe('My Awesome Log');
       expect(result.content_md).toBe('This is detailed content with **markdown**.');
     });

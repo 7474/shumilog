@@ -5,6 +5,8 @@ import {
   createTestSession,
   createTestUser,
   seedTestTags
+,
+  TEST_TAG_IDS,
 } from '../helpers/app';
 
 const TEST_USER_ID = 'user_share_flow_author';
@@ -43,7 +45,7 @@ describe('Integration: Log share flow', () => {
         title: 'Integration share flow',
         content_md: '# Sharing time\nIntegration flow expectations',
         is_public: true,
-        tag_ids: ['tag_anime', 'tag_manga']
+        tag_ids: [TEST_TAG_IDS.ANIME, TEST_TAG_IDS.MANGA]
       })
     });
 
@@ -61,7 +63,7 @@ describe('Integration: Log share flow', () => {
     });
     expect(Array.isArray(createdLog.associated_tags)).toBe(true);
     expect(createdLog.associated_tags.map((tag: any) => tag.id)).toEqual(
-      expect.arrayContaining(['tag_anime', 'tag_manga'])
+      expect.arrayContaining([TEST_TAG_IDS.ANIME, TEST_TAG_IDS.MANGA])
     );
 
     const logId = createdLog.id;
@@ -86,7 +88,7 @@ describe('Integration: Log share flow', () => {
     });
     expect(Array.isArray(detailPayload.associated_tags)).toBe(true);
     expect(detailPayload.associated_tags.map((tag: any) => tag.id)).toEqual(
-      expect.arrayContaining(['tag_anime', 'tag_manga'])
+      expect.arrayContaining([TEST_TAG_IDS.ANIME, TEST_TAG_IDS.MANGA])
     );
 
     // Step 3: log appears in user filter results with tag filter applied

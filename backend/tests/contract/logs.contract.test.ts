@@ -5,7 +5,8 @@ import {
   createTestSession,
   createTestUser,
   seedTestTags,
-  seedTestLogs
+  seedTestLogs,
+  TEST_TAG_IDS,
 } from '../helpers/app';
 import { toOpenApiResponse } from '../helpers/openapi-setup';
 
@@ -79,14 +80,14 @@ describe('Contract: Logs routes', () => {
     it('filters list by tag_ids', async () => {
       await seedTestLogs();
 
-      const response = await app.request('/logs?tag_ids=tag_anime', { method: 'GET' });
+      const response = await app.request(`/logs?tag_ids=${TEST_TAG_IDS.ANIME}`, { method: 'GET' });
       expect(response.status).toBe(200);
 
       const payload = await response.json();
       expect(payload.items.length).toBeGreaterThan(0);
       payload.items.forEach((log: any) => {
         const tagIds = (log.associated_tags ?? []).map((tag: any) => tag.id);
-        expect(tagIds).toContain('tag_anime');
+        expect(tagIds).toContain(TEST_TAG_IDS.ANIME);
       });
     });
 
@@ -131,7 +132,7 @@ describe('Contract: Logs routes', () => {
         body: JSON.stringify({
           title: 'New adventure',
           content_md: '# Log\nTesting contract expectations',
-          tag_ids: ['tag_anime', 'tag_manga'],
+          tag_ids: [TEST_TAG_IDS.ANIME, TEST_TAG_IDS.MANGA],
           is_public: true
         })
       });
@@ -152,7 +153,7 @@ describe('Contract: Logs routes', () => {
       expect(typeof log.id).toBe('string');
       expect(typeof log.created_at).toBe('string');
       expect(Array.isArray(log.associated_tags)).toBe(true);
-      expect(log.associated_tags.map((tag: any) => tag.id)).toEqual(expect.arrayContaining(['tag_anime', 'tag_manga']));
+      expect(log.associated_tags.map((tag: any) => tag.id)).toEqual(expect.arrayContaining([TEST_TAG_IDS.ANIME, TEST_TAG_IDS.MANGA]));
     });
 
     it('defaults to public when is_public is not specified', async () => {
@@ -170,7 +171,7 @@ describe('Contract: Logs routes', () => {
         body: JSON.stringify({
           title: 'Default public log',
           content_md: '# Log\nThis should be public by default',
-          tag_ids: ['tag_anime']
+          tag_ids: [TEST_TAG_IDS.ANIME]
           // Note: is_public is NOT specified
         })
       });
@@ -275,7 +276,7 @@ describe('Contract: Logs routes', () => {
         body: JSON.stringify({
           title: 'No auth',
           content_md: 'Should fail',
-          tag_ids: ['tag_anime']
+          tag_ids: [TEST_TAG_IDS.ANIME]
         })
       });
 
@@ -366,7 +367,7 @@ describe('Contract: Logs routes', () => {
           title: 'Updated title',
           content_md: 'Updated content',
           is_public: false,
-          tag_ids: ['tag_manga']
+          tag_ids: [TEST_TAG_IDS.MANGA]
         })
       });
 
@@ -378,7 +379,7 @@ describe('Contract: Logs routes', () => {
         content_md: 'Updated content',
         is_public: false
       });
-      expect(log.associated_tags.map((tag: any) => tag.id)).toEqual(['tag_manga']);
+      expect(log.associated_tags.map((tag: any) => tag.id)).toEqual([TEST_TAG_IDS.MANGA]);
     });
 
     it('returns 401 when unauthenticated', async () => {

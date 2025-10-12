@@ -5,7 +5,8 @@ import {
   createTestSession,
   createTestUser,
   seedTestTags,
-  setupTestEnvironment
+  setupTestEnvironment,
+  TEST_TAG_IDS,
 } from '../helpers/app';
 
 /**
@@ -152,14 +153,14 @@ describe('Contract: Tags routes', () => {
     it('returns tag detail with metadata and associations', async () => {
       await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime', { method: 'GET' });
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, { method: 'GET' });
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toContain('application/json');
 
       const tag = await response.json();
       expect(tag).toMatchObject({
-        id: 'tag_anime',
+        id: TEST_TAG_IDS.ANIME,
         name: expect.any(String),
         description: expect.any(String),
         metadata: expect.any(Object),
@@ -179,7 +180,7 @@ describe('Contract: Tags routes', () => {
     it('updates tag fields when requested by owner', async () => {
       const sessionToken = await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +199,7 @@ describe('Contract: Tags routes', () => {
       expect(response.status).toBe(200);
       const tag = await response.json();
       expect(tag).toMatchObject({
-        id: 'tag_anime',
+        id: TEST_TAG_IDS.ANIME,
         name: 'Anime Updated',
         description: 'Updated description',
         metadata: {
@@ -212,7 +213,7 @@ describe('Contract: Tags routes', () => {
     it('returns 401 when unauthenticated', async () => {
       await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -228,7 +229,7 @@ describe('Contract: Tags routes', () => {
       await createTestUser('other-user', 'other_user');
       const otherSession = await createTestSession('other-user');
 
-      const response = await app.request('/tags/tag_anime', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +263,7 @@ describe('Contract: Tags routes', () => {
     it('removes a tag owned by the requester', async () => {
       const sessionToken = await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, {
         method: 'DELETE',
         headers: {
           Cookie: `session=${sessionToken}`
@@ -271,14 +272,14 @@ describe('Contract: Tags routes', () => {
 
       expect(response.status).toBe(204);
 
-      const confirm = await app.request('/tags/tag_anime', { method: 'GET' });
+      const confirm = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, { method: 'GET' });
       expect(confirm.status).toBe(404);
     });
 
     it('returns 401 when unauthenticated', async () => {
       await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime', { method: 'DELETE' });
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, { method: 'DELETE' });
       expect(response.status).toBe(401);
     });
 
@@ -287,7 +288,7 @@ describe('Contract: Tags routes', () => {
       await createTestUser('other-user', 'other_user', 'user'); // Regular user, not admin
       const otherSession = await createTestSession('other-user');
 
-      const response = await app.request('/tags/tag_anime', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, {
         method: 'DELETE',
         headers: {
           Cookie: `session=${otherSession}`
@@ -317,29 +318,29 @@ describe('Contract: Tags routes', () => {
     it('creates and lists tag associations', async () => {
       const sessionToken = await setupTestEnvironment();
 
-      const createResponse = await app.request('/tags/tag_anime/associations', {
+      const createResponse = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Cookie: `session=${sessionToken}`
         },
-        body: JSON.stringify({ associated_tag_id: 'tag_manga' })
+        body: JSON.stringify({ associated_tag_id: TEST_TAG_IDS.MANGA })
       });
 
       expect(createResponse.status).toBe(201);
 
-      const listResponse = await app.request('/tags/tag_anime/associations', { method: 'GET' });
+      const listResponse = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations`, { method: 'GET' });
       expect(listResponse.status).toBe(200);
 
       const associations = await listResponse.json();
       expect(Array.isArray(associations)).toBe(true);
-      expect(associations.some((tag: any) => tag.id === 'tag_manga')).toBe(true);
+      expect(associations.some((tag: any) => tag.id === TEST_TAG_IDS.MANGA)).toBe(true);
     });
 
     it('returns 400 when association payload is invalid', async () => {
       const sessionToken = await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime/associations', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -354,12 +355,12 @@ describe('Contract: Tags routes', () => {
     it('returns 401 when creating association without authentication', async () => {
       await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime/associations', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ associated_tag_id: 'tag_manga' })
+        body: JSON.stringify({ associated_tag_id: TEST_TAG_IDS.MANGA })
       });
 
       expect(response.status).toBe(401);
@@ -377,7 +378,7 @@ describe('Contract: Tags routes', () => {
           'Content-Type': 'application/json',
           Cookie: `session=${sessionToken}`
         },
-        body: JSON.stringify({ associated_tag_id: 'tag_manga' })
+        body: JSON.stringify({ associated_tag_id: TEST_TAG_IDS.MANGA })
       });
 
       expect(response.status).toBe(404);
@@ -386,16 +387,16 @@ describe('Contract: Tags routes', () => {
     it('removes an existing association', async () => {
       const sessionToken = await setupTestEnvironment();
 
-      await app.request('/tags/tag_anime/associations', {
+      await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Cookie: `session=${sessionToken}`
         },
-        body: JSON.stringify({ associated_tag_id: 'tag_manga' })
+        body: JSON.stringify({ associated_tag_id: TEST_TAG_IDS.MANGA })
       });
 
-      const deleteResponse = await app.request('/tags/tag_anime/associations?associated_tag_id=tag_manga', {
+      const deleteResponse = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations?associated_tag_id=${TEST_TAG_IDS.MANGA}`, {
         method: 'DELETE',
         headers: {
           Cookie: `session=${sessionToken}`
@@ -404,15 +405,15 @@ describe('Contract: Tags routes', () => {
 
       expect(deleteResponse.status).toBe(204);
 
-      const listResponse = await app.request('/tags/tag_anime/associations', { method: 'GET' });
+      const listResponse = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations`, { method: 'GET' });
       const associations = await listResponse.json();
-      expect(associations.some((tag: any) => tag.id === 'tag_manga')).toBe(false);
+      expect(associations.some((tag: any) => tag.id === TEST_TAG_IDS.MANGA)).toBe(false);
     });
 
     it('returns 401 when deleting association without authentication', async () => {
       await setupTestEnvironment();
 
-      const response = await app.request('/tags/tag_anime/associations?associated_tag_id=tag_manga', {
+      const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations?associated_tag_id=${TEST_TAG_IDS.MANGA}`, {
         method: 'DELETE'
       });
 
@@ -424,7 +425,7 @@ describe('Contract: Tags routes', () => {
       await createTestUser(userId, 'tags_creator');
       const sessionToken = await createTestSession(userId);
 
-      const response = await app.request('/tags/unknown-tag/associations?associated_tag_id=tag_manga', {
+      const response = await app.request(`/tags/unknown-tag/associations?associated_tag_id=${TEST_TAG_IDS.MANGA}`, {
         method: 'DELETE',
         headers: {
           Cookie: `session=${sessionToken}`

@@ -86,4 +86,17 @@ describe('Integration: Tag Recent Logs', () => {
       }
     }
   });
+
+  it('should include images array in recent logs', async () => {
+    await setupTestEnvironment();
+
+    const response = await app.request('/tags/tag_anime', { method: 'GET' });
+    const tag = await response.json();
+
+    // Verify images field exists for all logs
+    tag.recent_logs.forEach((log: any) => {
+      expect(log).toHaveProperty('images');
+      expect(Array.isArray(log.images)).toBe(true);
+    });
+  });
 });

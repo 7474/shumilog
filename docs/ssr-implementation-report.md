@@ -90,7 +90,7 @@ SSR関連の処理は一切含まれません。
 <meta property="twitter:image" content="https://example.com/image.jpg" />
 ```
 
-### タグ詳細ページ
+### タグ詳細ページ（画像なし）
 ```html
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://shumilog.dev/tags/Anime" />
@@ -102,6 +102,27 @@ SSR関連の処理は一切含まれません。
 <meta property="twitter:title" content="#Anime" />
 <meta property="twitter:description" content="Japanese animation" />
 ```
+
+### タグ詳細ページ（画像あり - 2025/10更新）
+```html
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://shumilog.dev/tags/Anime" />
+<meta property="og:title" content="#Anime" />
+<meta property="og:description" content="Japanese animation" />
+<meta property="og:site_name" content="Shumilog" />
+<meta property="og:image" content="https://shumilog.dev/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/https://api.shumilog.dev/api/logs/log_id/images/image_id" />
+
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="#Anime" />
+<meta property="twitter:description" content="Japanese animation" />
+<meta property="twitter:image" content="https://shumilog.dev/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/https://api.shumilog.dev/api/logs/log_id/images/image_id" />
+```
+
+**画像最適化機能**:
+- タグに関連するログの最初の画像をOGP画像として使用
+- Cloudflare Image Resizingで1200x630ピクセルに最適化（X/Twitter推奨サイズ）
+- 画像がある場合は`summary_large_image`カードとして表示
+- `fit=cover`で適切にトリミング、`quality=85`で高品質を維持
 
 ## セキュリティ対策
 
@@ -176,9 +197,10 @@ SSR関連の処理は一切含まれません。
 
 ## 今後の改善案
 
-1. **OGP画像の自動生成**
-   - タグやログのサムネイル画像を動的に生成
-   - Cloudflare Workers の Canvas API を利用
+1. ~~**OGP画像の自動生成**~~ → **実装済み（2025/10）**
+   - ✅ タグやログの関連画像をOGP画像として使用
+   - ✅ Cloudflare Image Resizingで最適化（1200x630）
+   - 残課題: 画像がない場合の動的サムネイル生成（Canvas API）
 
 2. **キャッシュ戦略の最適化**
    - SSR HTMLをCDNにキャッシュ

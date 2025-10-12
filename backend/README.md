@@ -45,20 +45,19 @@ Cookie: session=<your-session-token>
 
 ### ✅ All Tests (CI Enabled)
 - **Command**: `npm test`
-- **Status**: All tests passing - 217 passed, 70 appropriately skipped
-- **Coverage**: Contract tests, unit tests, and integration tests with proper skipping
+- **Status**: All tests passing - 282 passed, 0 skipped
+- **Coverage**: Contract tests, unit tests, and integration tests
 - **CI**: Enabled in GitHub Actions running full test suite
 
 ### ✅ Contract Tests with OpenAPI Validation
 - **Command**: `npm run test:contract`
-- **Status**: All passing (79 passed, 29 appropriately skipped)
+- **Status**: All passing
 - **Coverage**: API endpoint contracts, authentication flows, validation
 - **OpenAPI Validation**: Automated validation against `/api/v1/openapi.yaml` specification
 
-### ⚠️ Integration Tests (Properly Skipped)
-- **Status**: Skipped with documented reasons (44 tests skipped)
-- **Reason**: Authentication middleware and OAuth flow issues in test environment
-- **Approach**: Tests are skipped with TODO comments explaining specific issues
+### ✅ Integration Tests
+- **Status**: All passing
+- **Approach**: Use `createTestSession()` helper for authenticated test scenarios
 
 ## OpenAPI Specification Validation
 
@@ -111,19 +110,16 @@ This workflow ensures:
 - ✅ Documentation is automatically accurate
 
 
-## Authentication Issues (Documented & Skipped)
+## Test Coverage
 
 ### Working
 - Contract tests with authentication ✅
 - Log endpoint authentication ✅  
 - Basic session management ✅
 - Unit tests ✅
+- Integration tests with test session helpers ✅
 
-### Skipped with Reasoning
-- Integration tests requiring OAuth flows (mobile workflows, user onboarding)
-- Complex authentication scenarios (end-to-end workflows)
-- Tests dependent on external service simulation (Twitter OAuth)
-- Multi-step authentication flows that don't work in test environment
+All tests use the `createTestSession()` helper for authenticated scenarios, avoiding the need for complex OAuth flow simulation in tests.
 
 ## Running Tests
 
@@ -143,29 +139,14 @@ npm run test:watch
 
 ## CI Strategy
 
-The CI now runs the full test suite (`npm test`) with problematic integration tests properly skipped using `describe.skip()` and comprehensive TODO comments explaining:
+The CI runs the full test suite (`npm test`) with all tests passing:
 
-1. **Authentication Issues**: OAuth flow simulation problems
-2. **Session Management**: Integration test environment limitations  
-3. **External Dependencies**: Twitter API mocking challenges
-4. **Test Environment**: Differences between test and runtime auth
+1. **Contract Tests**: Validate API contracts against OpenAPI specification
+2. **Unit Tests**: Test individual service logic with mocks
+3. **Integration Tests**: Test complete workflows with test database
 
 This approach ensures:
 - ✅ CI remains stable and reliable
 - ✅ Core functionality is thoroughly tested
-- ✅ Problem areas are clearly documented
-- ✅ Technical debt is properly tracked
+- ✅ All tests provide value without redundancy
 - ✅ Full test coverage visibility maintained
-
-## Integration Test Issues (Documented for Future Resolution)
-
-Each skipped integration test file includes specific TODO comments explaining:
-
-- `mobile-workflows.test.ts`: OAuth callback flow issues
-- `tag-management.test.ts`: Session cookie authentication problems  
-- `user-onboarding.test.ts`: Complete OAuth flow simulation issues
-- `content-discovery.test.ts`: Authentication and data seeding dependencies
-- `episode-logging.test.ts`: Complex auth-dependent scenarios
-- `error-handling.test.ts`: External service error simulation
-- `hashtag-processing.test.ts`: Auth-dependent content creation
-- `workflows/end-to-end.test.ts`: Comprehensive multi-step auth flows

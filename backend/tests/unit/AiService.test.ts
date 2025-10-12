@@ -34,5 +34,31 @@ describe('AiService', () => {
       expect(result.content).toContain('### 参考リンク');
       expect(result.content).toContain('公式サイト');
     });
+
+    it('should handle AI response when Wikipedia page does not exist', async () => {
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `「30 MINUTES FANTASY」に関するWikipedia記事が見つかりませんでした。`
+                }
+              ]
+            }
+          ]
+        })
+      };
+
+      const aiService = new AiService(mockAi);
+      const result = await aiService.generateTagContentFromName('30 MINUTES FANTASY');
+
+      expect(result.content).toBeTruthy();
+      expect(result.content).toContain('Wikipedia記事が見つかりませんでした');
+      expect(result.content).toContain('30 MINUTES FANTASY');
+      // AIは呼ばれる（プロンプトでWikipedia確認を依頼）
+      expect(mockAi.run).toHaveBeenCalled();
+    });
   });
 });

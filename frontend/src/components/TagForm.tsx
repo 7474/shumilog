@@ -43,6 +43,7 @@ interface TagFormProps {
 
 export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
   const [error, setError] = useState<string | null>(null);
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   const [isLoadingSupport, setIsLoadingSupport] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -93,20 +94,43 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
 
     try {
       setError(null);
+      setFallbackNotice(null);
       setIsLoadingSupport(true);
 
-      const result = await api.POST('/support/tags', {
+      // Try AI-enhanced first
+      let result = await api.POST('/support/tags', {
         body: {
           tag_name: tagName,
-          support_type: 'wikipedia_summary',
+          support_type: 'ai_enhanced',
         },
       });
+
+      let usedFallback = false;
+
+      // If AI fails, fallback to wikipedia_summary
+      if (result.error || !result.data) {
+        console.warn('AI enhanced support failed, falling back to Wikipedia');
+        usedFallback = true;
+        
+        result = await api.POST('/support/tags', {
+          body: {
+            tag_name: tagName,
+            support_type: 'wikipedia_summary',
+          },
+        });
+      }
 
       if (result.error || !result.data) {
         throw new Error((result.error as any)?.error || 'サポート情報の取得に失敗しました');
       }
 
       const data = result.data;
+      
+      // Show fallback notice if Wikipedia was used as fallback
+      if (usedFallback) {
+        setFallbackNotice('AI処理が失敗したため、Wikipedia情報を使用しています。');
+      }
+      
       const currentDescription = form.getValues('description') || '';
       const textarea = descriptionRef.current;
 
@@ -160,6 +184,12 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
             <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
             <p className="text-red-700 text-sm flex-1">{error}</p>
+          </div>
+        )}
+        {fallbackNotice && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start space-x-2">
+            <AlertCircle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+            <p className="text-yellow-800 text-sm flex-1">{fallbackNotice}</p>
           </div>
         )}
         <FormField

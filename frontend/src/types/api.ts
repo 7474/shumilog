@@ -733,7 +733,8 @@ export interface paths {
          *     as it only requires the tag name, not an existing tag ID.
          *
          *     Currently supported types:
-         *     - `wikipedia_summary`: Fetches a summary from Wikipedia
+         *     - `ai_enhanced`: Uses AI to generate enhanced content based on Wikipedia data
+         *     - `wikipedia_summary`: Fetches a summary directly from Wikipedia
          *
          *     The response includes Markdown-formatted content where relevant terms are converted to hashtags.
          *
@@ -754,11 +755,14 @@ export interface paths {
                          */
                         tag_name: string;
                         /**
-                         * @description Type of support content to retrieve
-                         * @example wikipedia_summary
+                         * @description Type of support content to retrieve:
+                         *     - `ai_enhanced`: AI-generated content
+                         *     - `wikipedia_summary`: Direct Wikipedia summary
+                         *
+                         * @example ai_enhanced
                          * @enum {string}
                          */
-                        support_type: "wikipedia_summary";
+                        support_type: "wikipedia_summary" | "ai_enhanced";
                     };
                 };
             };
@@ -777,9 +781,10 @@ export interface paths {
                             content: string;
                             /**
                              * @description The type of support that was used
-                             * @example wikipedia_summary
+                             * @example ai_enhanced
+                             * @enum {string}
                              */
-                            support_type: string;
+                            support_type: "wikipedia_summary" | "ai_enhanced";
                         };
                     };
                 };

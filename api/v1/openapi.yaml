@@ -436,7 +436,8 @@ paths:
         as it only requires the tag name, not an existing tag ID.
         
         Currently supported types:
-        - `wikipedia_summary`: Fetches a summary from Wikipedia
+        - `ai_enhanced`: Uses AI to generate enhanced content based on Wikipedia data
+        - `wikipedia_summary`: Fetches a summary directly from Wikipedia
         
         The response includes Markdown-formatted content where relevant terms are converted to hashtags.
       security:
@@ -457,9 +458,12 @@ paths:
                   example: アニメ
                 support_type:
                   type: string
-                  enum: [wikipedia_summary]
-                  description: Type of support content to retrieve
-                  example: wikipedia_summary
+                  enum: [wikipedia_summary, ai_enhanced]
+                  description: |
+                    Type of support content to retrieve:
+                    - `ai_enhanced`: AI-generated content
+                    - `wikipedia_summary`: Direct Wikipedia summary
+                  example: ai_enhanced
       responses:
         '200':
           description: Support content retrieved successfully
@@ -478,7 +482,8 @@ paths:
                   support_type:
                     type: string
                     description: The type of support that was used
-                    example: wikipedia_summary
+                    enum: [wikipedia_summary, ai_enhanced]
+                    example: ai_enhanced
         '400':
           description: Invalid support type or request
         '401':

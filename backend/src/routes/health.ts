@@ -7,7 +7,6 @@ const health = new Hono();
 health.get('/', async (c) => {
   const timestamp = new Date().toISOString();
   const database = ((c as any).get('database') as Database | undefined) ?? null;
-  const runtimeConfig = ((c as any).get('config') as { nodeEnv: string } | undefined);
 
   let databaseStatus: 'connected' | 'disconnected' | 'unknown' = 'unknown';
   let backendStatus: 'running' | 'degraded' = 'running';
@@ -29,8 +28,6 @@ health.get('/', async (c) => {
   const payload = {
     status: healthy ? 'healthy' : 'unhealthy',
     timestamp,
-    environment: runtimeConfig?.nodeEnv ?? 'development',
-    version: '1.0.0-dev',
     services: {
       database: databaseStatus,
       backend: backendStatus,

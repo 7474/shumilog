@@ -6,7 +6,16 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
-    return <textarea className={cn(className)} ref={ref} {...props} />;
+    return (
+      <textarea
+        className={cn(
+          'resize-y overflow-auto overscroll-contain',
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
   }
 );
 Textarea.displayName = 'Textarea';

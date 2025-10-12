@@ -27,22 +27,27 @@ if (!userInput) {
   console.error('');
   console.error('例:');
   console.error('  npm run dev:create-session alice');
-  console.error('  npm run dev:create-session user_alice');
+  console.error('  npm run dev:create-session 73f7a1b7-ba23-43e9-a154-2ae3cce85ec5');
   console.error('');
   console.error('シードデータのユーザー:');
-  console.error('  - alice (user_alice)');
-  console.error('  - bob (user_bob)');
-  console.error('  - carol (user_carol)');
-  console.error('  - dave (user_dave)');
+  console.error('  - alice (73f7a1b7-ba23-43e9-a154-2ae3cce85ec5)');
+  console.error('  - bob (7c750194-9e35-446d-afe3-299629c7150e)');
+  console.error('  - carol (00ac1168-a19c-4294-a6ad-1b995a6417ae)');
+  console.error('  - dave (e9629fd6-381f-4659-9218-d345b30e09b1)');
   process.exit(1);
 }
 
 // 短縮名を完全なユーザーIDに変換
 const userIdMap: Record<string, string> = {
-  'alice': 'user_alice',
-  'bob': 'user_bob',
-  'carol': 'user_carol',
-  'dave': 'user_dave',
+  'alice': '73f7a1b7-ba23-43e9-a154-2ae3cce85ec5',
+  'bob': '7c750194-9e35-446d-afe3-299629c7150e',
+  'carol': '00ac1168-a19c-4294-a6ad-1b995a6417ae',
+  'dave': 'e9629fd6-381f-4659-9218-d345b30e09b1',
+  // 後方互換性のため旧IDもサポート
+  'user_alice': '73f7a1b7-ba23-43e9-a154-2ae3cce85ec5',
+  'user_bob': '7c750194-9e35-446d-afe3-299629c7150e',
+  'user_carol': '00ac1168-a19c-4294-a6ad-1b995a6417ae',
+  'user_dave': 'e9629fd6-381f-4659-9218-d345b30e09b1',
 };
 
 const userId = userIdMap[userInput.toLowerCase()] || userInput;

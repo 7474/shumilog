@@ -18,7 +18,7 @@ export class LogService {
    */
   async createLog(data: CreateLogData, userId: string): Promise<Log> {
     const now = new Date().toISOString();
-    const logId = `log_${Date.now()}`;
+    const logId = crypto.randomUUID();
     
     // Create the log
     const stmt = this.db.prepare(`
@@ -473,7 +473,7 @@ export class LogService {
       
       // Use batch insert for better performance
       const insertStatements = tagsToCreate.map(tagName => {
-        const tagId = `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const tagId = crypto.randomUUID();
         existingTagMap.set(tagName, tagId);
         return {
           sql: `INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)

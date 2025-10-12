@@ -23,10 +23,11 @@ export class TagService {
 
   private generateTagId(): string {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return `tag_${crypto.randomUUID()}`;
+      return crypto.randomUUID();
     }
 
-    return `tag_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    // Fallback for environments without crypto.randomUUID
+    return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   }
 
   private async getTagRow(tagId: string): Promise<any | null> {
@@ -573,7 +574,7 @@ export class TagService {
       } else {
         // Tag doesn't exist, create it with empty description and metadata
         const now = new Date().toISOString();
-        associatedTagId = `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        associatedTagId = crypto.randomUUID();
         
         const createTagStmt = this.db.prepare(`
           INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)

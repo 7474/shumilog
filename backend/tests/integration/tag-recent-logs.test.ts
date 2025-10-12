@@ -3,6 +3,8 @@ import {
   app,
   clearTestData,
   setupTestEnvironment
+,
+  TEST_TAG_IDS,
 } from '../helpers/app';
 
 /**
@@ -24,7 +26,7 @@ describe('Integration: Tag Recent Logs', () => {
     await setupTestEnvironment();
 
     // Fetch tag detail
-    const response = await app.request('/tags/tag_anime', { method: 'GET' });
+    const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, { method: 'GET' });
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Type')).toContain('application/json');
@@ -64,7 +66,7 @@ describe('Integration: Tag Recent Logs', () => {
   it('should limit recent logs to 10 items', async () => {
     await setupTestEnvironment();
 
-    const response = await app.request('/tags/tag_anime', { method: 'GET' });
+    const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, { method: 'GET' });
     const tag = await response.json();
 
     // Should not return more than 10 logs
@@ -74,7 +76,7 @@ describe('Integration: Tag Recent Logs', () => {
   it('should sort recent logs by creation date descending', async () => {
     await setupTestEnvironment();
 
-    const response = await app.request('/tags/tag_anime', { method: 'GET' });
+    const response = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, { method: 'GET' });
     const tag = await response.json();
 
     if (tag.recent_logs.length > 1) {

@@ -2,6 +2,13 @@ import { Miniflare } from 'miniflare';
 import { createApp } from '../../src/index.js';
 import { DATABASE_SCHEMAS } from '../../src/db/schema.sql.js';
 
+// Test ID mappings for consistent UUIDs
+export const TEST_TAG_IDS = {
+  ANIME: '3e8d692f-d9ef-4b26-a708-c9ac352b16aa',
+  MANGA: '96057d51-7fe9-4198-9003-a0449509b632',
+  ATTACK_ON_TITAN: 'e709cc42-4780-4653-be03-3883b38fd39b',
+} as const;
+
 const mf = new Miniflare({
   modules: true,
   script: `export default { async fetch() { return new Response('test helper', { status: 404 }); } };`,
@@ -294,19 +301,19 @@ export async function seedTestTags(): Promise<void> {
   const now = new Date().toISOString();
   const tags = [
     {
-      id: 'tag_anime',
+      id: TEST_TAG_IDS.ANIME,
       name: 'Anime',
       description: 'Japanese animation',
       metadata: { category: 'media' },
     },
     {
-      id: 'tag_attack_on_titan',
+      id: TEST_TAG_IDS.ATTACK_ON_TITAN,
       name: 'Attack on Titan',
       description: 'Popular anime series',
       metadata: { category: 'series' },
     },
     {
-      id: 'tag_manga',
+      id: TEST_TAG_IDS.MANGA,
       name: 'Manga',
       description: 'Japanese comics',
       metadata: { category: 'media' },
@@ -371,9 +378,9 @@ export async function seedTestLogs(): Promise<{
     updatedAt: now,
   });
 
-  await associateLogTag('log_public_entry', 'tag_anime');
-  await associateLogTag('log_public_entry', 'tag_manga');
-  await associateLogTag('log_other_public_entry', 'tag_manga');
+  await associateLogTag('log_public_entry', TEST_TAG_IDS.ANIME);
+  await associateLogTag('log_public_entry', TEST_TAG_IDS.MANGA);
+  await associateLogTag('log_other_public_entry', TEST_TAG_IDS.MANGA);
 
   return {
     ownerId,

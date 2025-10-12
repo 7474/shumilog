@@ -47,6 +47,36 @@ export class AiService {
   }
 
   /**
+   * Wikipediaページの存在を確認
+   * 
+   * @param tagName タグ名
+   * @returns ページが存在する場合はtrue、存在しない場合はfalse
+   */
+  async checkWikipediaExists(tagName: string): Promise<boolean> {
+    try {
+      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tagName)}`;
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
+          'Accept': 'application/json'
+        }
+      });
+
+      console.log('[AiService] Wikipedia existence check:', {
+        tagName,
+        status: response.status,
+        exists: response.ok
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('[AiService] Failed to check Wikipedia existence:', error);
+      return false;
+    }
+  }
+
+  /**
    * WikipediaのHTMLからメタデータを抽出
    * 
    * @param html Wikipedia HTML内容
@@ -130,6 +160,16 @@ export class AiService {
     console.log('[AiService] generateTagContentFromName called with tagName:', tagName);
 
     try {
+      // まずWikipediaページの存在を確認
+      const wikipediaExists = await this.checkWikipediaExists(tagName);
+      
+      if (!wikipediaExists) {
+        console.log('[AiService] Wikipedia page not found for:', tagName);
+        // Wikipediaページが存在しない場合は、その旨を明示したコンテンツを返す
+        const content = `<!-- AI生成コンテンツ開始 -->\n\n「${tagName}」に関するWikipedia記事が見つかりませんでした。\n\n情報を追加する場合は、手動で編集してください。\n\n<!-- AI生成コンテンツ終了 -->\n\n`;
+        return { content };
+      }
+
       // AI指示プロンプトを構築
       const instructionPrompt = this.buildInstructionPrompt(tagName);
 
@@ -138,7 +178,7 @@ export class AiService {
         input: [
           {
             role: 'system',
-            content: 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。与えられた情報から、タグの説明と関連タグを簡潔に生成してください。'
+            content: 'あなたはアニメ、マンガ、ゲームなどの趣味コンテンツに詳しい日本語アシスタントです。Wikipediaから得られた情報のみを基に、タグの説明と関連タグを簡潔に生成してください。情報が不足している場合は、その旨を正直に伝えてください。存在しない情報を創作してはいけません。'
           },
           {
             role: 'user',
@@ -182,11 +222,20 @@ export class AiService {
   private buildInstructionPrompt(requestedTagName: string): string {
     const prompt = `タグ「${requestedTagName}」の説明をMarkdown形式で生成してください。主に日本語版のWikipedia記事を情報源としてください。
 
+【最重要】ハルシネーション（虚偽情報の生成）の防止：
+- Wikipedia記事に記載されている情報のみを使用してください
+- 存在しない情報、確認できない情報は絶対に生成しないでください
+- 情報が不足している場合は、その旨を正直に記載してください
+- 推測や創作で情報を補完してはいけません
+- 出典リンクは実際に存在するWikipediaページのURLのみを使用してください
+
 【注意】参照記事のタイトルとタグ名が異なる場合（転送・リダイレクトされた場合）は、記事全体を参照しつつ、タグ名「${requestedTagName}」に該当する内容を優先的に抽出してください。
 
 【重要】必ずMarkdown形式で出力してください：
 
 1. 最初の段落: 1〜2行の端的な説明文（プレーンテキスト）
+   - Wikipedia記事に基づく事実のみを記載
+   - 情報が不足している場合は「詳細な情報が見つかりませんでした」と明記
 2. 関連タグ: "**関連タグ**: " で始まり、その後にハッシュタグを空白区切りで列挙（3〜10個）
    - 空白を含まないタグ: #タグ名 形式（例: #マンガ #ゲーム）
    - 空白を含むタグ: #{タグ名} 形式（例: #{Attack on Titan}）
@@ -196,13 +245,17 @@ export class AiService {
      * 例: 「ゲーム「SDコマンドガンダム」（GB）」→「SDコマンドガンダム」
      * 例: 「漫画 SDコマンド戦記」→「SDコマンド戦記」
      * 例外: 「劇場版 幼女戦記」→「劇場版 幼女戦記」（正式名称の一部として保持）
+   - Wikipedia記事に明記されている関連作品や概念のみをタグとして列挙
 3. サブセクション（オプション）: 連載・シリーズ作品の場合、### 見出しで各セクションを作成し、その下に箇条書き（- で始まる）でハッシュタグを列挙
    - 【必須】連載・シリーズのサブタイトル情報は省略しないでください
    - 特にシーズン、期、章、巻、エピソード、各話タイトルなどの情報はすべて列挙してください
    - 各話・エピソードのタイトルも重要な情報として含めてください
    - 【ハッシュタグ正規化ルール適用】サブセクション内のハッシュタグも上記の正規化ルールを適用してください
+   - Wikipedia記事に記載されているサブタイトルのみを列挙し、存在しないエピソードは生成しないでください
 4. Wikipediaを情報源とした場合は、その記事に出展としてリンクしてください
    - Wikipediaの記事を参照する場合はCCライセンスに準拠するための対応です
+   - 【重要】実際に存在するWikipediaページのURLのみをリンクしてください
+   - 存在しないページへのリンクは絶対に生成しないでください
 
 【出力例】
 アニメーション作品の総称で、日本の独自文化として世界的に人気があります。

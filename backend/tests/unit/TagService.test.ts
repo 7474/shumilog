@@ -40,27 +40,9 @@ describe('TagService', () => {
       expect(result.support_type).toBe('ai_enhanced');
     });
 
-    it('should fallback to wikipedia when AI service not set for ai_enhanced', async () => {
-      // Wikipedia APIをモック
-      global.fetch = async (url: any) => {
-        if (typeof url === 'string' && url.includes('wikipedia.org')) {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => ({
-              extract: 'AIタグの概要',
-              content_urls: { desktop: { page: 'https://ja.wikipedia.org/wiki/AI' } }
-            })
-          } as any;
-        }
-        throw new Error('Unexpected fetch call');
-      };
-
+    it('should throw error if AI service not set for ai_enhanced', async () => {
       tagService.setAiService(undefined as any);
-      const result = await tagService.getTagSupportByName('AIタグ', 'ai_enhanced');
-      expect(result.content).toContain('AIタグの概要');
-      expect(result.support_type).toBe('wikipedia_summary');
-      expect(result.fallback_used).toBe(true);
+      await expect(tagService.getTagSupportByName('AIタグ', 'ai_enhanced')).rejects.toThrow('AI service not available');
     });
 
     it('should throw error for invalid support_type', async () => {

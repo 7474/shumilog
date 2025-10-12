@@ -75,55 +75,5 @@ describe('Integration: AI Enhanced Tag Support', () => {
 
       expect(response.status).toBe(401);
     });
-
-    it('should fallback to wikipedia_summary when AI service is not available', async () => {
-      // Mock Wikipedia API to return valid data
-      const mockWikipediaSummary = {
-        extract: 'テストの説明です。',
-        content_urls: {
-          desktop: {
-            page: 'https://ja.wikipedia.org/wiki/%E3%83%86%E3%82%B9%E3%83%88'
-          }
-        }
-      };
-
-      global.fetch = vi.fn((url) => {
-        if (typeof url === 'string' && url.includes('wikipedia.org')) {
-          return Promise.resolve({
-            ok: true,
-            status: 200,
-            json: async () => mockWikipediaSummary
-          } as Response);
-        }
-        return Promise.reject(new Error('Unexpected fetch call'));
-      }) as any;
-
-      // Request with ai_enhanced support type (AI service is not available in test env)
-      const response = await app.request('/api/support/tags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          tag_name: 'テスト',
-          support_type: 'ai_enhanced'
-        })
-      });
-
-      // AI service is not available, so it should fallback to Wikipedia
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      
-      // Should return content from Wikipedia
-      expect(data).toHaveProperty('content');
-      expect(data.content).toContain('テストの説明です');
-      
-      // Should indicate fallback was used
-      expect(data).toHaveProperty('fallback_used', true);
-      
-      // support_type should still be wikipedia_summary (the fallback method)
-      expect(data).toHaveProperty('support_type', 'wikipedia_summary');
-    });
   });
 });

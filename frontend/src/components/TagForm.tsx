@@ -97,12 +97,28 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
       setFallbackNotice(null);
       setIsLoadingSupport(true);
 
-      const result = await api.POST('/support/tags', {
+      // Try AI-enhanced first
+      let result = await api.POST('/support/tags', {
         body: {
           tag_name: tagName,
           support_type: 'ai_enhanced',
         },
       });
+
+      let usedFallback = false;
+
+      // If AI fails, fallback to wikipedia_summary
+      if (result.error || !result.data) {
+        console.warn('AI enhanced support failed, falling back to Wikipedia');
+        usedFallback = true;
+        
+        result = await api.POST('/support/tags', {
+          body: {
+            tag_name: tagName,
+            support_type: 'wikipedia_summary',
+          },
+        });
+      }
 
       if (result.error || !result.data) {
         throw new Error((result.error as any)?.error || 'サポート情報の取得に失敗しました');
@@ -110,8 +126,8 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
 
       const data = result.data;
       
-      // Check if fallback was used
-      if (data.fallback_used) {
+      // Show fallback notice if Wikipedia was used as fallback
+      if (usedFallback) {
         setFallbackNotice('AI処理が失敗したため、Wikipedia情報を使用しています。');
       }
       

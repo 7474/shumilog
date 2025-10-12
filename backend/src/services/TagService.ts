@@ -608,11 +608,8 @@ export class TagService {
    * Get support content for tag editing based on tag name
    * This doesn't require an existing tag ID, so it can be used when creating new tags
    * Currently supports: wikipedia_summary, ai_enhanced
-   * 
-   * For ai_enhanced: If AI fails, automatically falls back to wikipedia_summary
-   * and sets fallback_used flag to true
    */
-  async getTagSupportByName(tagName: string, supportType: string): Promise<{ content: string; support_type: string; fallback_used?: boolean }> {
+  async getTagSupportByName(tagName: string, supportType: string): Promise<{ content: string; support_type: string }> {
     if (!tagName || typeof tagName !== 'string' || tagName.trim().length === 0) {
       throw new Error('Tag name is required');
     }
@@ -621,17 +618,7 @@ export class TagService {
       case 'wikipedia_summary':
         return await this.getWikipediaSummary(tagName);
       case 'ai_enhanced':
-        try {
-          return await this.getAiEnhancedSummary(tagName);
-        } catch (error) {
-          // AI処理が失敗した場合、Wikipediaサマリーにフォールバック
-          console.warn('AI enhanced summary failed, falling back to Wikipedia:', error instanceof Error ? error.message : 'Unknown error');
-          const wikipediaResult = await this.getWikipediaSummary(tagName);
-          return {
-            ...wikipediaResult,
-            fallback_used: true
-          };
-        }
+        return await this.getAiEnhancedSummary(tagName);
       default:
         throw new Error(`Unsupported support type: ${supportType}`);
     }

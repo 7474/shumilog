@@ -14,21 +14,67 @@ const testD1 = await mf.getD1Database('DB');
 
 const TABLES_IN_DEPENDENCY_ORDER = [
   'schema_migrations',
+  'log_image_associations',
   'log_tag_associations',
   'tag_associations',
+  'images',
   'logs',
   'sessions',
   'tags',
   'users',
 ];
 
+const TRIGGERS_TO_DROP = [
+  'logs_fts_insert',
+  'logs_fts_update',
+  'logs_fts_delete',
+  'tags_fts_insert',
+  'tags_fts_update',
+  'tags_fts_delete',
+];
+
+const FTS_TABLES = [
+  'logs_fts',
+  'tags_fts',
+];
+
 async function execSqlStatements(sql: string): Promise<void> {
-  const statements = sql
-    .split(';')
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0);
+  // For triggers and other multi-statement blocks, we need to handle them specially
+  // Split by semicolon but only at the end of complete statements
+  const statements: string[] = [];
+  let currentStatement = '';
+  let inTrigger = false;
+  
+  const lines = sql.split('\n');
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    // Check if we're starting a trigger
+    if (trimmedLine.startsWith('CREATE TRIGGER')) {
+      inTrigger = true;
+    }
+    
+    currentStatement += line + '\n';
+    
+    // Check if we're ending a trigger
+    if (inTrigger && trimmedLine === 'END;') {
+      statements.push(currentStatement.trim());
+      currentStatement = '';
+      inTrigger = false;
+    } else if (!inTrigger && trimmedLine.endsWith(';') && trimmedLine.length > 1) {
+      statements.push(currentStatement.trim());
+      currentStatement = '';
+    }
+  }
+  
+  // Add any remaining statement
+  if (currentStatement.trim()) {
+    statements.push(currentStatement.trim());
+  }
 
   for (const statement of statements) {
+    if (statement.length === 0) continue;
+    
     const sqlStatement = statement.endsWith(';') ? statement : `${statement};`;
     if (process.env.DEBUG_D1_SQL === 'true') {
       console.log('Executing SQL:', sqlStatement);
@@ -50,6 +96,25 @@ async function resetDatabase(): Promise<void> {
     // PRAGMA may not be supported by all runtimes; ignore if it fails.
   }
 
+  // Drop triggers first
+  for (const trigger of TRIGGERS_TO_DROP) {
+    try {
+      await execSqlStatements(`DROP TRIGGER IF EXISTS ${trigger};`);
+    } catch (_) {
+      // Ignore errors if trigger doesn't exist
+    }
+  }
+
+  // Drop FTS tables
+  for (const table of FTS_TABLES) {
+    try {
+      await execSqlStatements(`DROP TABLE IF EXISTS ${table};`);
+    } catch (_) {
+      // Ignore errors if table doesn't exist
+    }
+  }
+
+  // Drop regular tables
   for (const table of TABLES_IN_DEPENDENCY_ORDER) {
     await execSqlStatements(`DROP TABLE IF EXISTS ${table};`);
   }
@@ -94,20 +159,22 @@ async function insertUser({
   twitterUsername,
   displayName,
   avatarUrl,
+  role,
   createdAt,
 }: {
   id: string;
   twitterUsername: string;
   displayName: string;
   avatarUrl?: string;
+  role?: 'user' | 'admin';
   createdAt: string;
 }): Promise<void> {
   await testD1
     .prepare(
-      `INSERT OR IGNORE INTO users (id, twitter_username, display_name, avatar_url, created_at)
-       VALUES (?, ?, ?, ?, ?)`
+      `INSERT OR IGNORE INTO users (id, twitter_username, display_name, avatar_url, role, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, twitterUsername, displayName, avatarUrl ?? null, createdAt)
+    .bind(id, twitterUsername, displayName, avatarUrl ?? null, role ?? 'user', createdAt)
     .run();
 }
 
@@ -206,19 +273,24 @@ export async function createTestSession(userId: string = 'mock-user-id'): Promis
   return token;
 }
 
-export async function createTestUser(userId: string = 'mock-user-id', username: string = 'testuser'): Promise<void> {
+export async function createTestUser(
+  userId: string = 'mock-user-id', 
+  username: string = 'testuser',
+  role: 'user' | 'admin' = 'user'
+): Promise<void> {
   const now = new Date().toISOString();
   await insertUser({
     id: userId,
     twitterUsername: username,
     displayName: `Test User ${username}`,
     avatarUrl: `https://example.com/avatar/${username}.jpg`,
+    role,
     createdAt: now,
   });
 }
 
 export async function seedTestTags(): Promise<void> {
-  await createTestUser('mock-user-id', 'tag_creator');
+  await createTestUser('mock-user-id', 'tag_creator', 'admin'); // Make tag creator an admin
   const now = new Date().toISOString();
   const tags = [
     {

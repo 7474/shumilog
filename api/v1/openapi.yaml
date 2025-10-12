@@ -1,0 +1,1147 @@
+openapi: 3.0.3
+info:
+  title: Hobby Content Log API
+  description: |
+    API for logging and sharing personal content logs
+    
+    **CANONICAL SOURCE**: This is the source of truth for the API specification.
+    All development, testing, and documentation should reference this file.
+    
+    Maintain this specification continuously as features are developed.
+  version: 1.0.0
+servers:
+  - url: https://shumilog.example.com/api
+    description: Production server
+  - url: http://localhost:8787/api
+    description: Development server
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the API and its services
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - timestamp
+                  - services
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-10-03T12:00:00.000Z"
+                  services:
+                    type: object
+                    required:
+                      - database
+                      - backend
+                    properties:
+                      database:
+                        type: string
+                        enum: [connected, disconnected, unknown]
+                        example: connected
+                      backend:
+                        type: string
+                        enum: [running, degraded]
+                        example: running
+
+  /auth/twitter:
+    get:
+      summary: Initiate Twitter OAuth flow
+      description: Redirects user to Twitter for authentication
+      responses:
+        '302':
+          description: Redirect to Twitter OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+                example: https://twitter.com/i/oauth2/authorize?...
+        '400':
+          description: Invalid request parameters
+
+  /auth/callback:
+    get:
+      summary: Handle Twitter OAuth callback
+      description: Process OAuth callback and create user session
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to application with session
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: session=token; HttpOnly; Secure
+        '401':
+          description: Authentication failed
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      description: Invalidate user session
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Not authenticated
+
+  /users/me:
+    get:
+      summary: Get current user profile
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+
+  /users/me/logs:
+    get:
+      summary: Get current user's logs (both public and private)
+      description: Returns all logs belonging to the authenticated user, including private logs. Useful for reviewing personal log history.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of user's logs
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - total
+                  - limit
+                  - offset
+                  - has_more
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Log'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  has_more:
+                    type: boolean
+        '401':
+          description: Not authenticated
+
+  /tags:
+    get:
+      summary: Search and list tags
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - total
+                  - limit
+                  - offset
+                  - has_more
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  has_more:
+                    type: boolean
+
+    post:
+      summary: Create new tag
+      description: |
+        Create a new tag with automatic hashtag processing.
+        
+        **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`), 
+        the system will automatically create associations with existing tags or create new tags if they don't exist.
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Invalid tag data
+        '401':
+          description: Not authenticated
+
+  /tags/{tagId}:
+    get:
+      summary: Get tag details
+      description: |
+        Get detailed information about a tag. The `tagId` parameter accepts both:
+        - Tag name (user-friendly, URL-encoded if needed)
+        - Tag ID (for backward compatibility)
+        
+        The tag name is checked first, then the tag ID if not found by name.
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
+      responses:
+        '200':
+          description: Tag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDetail'
+        '404':
+          description: Tag not found
+
+    put:
+      summary: Update tag
+      description: |
+        Update an existing tag with automatic hashtag processing.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
+        
+        **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`), 
+        the system will automatically create associations with existing tags or create new tags if they don't exist.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not tag owner
+        '404':
+          description: Tag not found
+
+    delete:
+      summary: Delete tag
+      description: |
+        Delete a tag. The `tagId` parameter accepts both tag name (preferred) and tag ID.
+        
+        **Admin privileges required**: Only users with the 'admin' role can delete tags.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
+      responses:
+        '204':
+          description: Tag deleted
+        '401':
+          description: Not authenticated
+        '403':
+          description: Admin privileges required
+        '404':
+          description: Tag not found
+
+  /tags/{tagId}/associations:
+    get:
+      summary: Get tags associated with this tag
+      description: |
+        Get all tags associated with the specified tag.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
+      responses:
+        '200':
+          description: List of associated tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '404':
+          description: Tag not found
+
+    post:
+      summary: Create association between tags
+      description: |
+        Create an association between two tags.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - associated_tag_id
+              properties:
+                associated_tag_id:
+                  type: string
+                  description: ID of tag to associate with
+      responses:
+        '201':
+          description: Tag association created
+        '400':
+          description: Invalid association data
+        '401':
+          description: Not authenticated
+        '404':
+          description: Tag not found
+
+    delete:
+      summary: Remove association between tags
+      description: |
+        Remove an association between two tags.
+        The `tagId` parameter accepts both tag name (preferred) and tag ID.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag name (preferred) or tag ID
+          example: "Anime"
+        - name: associated_tag_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Tag association removed
+        '401':
+          description: Not authenticated
+        '404':
+          description: Tag or association not found
+
+  /support/tags:
+    post:
+      summary: Get content support for tag editing
+      description: |
+        Retrieve supporting content for a tag based on the tag name and support type.
+        The content is returned in Markdown format with relevant hashtags.
+        
+        This endpoint can be used when creating new tags or editing existing tags,
+        as it only requires the tag name, not an existing tag ID.
+        
+        Currently supported types:
+        - `wikipedia_summary`: Fetches a summary from Wikipedia
+        
+        The response includes Markdown-formatted content where relevant terms are converted to hashtags.
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tag_name
+                - support_type
+              properties:
+                tag_name:
+                  type: string
+                  description: Name of the tag to get support for
+                  example: アニメ
+                support_type:
+                  type: string
+                  enum: [wikipedia_summary]
+                  description: Type of support content to retrieve
+                  example: wikipedia_summary
+      responses:
+        '200':
+          description: Support content retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - content
+                  - support_type
+                properties:
+                  content:
+                    type: string
+                    description: Markdown-formatted content with hashtags
+                    example: "アニメ（#anime）は日本の文化を代表するメディアです。#manga や #gaming とともに広く親しまれています。"
+                  support_type:
+                    type: string
+                    description: The type of support that was used
+                    example: wikipedia_summary
+        '400':
+          description: Invalid support type or request
+        '401':
+          description: Not authenticated
+        '404':
+          description: No content available for the specified tag name
+        '500':
+          description: External service error or server error
+
+  /logs:
+    get:
+      summary: List public logs
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search logs by title or content (case-insensitive partial match)
+        - name: tag_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+            description: Filter by associated tag IDs
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of public logs
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - total
+                  - limit
+                  - offset
+                  - has_more
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Log'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  has_more:
+                    type: boolean
+
+    post:
+      summary: Create new log
+      description: |
+        Create a new log entry. Hashtags in the content (#{tagName} or #tagName format) 
+        will be automatically extracted and associated with the log as tags.
+        Supports both explicit tag specification and automatic hashtag extraction.
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogCreate'
+      responses:
+        '201':
+          description: Log created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
+        '400':
+          description: Invalid log data
+        '401':
+          description: Not authenticated
+
+  /logs/{logId}:
+    get:
+      summary: Get log details
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Log details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogDetail'
+        '404':
+          description: Log not found
+
+    put:
+      summary: Update log
+      description: |
+        Update an existing log entry. When content_md is updated, hashtags in the content 
+        (#{tagName} or #tagName format) will be automatically extracted and associated with the log as tags.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogUpdate'
+      responses:
+        '200':
+          description: Log updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not log owner
+        '404':
+          description: Log not found
+
+    delete:
+      summary: Delete log
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Log deleted
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not log owner
+        '404':
+          description: Log not found
+
+  /logs/{logId}/related:
+    get:
+      summary: Get related logs
+      description: |
+        Get logs that are related to the specified log.
+        Relation is determined by shared tags - logs with more common tags are ranked higher.
+        Only public logs are returned, excluding the specified log itself.
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 20
+      responses:
+        '200':
+          description: List of related logs
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - total
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Log'
+                  total:
+                    type: integer
+        '404':
+          description: Log not found
+
+  /logs/{logId}/share:
+    post:
+      summary: Share log to Twitter
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully shared to Twitter
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - twitter_post_id
+                properties:
+                  twitter_post_id:
+                    type: string
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not log owner
+        '404':
+          description: Log not found
+
+  /logs/{logId}/images:
+    post:
+      summary: Upload image to log
+      description: Upload an image file and attach it to a log
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (JPEG, PNG, GIF, WebP). Max size 10MB.
+                width:
+                  type: integer
+                  description: Image width in pixels
+                height:
+                  type: integer
+                  description: Image height in pixels
+                display_order:
+                  type: integer
+                  description: Display order for the image (lower numbers appear first)
+                  default: 0
+      responses:
+        '201':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogImage'
+        '400':
+          description: Invalid request (missing file, wrong format, file too large)
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not log owner
+        '404':
+          description: Log not found
+
+    get:
+      summary: Get all images for a log
+      description: Retrieve all images attached to a log
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of images
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LogImage'
+        '404':
+          description: Log not found
+
+  /logs/{logId}/images/{imageId}:
+    get:
+      summary: Get image data
+      description: Retrieve the actual image file
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image file
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Image not found
+
+    delete:
+      summary: Delete image
+      description: Delete an image attached to a log
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Image deleted successfully
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not log owner
+        '404':
+          description: Image not found
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  schemas:
+    User:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - twitter_username
+        - display_name
+        - avatar_url
+        - role
+        - created_at
+      properties:
+        id:
+          type: string
+        twitter_username:
+          type: string
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          nullable: true
+          description: User's avatar URL. null when user has no avatar set.
+        role:
+          type: string
+          enum: [user, admin]
+          description: User role for privilege management. 'admin' users can delete any tags.
+          default: user
+        created_at:
+          type: string
+          format: date-time
+
+    Tag:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - description
+        - metadata
+        - created_by
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+          description: Optional description for the tag. null when not provided by user.
+        metadata:
+          type: object
+          description: Flexible metadata storage
+        created_by:
+          type: string
+          description: User ID who created this tag
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TagCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          description: |
+            Optional description for the tag. Supports hashtag patterns in two formats:
+            - #{tagName} - Extended format (supports spaces and special characters)
+            - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+            
+            When hashtag patterns are found, the system will automatically:
+            1. Look for existing tags with matching names
+            2. Create new tags if they don't exist (with empty description and metadata)
+            3. Create associations between this tag and the referenced tags
+        metadata:
+          type: object
+
+    TagUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          description: |
+            Optional description for the tag. Supports hashtag patterns in two formats:
+            - #{tagName} - Extended format (supports spaces and special characters)
+            - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+            
+            When hashtag patterns are found, the system will automatically:
+            1. Look for existing tags with matching names
+            2. Create new tags if they don't exist (with empty description and metadata)
+            3. Create associations between this tag and the referenced tags
+        metadata:
+          type: object
+
+    TagDetail:
+      allOf:
+        - $ref: '#/components/schemas/Tag'
+        - type: object
+          required:
+            - log_count
+            - recent_logs
+            - associated_tags
+          properties:
+            log_count:
+              type: integer
+            recent_logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/Log'
+            associated_tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+              description: Tags associated with this tag
+
+    Log:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - user
+        - associated_tags
+        - title
+        - content_md
+        - is_public
+        - images
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        associated_tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Tags associated with this log
+        title:
+          type: string
+          nullable: true
+          description: Optional title for the log. null when not provided by user.
+        content_md:
+          type: string
+          description: Content in Markdown format
+        is_public:
+          type: boolean
+          description: Whether this log is publicly visible
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogImage'
+          description: Images attached to this log
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    LogCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - content_md
+      properties:
+        tag_ids:
+          type: array
+          items:
+            type: string
+          description: IDs of existing tags to associate with this log
+        tag_names:
+          type: array
+          items:
+            type: string
+          description: Names of tags to associate with this log (will create new tags if they don't exist)
+        title:
+          type: string
+          maxLength: 200
+        content_md:
+          type: string
+          maxLength: 10000
+          description: |
+            Markdown content of the log. Hashtags in the format #{tagName} or #tagName 
+            will be automatically extracted and associated with the log as tags.
+        is_public:
+          type: boolean
+          default: true
+          description: Whether the log is publicly visible. Defaults to true (public) when not specified.
+
+    LogUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        tag_ids:
+          type: array
+          items:
+            type: string
+          description: Update the tags associated with this log using existing tag IDs
+        tag_names:
+          type: array
+          items:
+            type: string
+          description: Update the tags associated with this log using tag names (will create new tags if they don't exist)
+        title:
+          type: string
+          maxLength: 200
+        content_md:
+          type: string
+          maxLength: 10000
+          description: |
+            Markdown content of the log. Hashtags in the format #{tagName} or #tagName 
+            will be automatically extracted and associated with the log as tags when content is updated.
+        is_public:
+          type: boolean
+
+    LogDetail:
+      allOf:
+        - $ref: '#/components/schemas/Log'
+        - type: object
+          description: Detailed log information (same as Log schema)
+
+    LogImage:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - log_id
+        - r2_key
+        - file_name
+        - content_type
+        - file_size
+        - width
+        - height
+        - display_order
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique image identifier
+        log_id:
+          type: string
+          description: ID of the log this image is attached to
+        r2_key:
+          type: string
+          description: R2 storage key for the image
+        file_name:
+          type: string
+          description: Original filename
+        content_type:
+          type: string
+          description: MIME type of the image
+          example: image/jpeg
+        file_size:
+          type: integer
+          description: File size in bytes
+        width:
+          type: integer
+          nullable: true
+          description: Image width in pixels. null when dimension information is not available.
+        height:
+          type: integer
+          nullable: true
+          description: Image height in pixels. null when dimension information is not available.
+        display_order:
+          type: integer
+          description: Display order (lower numbers appear first)
+        created_at:
+          type: string
+          format: date-time
+          description: When the image was uploaded

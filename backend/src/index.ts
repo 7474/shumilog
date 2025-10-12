@@ -1,4 +1,4 @@
-import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import type { D1Database, KVNamespace, R2Bucket } from '@cloudflare/workers-types';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
@@ -9,20 +9,27 @@ import { TagService } from './services/TagService.js';
 import { LogService } from './services/LogService.js';
 import { SessionService } from './services/SessionService.js';
 import { TwitterService } from './services/TwitterService.js';
+import { AiService, type AiBinding } from './services/AiService.js';
+import { ImageService } from './services/ImageService.js';
 
 import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
 import { securityHeaders, requestLogger, rateLimiter } from './middleware/security.js';
+import { cacheApi, cacheControl } from './middleware/cache.js';
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
+import imageRoutes from './routes/images.js';
 import healthRoutes from './routes/health.js';
 import devRoutes from './routes/dev.js';
+import supportRoutes from './routes/support.js';
 
 export interface RuntimeEnv {
   DB?: D1Database;
   SESSIONS?: KVNamespace;
+  AI?: AiBinding;
+  IMAGES?: R2Bucket;
   DATABASE_URL?: string;
   DB_PATH?: string;
   NODE_ENV?: string;
@@ -44,7 +51,7 @@ interface RuntimeConfig {
   appLoginUrl: string;
 }
 
-type AppBindings = {
+export type AppBindings = {
   Bindings: RuntimeEnv;
   Variables: {
     database: Database;
@@ -53,7 +60,21 @@ type AppBindings = {
     tagService: TagService;
     logService: LogService;
     twitterService: TwitterService;
+    imageService: ImageService;
+    aiService?: AiService;
     config: RuntimeConfig;
+    auth?: {
+      user: {
+        id: string;
+        twitter_username: string;
+        display_name: string;
+        avatar_url?: string;
+        role: 'user' | 'admin';
+        created_at: string;
+      };
+      sessionId: string;
+    };
+    hasPrivateData?: boolean;
   };
 };
 
@@ -88,7 +109,18 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
   app.route('/auth', authRoutes);
   app.route('/users', userRoutes);
 
+  // Apply authentication middleware to tags routes  
+  // Note: Hono's middleware matching:
+  // - `/tags` matches exactly /tags
+  // - `/tags/*` matches /tags/anything and /tags/anything/more (greedy wildcard)
+  // We need to handle both POST /tags and PUT/DELETE /tags/:id and POST/DELETE /tags/:id/associations
   app.use('/tags', async (c, next) => {
+    if (['POST'].includes(c.req.method)) {
+      return requireAuth(c, next);
+    }
+    return next();
+  });
+  app.use('/tags/*', async (c, next) => {
     if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
       return requireAuth(c, next);
     }
@@ -96,13 +128,27 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
   });
   app.route('/tags', tagRoutes);
 
+  // Apply authentication middleware to logs routes
+  // Similar pattern: handle both base path and all sub-paths
   app.use('/logs', async (c, next) => {
+    if (c.req.method === 'POST') {
+      return requireAuth(c, next);
+    }
+    return optionalAuth(c, next);
+  });
+  app.use('/logs/*', async (c, next) => {
     if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
       return requireAuth(c, next);
     }
     return optionalAuth(c, next);
   });
+  // Register image routes first (more specific paths should be registered before general ones)
+  app.route('/logs', imageRoutes);
   app.route('/logs', logRoutes);
+
+  // Support routes require authentication for all methods
+  app.use('/support/*', requireAuth);
+  app.route('/support', supportRoutes);
 }
 
 export function createApp(env: RuntimeEnv = {}) {
@@ -114,6 +160,10 @@ export function createApp(env: RuntimeEnv = {}) {
   const userService = new UserService(database);
   const tagService = new TagService(database);
   const logService = new LogService(database);
+  const imageService = new ImageService(database, env.IMAGES || null);
+
+  // AiServiceを初期化（AIバインディングがある場合のみ）
+  const aiService = env.AI ? new AiService(env.AI) : undefined;
 
   const appBaseUrl = env.APP_BASE_URL ?? process.env.APP_BASE_URL ?? 'http://localhost:5173';
   const runtimeConfig: RuntimeConfig = {
@@ -162,6 +212,8 @@ export function createApp(env: RuntimeEnv = {}) {
   app.use('*', securityHeaders());
   app.use('*', requestLogger());
   app.use('*', rateLimiter(RATE_WINDOW_MS, MAX_RATE_REQUESTS));
+  app.use('*', cacheApi());
+  app.use('*', cacheControl());
 
   app.use('*', async (c, next) => {
     c.set('database', database);
@@ -170,6 +222,10 @@ export function createApp(env: RuntimeEnv = {}) {
     c.set('tagService', tagService);
     c.set('logService', logService);
     c.set('twitterService', twitterService);
+    c.set('imageService', imageService);
+    if (aiService) {
+      c.set('aiService', aiService);
+    }
     c.set('config', runtimeConfig);
     await next();
   });
@@ -177,8 +233,10 @@ export function createApp(env: RuntimeEnv = {}) {
   app.route('/health', healthRoutes);
   app.route('/dev', devRoutes);
 
-  registerApiRoutes(app, sessionService, userService);
   registerApiRoutes(app.basePath('/api'), sessionService, userService);
+  
+  // Also register API routes at root level for backward compatibility with tests
+  registerApiRoutes(app, sessionService, userService);
 
   app.onError((err, c) => {
     console.error('Unhandled error:', err);
@@ -195,34 +253,7 @@ export function createApp(env: RuntimeEnv = {}) {
   return app;
 }
 
-export async function initializeDatabase(database: Database): Promise<void> {
-  try {
-    await database.connect();
-    const migrationCheck = await database.query(
-      'SELECT name FROM sqlite_master WHERE type="table" AND name="schema_migrations"',
-    );
-
-    if (migrationCheck.length === 0) {
-      await runDatabaseMigrations(database);
-    }
-  } catch (error) {
-    console.error('Database initialization failed:', error);
-    throw error;
-  }
-}
-
-async function runDatabaseMigrations(database: Database): Promise<void> {
-  const { DATABASE_SCHEMAS } = await import('./db/schema.sql.js');
-  const { seedDatabase, isDatabaseSeeded } = await import('./db/seeds.sql.js');
-
-  for (const schema of DATABASE_SCHEMAS) {
-    await database.exec(schema);
-  }
-
-  if (!(await isDatabaseSeeded(database))) {
-    await seedDatabase(database);
-  }
-}
+export type AppType = ReturnType<typeof createApp>;
 
 let cachedApp: Hono<AppBindings> | null = null;
 

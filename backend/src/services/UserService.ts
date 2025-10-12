@@ -12,8 +12,8 @@ export class UserService {
     const userId = crypto.randomUUID();
     
     const stmt = this.db.prepare(`
-      INSERT INTO users (id, twitter_username, display_name, avatar_url, created_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO users (id, twitter_username, display_name, avatar_url, role, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
     
     await stmt.run([
@@ -21,6 +21,7 @@ export class UserService {
       data.twitter_username || null,
       data.display_name,
       data.avatar_url || null,
+      'user', // Default role
       now
     ]);
 
@@ -29,6 +30,7 @@ export class UserService {
       twitter_username: data.twitter_username,
       display_name: data.display_name,
       avatar_url: data.avatar_url,
+      role: 'user',
       created_at: now
     };
   }
@@ -38,7 +40,7 @@ export class UserService {
    */
   async findById(id: string): Promise<User | null> {
     const row = await this.db.queryFirst(
-      'SELECT id, twitter_username, display_name, avatar_url, created_at FROM users WHERE id = ?',
+      'SELECT id, twitter_username, display_name, avatar_url, role, created_at FROM users WHERE id = ?',
       [id]
     );
     
@@ -57,7 +59,7 @@ export class UserService {
    */
   async findByTwitterUsername(username: string): Promise<User | null> {
     const row = await this.db.queryFirst(
-      'SELECT id, twitter_username, display_name, avatar_url, created_at FROM users WHERE twitter_username = ?',
+      'SELECT id, twitter_username, display_name, avatar_url, role, created_at FROM users WHERE twitter_username = ?',
       [username]
     );
     
@@ -85,8 +87,6 @@ export class UserService {
       throw new Error('No fields to update');
     }
     
-    updates.push('updated_at = ?');
-    params.push(new Date().toISOString());
     params.push(userId);
     
     const stmt = this.db.prepare(`
@@ -170,5 +170,12 @@ export class UserService {
       totalTags: tagsResult?.count || 0,
       recentLogsCount: recentResult?.count || 0
     };
+  }
+
+  /**
+   * Check if user has admin privileges
+   */
+  isAdmin(user: User): boolean {
+    return user.role === 'admin';
   }
 }

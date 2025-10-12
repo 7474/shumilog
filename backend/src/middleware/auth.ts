@@ -10,6 +10,7 @@ export interface AuthContext {
     twitter_username: string;
     display_name: string;
     avatar_url?: string;
+    role: 'user' | 'admin';
     created_at: string;
   };
   sessionId: string;
@@ -20,7 +21,7 @@ const SESSION_COOKIE_NAME = 'session';
 const buildSessionCookieOptions = (_c: Context, maxAgeSeconds: number) => ({
   httpOnly: true,
   secure: true,
-  sameSite: 'Lax' as const,
+  sameSite: 'None' as const,
   path: '/',
   maxAge: maxAgeSeconds
 });

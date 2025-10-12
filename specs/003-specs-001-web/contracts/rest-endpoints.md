@@ -1,6 +1,6 @@
 # Contract Snapshot: Hobby Content Log API
 
-Source of truth: [`specs/001-web-x-twitter/contracts/api.yaml`](../001-web-x-twitter/contracts/api.yaml)
+Source of truth: [`/api/v1/openapi.yaml`](../../api/v1/openapi.yaml) (canonical API specification)
 
 ## Authentication
 | Endpoint | Method | Description | Success | Failure |
@@ -34,6 +34,7 @@ Source of truth: [`specs/001-web-x-twitter/contracts/api.yaml`](../001-web-x-twi
 | `/logs/{logId}` | GET | Log detail | 200 `LogDetail` | 404 missing |
 | `/logs/{logId}` | PUT | Update log | 200 `Log` | 401 unauth · 403 forbidden · 404 missing |
 | `/logs/{logId}` | DELETE | Remove log | 204 empty | 401 unauth · 403 forbidden · 404 missing |
+| `/logs/{logId}/related` | GET | Related logs (filter by `limit`) | 200 `{ items, total }` | 404 missing log |
 | `/logs/{logId}/share` | POST | Share log to Twitter | 200 `{ twitter_post_id }` | 401 unauth · 403 forbidden · 404 missing |
 
 ## Contract Testing Notes

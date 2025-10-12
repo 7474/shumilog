@@ -9,13 +9,13 @@ import { clearSessionCookie, setSessionCookie } from '../middleware/auth.js';
 const auth = new Hono();
 
 const OAUTH_STATE_COOKIE = 'oauth_state';
+const OAUTH_VERIFIER_COOKIE = 'oauth_verifier';
 
 type RuntimeConfig = {
   nodeEnv: string;
   twitterClientId: string;
   twitterRedirectUri: string;
-  oauthSuccessRedirect: string;
-  oauthFailureRedirect: string;
+  appBaseUrl: string;
 };
 
 const resolveSessionService = (c: any): SessionService => {
@@ -71,6 +71,13 @@ const clearOAuthStateCookie = (c: any) => {
     path: '/',
     maxAge: 0
   });
+  setCookie(c, OAUTH_VERIFIER_COOKIE, '', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+    path: '/',
+    maxAge: 0
+  });
 };
 
 // GET /auth/twitter - Initiate Twitter OAuth flow
@@ -89,7 +96,7 @@ auth.get('/twitter', async (c) => {
   }
 
   try {
-    const { authUrl, state } = await twitterService.getAuthUrl(redirectUri);
+    const { authUrl, state, codeVerifier } = await twitterService.getAuthUrl(redirectUri);
     const parsedUrl = new URL(authUrl);
 
     if (config.twitterClientId) {
@@ -97,6 +104,14 @@ auth.get('/twitter', async (c) => {
     }
 
     setCookie(c, OAUTH_STATE_COOKIE, state, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      path: '/',
+      maxAge: 60 * 5 // 5 minutes
+    });
+
+    setCookie(c, OAUTH_VERIFIER_COOKIE, codeVerifier, {
       httpOnly: true,
       secure: true,
       sameSite: 'Lax',
@@ -130,16 +145,28 @@ auth.get('/callback', async (c) => {
   }
 
   const stateCookie = getCookie(c, OAUTH_STATE_COOKIE);
+  const verifierCookie = getCookie(c, OAUTH_VERIFIER_COOKIE);
   const isOfflineMode = config.nodeEnv !== 'production';
 
-  if (stateCookie && stateCookie !== state) {
-    clearOAuthStateCookie(c);
-    throw new HTTPException(401, { message: 'Invalid OAuth state' });
-  }
-
-  if (!isOfflineMode && !twitterService.verifyState(state)) {
-    clearOAuthStateCookie(c);
-    throw new HTTPException(401, { message: 'Invalid OAuth state' });
+  // State verification strategy:
+  // - Production: Use cookie-based state verification only (CSRF protection)
+  //   Cookie is HttpOnly, Secure, and sufficient for security
+  //   Avoids relying on in-memory state which is unreliable in Cloudflare Workers
+  //   (different Worker instances may handle OAuth init vs callback)
+  // - Offline/Test: Skip cookie validation for testing convenience
+  if (!isOfflineMode) {
+    if (!stateCookie) {
+      clearOAuthStateCookie(c);
+      throw new HTTPException(401, { message: 'Invalid OAuth state' });
+    }
+    if (stateCookie !== state) {
+      clearOAuthStateCookie(c);
+      throw new HTTPException(401, { message: 'Invalid OAuth state' });
+    }
+    if (!verifierCookie) {
+      clearOAuthStateCookie(c);
+      throw new HTTPException(401, { message: 'Invalid OAuth state' });
+    }
   }
 
   try {
@@ -152,7 +179,8 @@ auth.get('/callback', async (c) => {
 
       profile = buildMockProfile(state);
     } else {
-      const tokens = await twitterService.exchangeCodeForTokens(code, config.twitterRedirectUri, state);
+      // In production, use codeVerifier from cookie
+      const tokens = await twitterService.exchangeCodeForTokens(code, config.twitterRedirectUri, state, verifierCookie);
       profile = await twitterService.getUserProfile(tokens.accessToken);
     }
 
@@ -167,7 +195,7 @@ auth.get('/callback', async (c) => {
     clearOAuthStateCookie(c);
     setSessionCookie(c, sessionToken);
 
-    return c.redirect(config.oauthSuccessRedirect || '/', 302);
+    return c.redirect(config.appBaseUrl || '/', 302);
   } catch (error) {
     clearOAuthStateCookie(c);
 

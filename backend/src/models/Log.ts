@@ -2,6 +2,8 @@
  * Log model aligned with minimal data model blueprint
  */
 
+import type { LogImage } from './Image.js';
+
 export interface User {
   id: string;
   twitter_username?: string;
@@ -30,12 +32,14 @@ export interface Log {
   is_public: boolean;
   created_at: string;
   updated_at: string;
+  images?: LogImage[];
 }
 
 export interface LogDetail extends Log {}
 
 export interface CreateLogData {
-  tag_ids: string[];
+  tag_ids?: string[];
+  tag_names?: string[];
   title?: string;
   content_md: string;
   is_public?: boolean;
@@ -43,6 +47,7 @@ export interface CreateLogData {
 
 export interface UpdateLogData {
   tag_ids?: string[];
+  tag_names?: string[];
   title?: string;
   content_md?: string;
   is_public?: boolean;
@@ -52,6 +57,7 @@ export interface LogSearchParams {
   tag_ids?: string[];
   user_id?: string;
   is_public?: boolean;
+  search?: string;
   limit?: number;
   offset?: number;
 }
@@ -74,7 +80,8 @@ export const LOG_TABLE_SCHEMA = `
   );
   
   CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
-  CREATE INDEX IF NOT EXISTS idx_logs_is_public ON logs(is_public);
+  CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_logs_user_created ON logs(user_id, created_at DESC);
 `;
 
 export class LogModel {
@@ -86,7 +93,7 @@ export class LogModel {
     return content.length > 0 && content.length <= 10000;
   }
 
-  static fromRow(row: any, user: User, tags: Tag[]): Log {
+  static fromRow(row: any, user: User, tags: Tag[], images?: LogImage[]): Log {
     return {
       id: row.id,
       user_id: row.user_id,
@@ -96,11 +103,12 @@ export class LogModel {
       content_md: row.content_md,
       is_public: Boolean(row.is_public),
       created_at: row.created_at,
-      updated_at: row.updated_at
+      updated_at: row.updated_at,
+      images: images || [],
     };
   }
 
-  static fromRowWithVisibility(row: any, user: User, tags: Tag[]): LogDetail {
-    return LogModel.fromRow(row, user, tags);
+  static fromRowWithVisibility(row: any, user: User, tags: Tag[], images?: LogImage[]): LogDetail {
+    return LogModel.fromRow(row, user, tags, images);
   }
 }

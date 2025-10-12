@@ -1,10 +1,54 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { TagService, TagUsageStats } from '../../src/services/TagService.js';
+import { TagService } from '../../src/services/TagService.js';
 import { Database } from '../../src/db/database.js';
 import { clearTestData, getTestD1Database, createTestUser } from '../helpers/app.js';
-import { Tag, CreateTagData, UpdateTagData, TagSearchParams } from '../../src/models/Tag.js';
+import { CreateTagData, UpdateTagData } from '../../src/models/Tag.js';
 
 describe('TagService', () => {
+  describe('getTagSupportByName', () => {
+    it('should return Wikipedia summary for support_type=wikipedia_summary', async () => {
+      // Wikipedia APIをモック
+      global.fetch = async (url: any) => {
+        if (typeof url === 'string' && url.includes('wikipedia.org')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              extract: 'テストの概要',
+              content_urls: { desktop: { page: 'https://ja.wikipedia.org/wiki/テスト' } }
+            })
+          } as any;
+        }
+        throw new Error('Unexpected fetch call');
+      };
+      const result = await tagService.getTagSupportByName('テスト', 'wikipedia_summary');
+      expect(result.content).toContain('テストの概要');
+      expect(result.content).toContain('Wikipedia');
+      expect(result.support_type).toBe('wikipedia_summary');
+    });
+
+    it('should return AI enhanced summary for support_type=ai_enhanced', async () => {
+      // AiServiceのモック
+      const mockAiService = {
+        generateTagContentFromName: async (tagName: string) => ({
+          content: `AI生成: ${tagName}`
+        })
+      };
+      tagService.setAiService(mockAiService as any);
+      const result = await tagService.getTagSupportByName('AIタグ', 'ai_enhanced');
+      expect(result.content).toContain('AI生成: AIタグ');
+      expect(result.support_type).toBe('ai_enhanced');
+    });
+
+    it('should throw error if AI service not set for ai_enhanced', async () => {
+      tagService.setAiService(undefined as any);
+      await expect(tagService.getTagSupportByName('AIタグ', 'ai_enhanced')).rejects.toThrow('AI service not available');
+    });
+
+    it('should throw error for invalid support_type', async () => {
+      await expect(tagService.getTagSupportByName('タグ', 'invalid_type')).rejects.toThrow('Unsupported support type');
+    });
+  });
   let tagService: TagService;
   let mockDatabase: Database;
 
@@ -237,6 +281,83 @@ describe('TagService', () => {
 
       expect(result.items).toHaveLength(0);
     });
+
+    it('should be case insensitive', async () => {
+      const result1 = await tagService.searchTags({ search: 'anime' });
+      const result2 = await tagService.searchTags({ search: 'ANIME' });
+      const result3 = await tagService.searchTags({ search: 'Anime' });
+
+      expect(result1.items.length).toBeGreaterThan(0);
+      expect(result1.items.length).toBe(result2.items.length);
+      expect(result1.items.length).toBe(result3.items.length);
+      expect(result1.items.map(t => t.id).sort()).toEqual(result2.items.map(t => t.id).sort());
+      expect(result1.items.map(t => t.id).sort()).toEqual(result3.items.map(t => t.id).sort());
+    });
+
+    it('should support 1-character search using LIKE fallback', async () => {
+      // Single character search should work with LIKE fallback
+      const result = await tagService.searchTags({ search: 'A' });
+
+      // Should find tags containing 'A' (Anime, Attack on Titan, Manga, etc.)
+      expect(result.items.length).toBeGreaterThan(0);
+      expect(result.items.some(tag => tag.name.toLowerCase().includes('a'))).toBe(true);
+    });
+
+    it('should support 2-character search using LIKE fallback', async () => {
+      // Two character search should work with LIKE fallback
+      const result = await tagService.searchTags({ search: 'an' });
+
+      // Should find tags containing 'an' (Anime, Manga, etc.)
+      expect(result.items.length).toBeGreaterThan(0);
+      expect(result.items.some(tag => 
+        tag.name.toLowerCase().includes('an') || 
+        tag.description?.toLowerCase().includes('an')
+      )).toBe(true);
+    });
+
+    it('should return tags ordered by updated_at DESC (newest first)', async () => {
+      // Clear and create tags with delays to ensure different timestamps
+      await clearTestData();
+      await createTestUser('user-1', 'tag-user-1');
+      
+      const tag1 = await tagService.createTag({ name: 'First Tag' }, 'user-1');
+      
+      // Small delay to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      const tag2 = await tagService.createTag({ name: 'Second Tag' }, 'user-1');
+      
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      const tag3 = await tagService.createTag({ name: 'Third Tag' }, 'user-1');
+
+      const result = await tagService.searchTags();
+
+      // Should be ordered by updated_at DESC (newest first)
+      expect(result.items).toHaveLength(3);
+      expect(result.items[0].id).toBe(tag3.id); // Most recent
+      expect(result.items[1].id).toBe(tag2.id);
+      expect(result.items[2].id).toBe(tag1.id); // Oldest
+    });
+
+    it('should maintain updated_at DESC order when searching', async () => {
+      // Clear and create tags with delays
+      await clearTestData();
+      await createTestUser('user-1', 'tag-user-1');
+      
+      await tagService.createTag({ name: 'Anime First', description: 'anime content' }, 'user-1');
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const tag2 = await tagService.createTag({ name: 'Anime Second', description: 'more anime' }, 'user-1');
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const tag3 = await tagService.createTag({ name: 'Anime Third', description: 'latest anime' }, 'user-1');
+
+      const result = await tagService.searchTags({ search: 'anime' });
+
+      // Should be ordered by updated_at DESC even when searching
+      expect(result.items.length).toBeGreaterThanOrEqual(2);
+      expect(result.items[0].id).toBe(tag3.id); // Most recent matching tag
+      expect(result.items[1].id).toBe(tag2.id);
+    });
   });
 
   describe('getTagUsageStats', () => {
@@ -354,6 +475,39 @@ describe('TagService', () => {
 
       expect(result).toEqual([]);
     });
+
+    it('should be case insensitive', async () => {
+      const result1 = await tagService.getTagSuggestions('anime');
+      const result2 = await tagService.getTagSuggestions('ANIME');
+      const result3 = await tagService.getTagSuggestions('Anime');
+
+      expect(result1.length).toBeGreaterThan(0);
+      expect(result1.length).toBe(result2.length);
+      expect(result1.length).toBe(result3.length);
+      expect(result1.map(t => t.id).sort()).toEqual(result2.map(t => t.id).sort());
+      expect(result1.map(t => t.id).sort()).toEqual(result3.map(t => t.id).sort());
+    });
+
+    it('should support 1-character search using LIKE fallback', async () => {
+      // Single character search should work with LIKE fallback
+      const result = await tagService.getTagSuggestions('A');
+
+      // Should find tags containing 'A' (Anime, Animation, etc.)
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.some(tag => tag.name.toLowerCase().includes('a'))).toBe(true);
+    });
+
+    it('should support 2-character search using LIKE fallback', async () => {
+      // Two character search should work with LIKE fallback
+      const result = await tagService.getTagSuggestions('an');
+
+      // Should find tags containing 'an' (Anime, Animation, etc.)
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.some(tag => 
+        tag.name.toLowerCase().includes('an') || 
+        tag.description?.toLowerCase().includes('an')
+      )).toBe(true);
+    });
   });
 
   describe('deleteTag', () => {
@@ -376,6 +530,94 @@ describe('TagService', () => {
     it('should handle deleting non-existent tag', async () => {
       // Should not throw error
       await expect(tagService.deleteTag('non-existent-id')).resolves.not.toThrow();
+    });
+  });
+
+  describe('getRecentReferringTags', () => {
+    it('should return tags that reference the target tag', async () => {
+      // Create target tag
+      const targetTag = await tagService.createTag({ name: 'Target Tag' }, 'user-1');
+      
+      // Create referring tags with associations
+      const referringTag1 = await tagService.createTag({ 
+        name: 'Referring Tag 1',
+        description: `This references ${targetTag.name}`
+      }, 'user-1');
+      await tagService.createTagAssociation(referringTag1.id, targetTag.id);
+      
+      const referringTag2 = await tagService.createTag({ 
+        name: 'Referring Tag 2',
+        description: `Also references ${targetTag.name}`
+      }, 'user-2');
+      await tagService.createTagAssociation(referringTag2.id, targetTag.id);
+
+      const result = await tagService.getRecentReferringTags(targetTag.id);
+
+      expect(result).toBeInstanceOf(Array);
+      expect(result.length).toBe(2);
+      expect(result.some(tag => tag.id === referringTag1.id)).toBe(true);
+      expect(result.some(tag => tag.id === referringTag2.id)).toBe(true);
+    });
+
+    it('should return empty array when no tags reference the target', async () => {
+      const tag = await tagService.createTag({ name: 'Lonely Tag' }, 'user-1');
+
+      const result = await tagService.getRecentReferringTags(tag.id);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should sort results by association creation date (newest first)', async () => {
+      const targetTag = await tagService.createTag({ name: 'Popular Tag' }, 'user-1');
+      
+      // Create first reference
+      const oldTag = await tagService.createTag({ name: 'Old Ref' }, 'user-1');
+      await tagService.createTagAssociation(oldTag.id, targetTag.id);
+      
+      // Add small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      // Create second reference
+      const newTag = await tagService.createTag({ name: 'New Ref' }, 'user-2');
+      await tagService.createTagAssociation(newTag.id, targetTag.id);
+
+      const result = await tagService.getRecentReferringTags(targetTag.id);
+
+      expect(result.length).toBe(2);
+      // The newer reference should come first
+      expect(result[0].id).toBe(newTag.id);
+      expect(result[1].id).toBe(oldTag.id);
+    });
+
+    it('should respect limit parameter', async () => {
+      const targetTag = await tagService.createTag({ name: 'Target' }, 'user-1');
+      
+      // Create 5 referring tags
+      for (let i = 0; i < 5; i++) {
+        const refTag = await tagService.createTag({ name: `Ref ${i}` }, 'user-1');
+        await tagService.createTagAssociation(refTag.id, targetTag.id);
+      }
+
+      const result = await tagService.getRecentReferringTags(targetTag.id, 3);
+
+      expect(result.length).toBe(3);
+    });
+
+    it('should not include bidirectional references from getTagAssociations', async () => {
+      const tag1 = await tagService.createTag({ name: 'Tag 1' }, 'user-1');
+      const tag2 = await tagService.createTag({ name: 'Tag 2' }, 'user-1');
+      
+      // Create association: tag1 -> tag2
+      await tagService.createTagAssociation(tag1.id, tag2.id);
+
+      // getRecentReferringTags for tag2 should return tag1
+      const referringToTag2 = await tagService.getRecentReferringTags(tag2.id);
+      expect(referringToTag2.length).toBe(1);
+      expect(referringToTag2[0].id).toBe(tag1.id);
+
+      // getRecentReferringTags for tag1 should return empty (no one references tag1)
+      const referringToTag1 = await tagService.getRecentReferringTags(tag1.id);
+      expect(referringToTag1.length).toBe(0);
     });
   });
 });

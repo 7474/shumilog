@@ -1,7 +1,13 @@
 openapi: 3.0.3
 info:
   title: Hobby Content Log API
-  description: API for logging and sharing personal content logs
+  description: |
+    API for logging and sharing personal content logs
+    
+    **DEPRECATED**: This file has been moved to `/api/v1/openapi.yaml` as the canonical source.
+    Please use the canonical location for all future references and updates.
+    
+    This file is kept for historical reference only.
   version: 1.0.0
 servers:
   - url: https://shumilog.example.com/api

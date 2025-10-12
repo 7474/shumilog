@@ -1,62 +1,107 @@
-/**
- * In-memory caching service for performance optimization
- */
+interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+interface CacheStats {
+  size: number;
+  keys: string[];
+}
+
 export class CacheService {
-  private cache = new Map<string, { data: any; expiry: number }>();
-  
+  private cache: Map<string, CacheEntry<any>> = new Map();
+  private readonly defaultTTL = 5 * 60 * 1000; // 5 minutes
+
   /**
-   * Store data in cache with TTL
+   * Store a value in the cache with optional TTL
    */
-  set(key: string, data: any, ttlMs: number = 300000): void { // 5 minute default
-    // Handle zero or negative TTL by setting expiry to past time
-    const expiry = ttlMs <= 0 ? Date.now() - 1 : Date.now() + ttlMs;
+  set<T>(key: string, value: T, ttl?: number): void {
+    const resolvedTTL = ttl ?? this.defaultTTL;
+    
+    // If TTL is 0 or negative, don't store the value at all
+    if (resolvedTTL <= 0) {
+      return;
+    }
+    
+    const expiresAt = Date.now() + resolvedTTL;
     
     this.cache.set(key, {
-      data,
-      expiry
+      value,
+      expiresAt
     });
   }
-  
+
   /**
-   * Retrieve data from cache
+   * Retrieve a value from the cache
    */
-  get(key: string): any | null {
-    const item = this.cache.get(key);
-    if (!item) return null;
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
     
-    if (Date.now() > item.expiry) {
+    if (!entry) {
+      return null;
+    }
+
+    // Check if entry has expired
+    if (entry.expiresAt > 0 && Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;
     }
-    
-    return item.data;
+
+    return entry.value;
   }
-  
+
   /**
-   * Invalidate cache entries matching pattern
+   * Invalidate cache entries matching a pattern
    */
   invalidate(pattern: string): void {
+    const keysToDelete: string[] = [];
+    
     for (const key of this.cache.keys()) {
       if (key.includes(pattern)) {
-        this.cache.delete(key);
+        keysToDelete.push(key);
       }
     }
+
+    for (const key of keysToDelete) {
+      this.cache.delete(key);
+    }
   }
-  
+
   /**
    * Clear all cache entries
    */
   clear(): void {
     this.cache.clear();
   }
-  
+
   /**
    * Get cache statistics
    */
-  getStats(): { size: number; keys: string[] } {
+  getStats(): CacheStats {
+    // Clean up expired entries first
+    this.cleanupExpired();
+    
     return {
       size: this.cache.size,
       keys: Array.from(this.cache.keys())
     };
+  }
+
+  /**
+   * Clean up expired entries
+   */
+  private cleanupExpired(): void {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.expiresAt > 0 && now > entry.expiresAt) {
+        keysToDelete.push(key);
+      }
+    }
+
+    for (const key of keysToDelete) {
+      this.cache.delete(key);
+    }
   }
 }

@@ -1,0 +1,115 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/deploy.yml
+      - backend/migrations/**
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+
+      # Development環境のマイグレーション
+      - name: Get D1 bookmark before migration (development)
+        id: bookmark-dev
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            d1 time-travel info shumilog-db-devel
+            --env development --json
+          workingDirectory: backend
+
+      - name: Extract bookmark ID (development)
+        id: extract-bookmark-dev
+        run: |
+          BOOKMARK=$(echo '${{ steps.bookmark-dev.outputs.command-output }}' \
+            | jq -r '.result.bookmark // empty')
+          echo "bookmark=$BOOKMARK" >> $GITHUB_OUTPUT
+          echo "Development bookmark: $BOOKMARK"
+
+      - name: Run D1 Migrations development
+        id: migrate-dev
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            d1 migrations apply shumilog-db-devel
+            --env development --remote
+          workingDirectory: backend
+
+      - name: Rollback D1 migration on failure (development)
+        if: >-
+          failure() && steps.migrate-dev.outcome == 'failure' &&
+          steps.extract-bookmark-dev.outputs.bookmark != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            d1 time-travel restore shumilog-db-devel
+            --env development
+            --bookmark ${{ steps.extract-bookmark-dev.outputs.bookmark }}
+          workingDirectory: backend
+
+      # Production環境のマイグレーション
+      - name: Get D1 bookmark before migration (production)
+        id: bookmark-prod
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            d1 time-travel info shumilog-db
+            --env production --json
+          workingDirectory: backend
+
+      - name: Extract bookmark ID (production)
+        id: extract-bookmark-prod
+        run: |
+          BOOKMARK=$(echo '${{ steps.bookmark-prod.outputs.command-output }}' \
+            | jq -r '.result.bookmark // empty')
+          echo "bookmark=$BOOKMARK" >> $GITHUB_OUTPUT
+          echo "Production bookmark: $BOOKMARK"
+
+      - name: Run D1 Migrations production
+        id: migrate-prod
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            d1 migrations apply shumilog-db
+            --env production --remote
+          workingDirectory: backend
+
+      - name: Rollback D1 migration on failure (production)
+        if: >-
+          failure() && steps.migrate-prod.outcome == 'failure' &&
+          steps.extract-bookmark-prod.outputs.bookmark != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            d1 time-travel restore shumilog-db
+            --env production
+            --bookmark ${{ steps.extract-bookmark-prod.outputs.bookmark }}
+          workingDirectory: backend

@@ -6,11 +6,13 @@ export interface TagAssociation {
   tag_id: string;
   associated_tag_id: string;
   created_at: string;
+  association_order: number;
 }
 
 export interface CreateTagAssociationData {
   tag_id: string;
   associated_tag_id: string;
+  association_order?: number;
 }
 
 export const TAG_ASSOCIATION_TABLE_SCHEMA = `
@@ -18,6 +20,7 @@ export const TAG_ASSOCIATION_TABLE_SCHEMA = `
     tag_id TEXT NOT NULL,
     associated_tag_id TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    association_order INTEGER NOT NULL DEFAULT 0,
     
     PRIMARY KEY (tag_id, associated_tag_id),
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
@@ -38,7 +41,8 @@ export class TagAssociationModel {
     return {
       tag_id: row.tag_id,
       associated_tag_id: row.associated_tag_id,
-      created_at: row.created_at
+      created_at: row.created_at,
+      association_order: row.association_order || 0
     };
   }
 }

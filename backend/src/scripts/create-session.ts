@@ -1,0 +1,159 @@
+#!/usr/bin/env node
+/**
+ * セッション発行スクリプト
+ * 
+ * 開発時に特定のユーザーでログインした状態を作成するためのスクリプト
+ * サービス層を介してセッションを発行します。
+ * 
+ * 使用方法:
+ *   npm run dev:create-session <user_id>
+ *   npm run dev:create-session alice
+ *   npm run dev:create-session user_alice
+ */
+
+import { execSync } from 'child_process';
+import { writeFileSync, unlinkSync } from 'fs';
+import { SessionModel } from '../models/Session.js';
+
+// コマンドライン引数からユーザーIDを取得
+const args = process.argv.slice(2);
+const userInput = args[0];
+
+if (!userInput) {
+  console.error('エラー: ユーザーIDを指定してください');
+  console.error('');
+  console.error('使用方法:');
+  console.error('  npm run dev:create-session <user_id>');
+  console.error('');
+  console.error('例:');
+  console.error('  npm run dev:create-session alice');
+  console.error('  npm run dev:create-session user_alice');
+  console.error('');
+  console.error('シードデータのユーザー:');
+  console.error('  - alice (user_alice)');
+  console.error('  - bob (user_bob)');
+  console.error('  - carol (user_carol)');
+  console.error('  - dave (user_dave)');
+  process.exit(1);
+}
+
+// 短縮名を完全なユーザーIDに変換
+const userIdMap: Record<string, string> = {
+  'alice': 'user_alice',
+  'bob': 'user_bob',
+  'carol': 'user_carol',
+  'dave': 'user_dave',
+};
+
+const userId = userIdMap[userInput.toLowerCase()] || userInput;
+
+function createSession() {
+  console.log('セッション発行を開始します...');
+  console.log(`ユーザーID: ${userId}`);
+  console.log('');
+
+  try {
+    // ユーザーが存在するか確認
+    const checkUserSql = `SELECT id, twitter_username, display_name FROM users WHERE id = '${userId}';`;
+    const tempCheckFile = '/tmp/check-user.sql';
+    writeFileSync(tempCheckFile, checkUserSql);
+    
+    let userCheckResult: string;
+    try {
+      userCheckResult = execSync(
+        `NO_D1_WARNING=true wrangler d1 execute shumilog-db-dev --local --file ${tempCheckFile}`,
+        { encoding: 'utf8', stdio: 'pipe' }
+      );
+    } catch (_error: any) {
+      console.error('エラー: データベースへのアクセスに失敗しました');
+      console.error('');
+      console.error('以下を確認してください:');
+      console.error('1. マイグレーションが実行されているか: npm run db:migrate');
+      console.error('2. シードデータが投入されているか: npm run db:seed');
+      process.exit(1);
+    } finally {
+      unlinkSync(tempCheckFile);
+    }
+
+    // ユーザーが見つからない場合
+    if (!userCheckResult || userCheckResult.includes('Rows: 0') || !userCheckResult.includes(userId)) {
+      console.error(`エラー: ユーザーID "${userId}" が見つかりません`);
+      console.error('');
+      console.error('シードデータが投入されていない可能性があります。');
+      console.error('以下のコマンドを実行してシードデータを投入してください:');
+      console.error('  npm run db:seed');
+      console.error('');
+      console.error('利用可能なユーザー:');
+      console.error('  - alice (user_alice)');
+      console.error('  - bob (user_bob)');
+      console.error('  - carol (user_carol)');
+      console.error('  - dave (user_dave)');
+      process.exit(1);
+    }
+
+    // ユーザー情報を抽出（簡易パース）
+    const displayNameMatch = userCheckResult.match(/display_name[:\s|]+([^\n|]+)/);
+    const twitterUsernameMatch = userCheckResult.match(/twitter_username[:\s|]+([^\n|]+)/);
+    const displayName = displayNameMatch ? displayNameMatch[1].trim() : userId;
+    const twitterUsername = twitterUsernameMatch ? twitterUsernameMatch[1].trim() : 'unknown';
+
+    console.log(`✓ ユーザーを確認しました: ${displayName} (@${twitterUsername})`);
+    console.log('');
+
+    // セッショントークンを生成（SessionModelを使用してサービス層のロジックを再利用）
+    const sessionToken = SessionModel.generateToken();
+    const expiresAt = SessionModel.createExpiryDate(30); // 30日間有効
+    const now = new Date().toISOString();
+
+    // セッション挿入SQLを生成
+    const insertSessionSql = `
+INSERT INTO sessions (token, user_id, created_at, expires_at)
+VALUES ('${sessionToken}', '${userId}', '${now}', '${expiresAt}');
+`.trim();
+
+    const tempInsertFile = '/tmp/insert-session.sql';
+    writeFileSync(tempInsertFile, insertSessionSql);
+
+    // セッションを挿入
+    try {
+      execSync(
+        `NO_D1_WARNING=true wrangler d1 execute shumilog-db-dev --local --file ${tempInsertFile}`,
+        { encoding: 'utf8', stdio: 'pipe' }
+      );
+    } catch (error: any) {
+      console.error('エラー: セッションの挿入に失敗しました');
+      console.error(error.message);
+      process.exit(1);
+    } finally {
+      unlinkSync(tempInsertFile);
+    }
+
+    console.log('✓ セッションの発行に成功しました！');
+    console.log('');
+    console.log('==========================================');
+    console.log('セッショントークン:');
+    console.log(sessionToken);
+    console.log('==========================================');
+    console.log('');
+    console.log('このトークンを使用してAPIをテストできます:');
+    console.log('');
+    console.log('curlの例:');
+    console.log(`  curl -X GET http://localhost:8787/api/users/me \\`);
+    console.log(`    -H "Cookie: session=${sessionToken}"`);
+    console.log('');
+    console.log('または、ブラウザの開発者ツールでCookieを設定:');
+    console.log(`  名前: session`);
+    console.log(`  値: ${sessionToken}`);
+    console.log(`  ドメイン: localhost`);
+    console.log(`  パス: /`);
+    console.log('');
+    console.log('注意: このセッションは30日間有効です。');
+
+  } catch (error: any) {
+    console.error('エラー: セッションの発行に失敗しました');
+    console.error(error.message || error);
+    process.exit(1);
+  }
+}
+
+createSession();

@@ -6,6 +6,8 @@ import { SessionService } from '../services/SessionService.js';
 import { UserService } from '../services/UserService.js';
 import { Log } from '../models/Log.js';
 import { getAuthUser, getOptionalAuthUser, optionalAuthMiddleware } from '../middleware/auth.js';
+import { invalidateCache } from '../middleware/cache.js';
+import type { AppBindings } from '../index.js';
 
 const MAX_LIMIT = 100;
 
@@ -21,16 +23,37 @@ const sanitizeTagIds = (value: unknown): string[] => {
 
   return value
     .map((id) => {
-      if (typeof id !== 'string') {
-        throw new HTTPException(400, { message: 'tag_ids must contain only strings' });
-      }
-      const trimmed = id.trim();
+      // Accept both strings and numbers, convert to string
+      const stringId = typeof id === 'string' ? id : String(id);
+      const trimmed = stringId.trim();
       if (!trimmed) {
         throw new HTTPException(400, { message: 'tag_ids cannot contain empty values' });
       }
       return trimmed;
     })
     .filter((id, index, self) => self.indexOf(id) === index);
+};
+
+const sanitizeTagNames = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    throw new HTTPException(400, { message: 'tag_names must be an array of strings' });
+  }
+
+  return value
+    .map((name) => {
+      if (typeof name !== 'string') {
+        throw new HTTPException(400, { message: 'tag_names must contain only strings' });
+      }
+      const trimmed = name.trim();
+      if (!trimmed) {
+        throw new HTTPException(400, { message: 'tag_names cannot contain empty values' });
+      }
+      if (trimmed.length > 200) {
+        throw new HTTPException(400, { message: 'tag_names cannot be longer than 200 characters' });
+      }
+      return trimmed;
+    })
+    .filter((name, index, self) => self.indexOf(name) === index);
 };
 
 const optionalTagIds = (value: unknown): string[] | undefined => {
@@ -56,6 +79,32 @@ const optionalTagIds = (value: unknown): string[] | undefined => {
     .filter((id, index, self) => self.indexOf(id) === index);
 };
 
+const optionalTagNames = (value: unknown): string[] | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new HTTPException(400, { message: 'tag_names must be an array when provided' });
+  }
+
+  return value
+    .map((name) => {
+      if (typeof name !== 'string') {
+        throw new HTTPException(400, { message: 'tag_names must contain only strings' });
+      }
+      const trimmed = name.trim();
+      if (!trimmed) {
+        throw new HTTPException(400, { message: 'tag_names cannot contain empty values' });
+      }
+      if (trimmed.length > 200) {
+        throw new HTTPException(400, { message: 'tag_names cannot be longer than 200 characters' });
+      }
+      return trimmed;
+    })
+    .filter((name, index, self) => self.indexOf(name) === index);
+};
+
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   if (value === null || value === undefined) {
     return fallback;
@@ -67,33 +116,34 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
   return parsed;
 };
 
-const toLogResponse = (log: Log) => ({
+export const toLogResponse = (log: Log) => ({
   id: log.id,
   title: log.title ?? null,
   content_md: log.content_md,
   is_public: Boolean(log.is_public),
-  privacy: log.is_public ? 'public' : 'private',
   created_at: log.created_at,
   updated_at: log.updated_at,
-  author: {
+  user: {
     id: log.user.id,
-    twitter_username: log.user.twitter_username,
+    twitter_username: log.user.twitter_username ?? '',
     display_name: log.user.display_name,
-    avatar_url: log.user.avatar_url,
+    avatar_url: log.user.avatar_url ?? null,
+    role: 'user',
     created_at: log.user.created_at
   },
-  tags: log.associated_tags.map((tag) => ({
+  associated_tags: log.associated_tags.map((tag) => ({
     id: tag.id,
     name: tag.name,
-    description: tag.description,
+    description: tag.description ?? null,
     metadata: tag.metadata,
     created_by: tag.created_by,
     created_at: tag.created_at,
     updated_at: tag.updated_at
-  }))
+  })),
+  images: log.images || []
 });
 
-const logs = new Hono();
+const logs = new Hono<AppBindings>();
 
 logs.use('*', async (c, next) => {
   const sessionService = getSessionService(c);
@@ -136,6 +186,7 @@ logs.get('/', async (c) => {
     ? rawTagIds.split(',').map((id) => id.trim()).filter(Boolean)
     : [];
   const userId = c.req.query('user_id')?.trim() || undefined;
+  const search = c.req.query('search')?.trim() || undefined;
   const limit = parsePositiveInt(c.req.query('limit'), 20);
   const offset = parsePositiveInt(c.req.query('offset'), 0);
 
@@ -154,6 +205,7 @@ logs.get('/', async (c) => {
       tag_ids: tagIds.length > 0 ? tagIds : undefined,
       user_id: userId,
       is_public: true,
+      search,
       limit,
       offset,
     };
@@ -180,16 +232,17 @@ logs.post('/', async (c) => {
   let body;
   try {
     body = await c.req.json();
-  } catch (error) {
+  } catch (_) {
     throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
   
-  // Validation
-  if (!body.content_md || typeof body.content_md !== 'string') {
-    throw new HTTPException(400, { message: 'content_md is required and must be a string' });
+  // Validation - support both content_md (preferred) and content (backward compatibility)
+  const contentMd = body.content_md || body.content;
+  if (!contentMd || typeof contentMd !== 'string') {
+    throw new HTTPException(400, { message: 'content_md (or content) is required and must be a string' });
   }
 
-  if (body.content_md.length > 10000) {
+  if (contentMd.length > 10000) {
     throw new HTTPException(400, { message: 'Content too long (maximum 10000 characters)' });
   }
 
@@ -197,17 +250,38 @@ logs.post('/', async (c) => {
     throw new HTTPException(400, { message: 'Title must be a string with maximum 200 characters' });
   }
 
-  const tagIds = sanitizeTagIds(body.tag_ids);
+  // Handle tag_names (priority) or tag_ids
+  let tagIds: string[] | undefined;
+  let tagNames: string[] | undefined;
+  
+  if (body.tag_names) {
+    tagNames = sanitizeTagNames(body.tag_names);
+  } else if (body.tag_ids) {
+    tagIds = sanitizeTagIds(body.tag_ids);
+  }
+  // Note: We no longer require explicit tags since hashtags can be auto-extracted from content
 
   try {
-    const isPublic = parsePrivacyInput(body.is_public ?? body.privacy, false) as boolean;
+    // Default to public when is_public/privacy is not specified
+    const privacyValue = body.is_public ?? body.privacy;
+    const isPublic = privacyValue !== undefined 
+      ? parsePrivacyInput(privacyValue, false) as boolean
+      : true;
 
     const newLog = await logService.createLog({
       title: body.title,
-      content_md: body.content_md,
+      content_md: contentMd,
       is_public: isPublic,
-      tag_ids: tagIds
+      tag_ids: tagIds,
+      tag_names: tagNames
     }, user.id);
+
+    // 公開ログの場合、一覧のキャッシュを無効化
+    if (isPublic) {
+      const baseUrl = new URL(c.req.url).origin;
+      await invalidateCache('/logs', baseUrl);
+      await invalidateCache('/api/logs', baseUrl);
+    }
 
     return c.json(toLogResponse(newLog), 201);
   } catch (error) {
@@ -246,12 +320,59 @@ logs.get('/:logId', async (c) => {
       throw new HTTPException(403, { message: 'Access denied' });
     }
 
+    // 非公開ログの場合、キャッシュしないようにフラグを設定
+    if (!isPublic) {
+      c.set('hasPrivateData', true);
+    }
+
     return c.json(toLogResponse(log));
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;
     }
     console.error('Error fetching log:', error);
+    throw new HTTPException(500, { message: 'Internal server error' });
+  }
+});
+
+// GET /logs/{logId}/related - Get related logs
+logs.get('/:logId/related', async (c) => {
+  const logId = c.req.param('logId');
+  const logService = getLogService(c);
+  const limit = parsePositiveInt(c.req.query('limit'), 10);
+
+  // Validate log ID format
+  if (!logId || logId.trim().length === 0) {
+    throw new HTTPException(400, { message: 'Invalid log ID format' });
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(logId)) {
+    throw new HTTPException(400, { message: 'Invalid log ID format' });
+  }
+
+  // Validate limit
+  if (limit <= 0 || limit > 20) {
+    throw new HTTPException(400, { message: 'Invalid limit parameter. Must be between 1 and 20.' });
+  }
+
+  try {
+    // Check if the log exists
+    const log = await logService.getLogById(logId);
+    if (!log) {
+      throw new HTTPException(404, { message: 'Log not found' });
+    }
+
+    // Get related logs
+    const relatedLogs = await logService.getRelatedLogs(logId, limit);
+
+    return c.json({
+      items: relatedLogs.map(toLogResponse),
+      total: relatedLogs.length
+    });
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Error fetching related logs:', error);
     throw new HTTPException(500, { message: 'Internal server error' });
   }
 });
@@ -265,16 +386,17 @@ logs.put('/:logId', async (c) => {
   let body;
   try {
     body = await c.req.json();
-  } catch (error) {
+  } catch (_) {
     throw new HTTPException(400, { message: 'Invalid JSON in request body' });
   }
   
-  // Validate required fields
-  if (!body.content_md || typeof body.content_md !== 'string') {
-    throw new HTTPException(400, { message: 'content_md is required and must be a string' });
+  // Validate required fields - support both content_md (preferred) and content (backward compatibility)
+  const contentMd = body.content_md || body.content;
+  if (!contentMd || typeof contentMd !== 'string') {
+    throw new HTTPException(400, { message: 'content_md (or content) is required and must be a string' });
   }
 
-  if (body.content_md.length > 10000) {
+  if (contentMd.length > 10000) {
     throw new HTTPException(400, { message: 'Content too long (maximum 10000 characters)' });
   }
 
@@ -283,6 +405,7 @@ logs.put('/:logId', async (c) => {
   }
 
   const tagIds = optionalTagIds(body.tag_ids);
+  const tagNames = optionalTagNames(body.tag_names);
   const visibility = parsePrivacyInput(body.is_public ?? body.privacy, true);
   
   try {
@@ -300,10 +423,23 @@ logs.put('/:logId', async (c) => {
     // Update the log
     const updatedLog = await logService.updateLog(logId, {
       title: body.title,
-      content_md: body.content_md,
+      content_md: contentMd,
       is_public: visibility,
-      tag_ids: tagIds
+      tag_ids: tagIds,
+      tag_names: tagNames
     }, user.id);
+
+    // キャッシュを無効化して、更新後のコンテンツが確実に表示されるようにする
+    // ログ詳細のキャッシュを削除
+    const baseUrl = new URL(c.req.url).origin;
+    await invalidateCache(`/logs/${logId}`, baseUrl);
+    await invalidateCache(`/api/logs/${logId}`, baseUrl);
+    
+    // 公開ログの場合、一覧のキャッシュも削除
+    if (updatedLog.is_public) {
+      await invalidateCache('/logs', baseUrl);
+      await invalidateCache('/api/logs', baseUrl);
+    }
 
     return c.json(toLogResponse(updatedLog));
   } catch (error) {
@@ -335,6 +471,17 @@ logs.delete('/:logId', async (c) => {
 
     // Delete the log
     await logService.deleteLog(logId, user.id);
+    
+    // キャッシュを無効化
+    const baseUrl = new URL(c.req.url).origin;
+    await invalidateCache(`/logs/${logId}`, baseUrl);
+    await invalidateCache(`/api/logs/${logId}`, baseUrl);
+    
+    // 公開ログだった場合、一覧のキャッシュも削除
+    if (existingLog.is_public) {
+      await invalidateCache('/logs', baseUrl);
+      await invalidateCache('/api/logs', baseUrl);
+    }
     
     return c.body(null, 204);
   } catch (error) {
@@ -374,7 +521,7 @@ logs.post('/:logId/share', async (c) => {
     let body;
     try {
       body = await c.req.json();
-    } catch (error) {
+    } catch (_) {
       body = {};
     }
     

@@ -13,7 +13,6 @@ TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
 ip = "0.0.0.0"
 port = 8787
 local_protocol = "http"
-persist = ".wrangler/state"
 
 [[d1_databases]]
 binding = "DB"
@@ -22,37 +21,61 @@ database_id = "local-shumilog-db-dev"
 preview_database_id = "local-shumilog-db-dev"
 migrations_dir = "migrations"
 
+[ai]
+binding = "AI"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "shumilog-images-dev"
+
 [env.development]
 name = "shumilog-backend-dev"
 
 [[env.development.d1_databases]]
 binding = "DB"
-database_name = "shumilog-db-dev"
-database_id = "placeholder-dev-id"
+database_name = "shumilog-db-devel"
+database_id = "617b5001-c479-48d0-b9a6-202e2b3d51f2"
 migrations_dir = "migrations"
+
+[env.development.ai]
+binding = "AI"
+
+[[env.development.r2_buckets]]
+binding = "IMAGES"
+bucket_name = "shumilog-images-devel"
 
 [env.development.vars]
 ENVIRONMENT = "development"
-APP_BASE_URL = "http://localhost:5173"
-APP_LOGIN_URL = "http://localhost:5173/login"
-TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
+APP_BASE_URL = "https://shumilog.dev"
+APP_LOGIN_URL = "https://shumilog.dev/login"
+TWITTER_REDIRECT_URI = "https://api.shumilog.dev/api/auth/callback"
 
 [env.production]
-name = "shumilog-backend-prod"
+name = "shumilog-backend"
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "shumilog-db-prod"
-database_id = "placeholder-prod-id"
+database_name = "shumilog-db"
+database_id = "c97e1c8a-45cd-4748-8792-3faa6ceb5a41"
 migrations_dir = "migrations"
+
+[env.production.ai]
+binding = "AI"
+
+[[env.production.r2_buckets]]
+binding = "IMAGES"
+bucket_name = "shumilog-images"
 
 [env.production.vars]
 ENVIRONMENT = "production"
-APP_BASE_URL = "https://shumilog.example.com"
-APP_LOGIN_URL = "https://shumilog.example.com/login"
-TWITTER_REDIRECT_URI = "https://shumilog.example.com/api/auth/callback"
+APP_BASE_URL = "https://shumilog.dev"
+APP_LOGIN_URL = "https://shumilog.dev/login"
+TWITTER_REDIRECT_URI = "https://api.shumilog.dev/api/auth/callback"
 
 # Secrets (configured via wrangler secret put)
 # TWITTER_CLIENT_ID
 # TWITTER_CLIENT_SECRET
 # SESSION_SECRET
+
+[observability.logs]
+enabled = true

@@ -329,6 +329,73 @@ const BOT_PATTERNS = [
 ];
 ```
 
+## CSRでのOGPメタデータ
+
+### 概要
+
+SSR対応のOGPボット向けのメタデータに加えて、通常のブラウザ（CSR）でも同じOGP情報を動的に設定しています。これにより、CSR対応のボットや、ブラウザ拡張機能、ブックマークツールなどがページのメタデータを正しく取得できます。
+
+### 実装方法
+
+**カスタムフック: `useOgp`**
+
+`frontend/src/hooks/useOgp.ts`で提供されるカスタムフックを使用して、ページごとにOGPメタデータを動的に設定します。
+
+```typescript
+import { useOgp, extractPlainText } from '@/hooks/useOgp';
+
+// ログ詳細ページでの使用例
+useOgp({
+  title: log.title || 'ログ',
+  description: extractPlainText(log.content_md || '', 200),
+  url: window.location.href,
+  image: log.images?.[0]?.url,
+  type: 'article',
+});
+```
+
+**実装の特徴:**
+- ネイティブDOM APIを使用（React 19対応）
+- SSRと同じメタタグ構成
+- `useEffect`による自動更新
+- HTMLエスケープ不要（属性設定時に自動処理）
+
+### 適用ページ
+
+現在、以下のページでOGPメタデータを設定しています：
+
+1. **ログ詳細ページ** (`/logs/:id`)
+   - タイトル: ログのタイトル
+   - 説明文: コンテンツから抽出（最大200文字）
+   - 画像: 関連画像の先頭（存在する場合）
+   - タイプ: `article`
+
+2. **タグ詳細ページ** (`/tags/:name`)
+   - タイトル: タグ名（`#tagname`形式）
+   - 説明文: タグの説明または既定文（最大200文字）
+   - タイプ: `website`
+
+### SSRとの一貫性
+
+CSRで設定するメタデータは、SSRで生成される内容と完全に一致しています：
+
+| 項目 | SSR | CSR |
+|------|-----|-----|
+| タイトル形式 | `{title} - Shumilog` | `{title} - Shumilog` |
+| 説明文長さ | 最大200文字 | 最大200文字 |
+| OGPタグ | og:*, twitter:* | og:*, twitter:* |
+| 画像最適化 | Cloudflare Image Resizing | （同じURL） |
+
+### テスト
+
+`frontend/tests/unit/useOgp.test.ts`でユニットテストを実装しています：
+
+- 基本的なOGPメタタグの設定
+- 画像付きメタタグの設定
+- 長い説明文の切り詰め
+- メタタグの動的更新
+- Markdownからのテキスト抽出
+
 ## トラブルシューティング
 
 ### SSRが動作しない

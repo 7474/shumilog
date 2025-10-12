@@ -259,7 +259,7 @@ export function TagDetailPage() {
 
       {/* ログ作成フォーム */}
       <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <PenLine size={20} />

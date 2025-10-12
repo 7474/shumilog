@@ -5,6 +5,50 @@ import { clearTestData, getTestD1Database, createTestUser } from '../helpers/app
 import { CreateTagData, UpdateTagData } from '../../src/models/Tag.js';
 
 describe('TagService', () => {
+  describe('getTagSupportByName', () => {
+    it('should return Wikipedia summary for support_type=wikipedia_summary', async () => {
+      // Wikipedia APIをモック
+      global.fetch = async (url: any) => {
+        if (typeof url === 'string' && url.includes('wikipedia.org')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              extract: 'テストの概要',
+              content_urls: { desktop: { page: 'https://ja.wikipedia.org/wiki/テスト' } }
+            })
+          } as any;
+        }
+        throw new Error('Unexpected fetch call');
+      };
+      const result = await tagService.getTagSupportByName('テスト', 'wikipedia_summary');
+      expect(result.content).toContain('テストの概要');
+      expect(result.content).toContain('Wikipedia');
+      expect(result.support_type).toBe('wikipedia_summary');
+    });
+
+    it('should return AI enhanced summary for support_type=ai_enhanced', async () => {
+      // AiServiceのモック
+      const mockAiService = {
+        generateTagContentFromName: async (tagName: string) => ({
+          content: `AI生成: ${tagName}`
+        })
+      };
+      tagService.setAiService(mockAiService as any);
+      const result = await tagService.getTagSupportByName('AIタグ', 'ai_enhanced');
+      expect(result.content).toContain('AI生成: AIタグ');
+      expect(result.support_type).toBe('ai_enhanced');
+    });
+
+    it('should throw error if AI service not set for ai_enhanced', async () => {
+      tagService.setAiService(undefined as any);
+      await expect(tagService.getTagSupportByName('AIタグ', 'ai_enhanced')).rejects.toThrow('AI service not available');
+    });
+
+    it('should throw error for invalid support_type', async () => {
+      await expect(tagService.getTagSupportByName('タグ', 'invalid_type')).rejects.toThrow('Unsupported support type');
+    });
+  });
   let tagService: TagService;
   let mockDatabase: Database;
 

@@ -410,8 +410,8 @@ export class AiService {
     markdown += output.markdown;
     markdown += '\n\n<!-- AI生成コンテンツ終了 -->\n\n';
     
-    // Wikipedia出典を追加
-    markdown += `出典: [Wikipedia](<${wikipediaUrl}>)`;
+    // Wikipedia出典を追加（標準的なMarkdownリンク形式を使用）
+    markdown += `出典: [Wikipedia](${wikipediaUrl})`;
     
     console.log('[AiService] formatAsMarkdown result:', {
       markdownLength: markdown.length,

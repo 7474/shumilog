@@ -328,6 +328,15 @@ tags.post('/:tagId/associations', async (c) => {
 
   try {
     await tagService.createTagAssociation(tag.id, associatedTagId);
+    
+    // キャッシュを無効化（関連タグが変更されたため）
+    const baseUrl = new URL(c.req.url).origin;
+    // タグ詳細のキャッシュを削除（IDとnameの両方）
+    await invalidateCache(`/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/tags/${tag.name}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.name}`, baseUrl);
+    
     return c.body(null, 201);
   } catch (error: any) {
     const message = typeof error?.message === 'string' ? error.message : 'Failed to create association';
@@ -370,6 +379,15 @@ tags.delete('/:tagId/associations', async (c) => {
 
   try {
     await tagService.removeTagAssociation(tag.id, associatedTagId);
+    
+    // キャッシュを無効化（関連タグが変更されたため）
+    const baseUrl = new URL(c.req.url).origin;
+    // タグ詳細のキャッシュを削除（IDとnameの両方）
+    await invalidateCache(`/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.id}`, baseUrl);
+    await invalidateCache(`/tags/${tag.name}`, baseUrl);
+    await invalidateCache(`/api/tags/${tag.name}`, baseUrl);
+    
     return c.body(null, 204);
   } catch (error) {
     console.error('Failed to remove tag association:', error);

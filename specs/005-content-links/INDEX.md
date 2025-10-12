@@ -49,6 +49,12 @@
    - JSON例とシードデータ
    - インデックス戦略
 
+6. **[metadata-collection.md](./metadata-collection.md)** 🤖
+   - メタデータ自動収集の方法
+   - Wikipedia/Wikidata API統合
+   - 半自動収集の実装例
+   - 手間削減の効果（90%削減）
+
 ### 🔍 調査・研究
 
 設計判断の根拠と技術調査：

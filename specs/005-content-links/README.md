@@ -21,6 +21,7 @@
 | [design.md](./design.md) | **詳細設計書** - データモデル、UI設計、実装計画の詳細 |
 | [architecture.md](./architecture.md) | **アーキテクチャ図** - システム構成、データフロー、影響範囲 |
 | [data-model.md](./data-model.md) | **データモデル** - メタデータ構造、バリデーション、例 |
+| [metadata-collection.md](./metadata-collection.md) | **メタデータ自動収集** - 人間の手間を最小化する収集方法 |
 | [research.md](./research.md) | **調査・研究** - 技術調査、設計判断、参考事例 |
 | [quickstart.md](./quickstart.md) | **クイックスタート** - 使用方法、サンプルコード、トラブルシューティング |
 
@@ -49,6 +50,13 @@
 - **決定**: Emojiアイコン + テキストラベル + shadcn/ui Button
 - **理由**: 追加ライブラリ不要、分かりやすい、軽量
 - **代替案**: Font Icon（追加のライブラリが必要）、サービスロゴ（ライセンス問題）
+
+### 5. メタデータ収集の自動化
+
+- **決定**: Wikipedia/Wikidata APIを使った半自動収集（Phase 2）
+- **理由**: 人間の手間を90%削減、高品質なメタデータ取得
+- **実装**: タグ名入力時に自動的にリンクを提案、ユーザーが確認・選択
+- **詳細**: [metadata-collection.md](./metadata-collection.md)参照
 
 ## サポートするリンクタイプ
 

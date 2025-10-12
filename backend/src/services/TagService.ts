@@ -1,6 +1,7 @@
 import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
 import { Database, PaginatedResult } from '../db/database.js';
 import { AiService } from './AiService.js';
+import { ImageModel } from '../models/Image.js';
 
 export interface TagUsageStats {
   tagId: string;
@@ -370,7 +371,7 @@ export class TagService {
       [tagId, limit]
     );
     
-    // Enrich with tags for each log
+    // Enrich with tags and images for each log
     const enrichedLogs = [];
     for (const row of rows) {
       const tagRows = await this.db.query(
@@ -384,6 +385,18 @@ export class TagService {
       );
       
       const tags = tagRows.map((tagRow: any) => TagModel.fromRow(tagRow));
+      
+      // Get images for the log
+      const imageRows = await this.db.query(
+        `SELECT i.*, lia.display_order
+         FROM images i
+         JOIN log_image_associations lia ON i.id = lia.image_id
+         WHERE lia.log_id = ?
+         ORDER BY lia.display_order ASC, i.created_at ASC`,
+        [row.id]
+      );
+      
+      const images = imageRows.map((imageRow: any) => ImageModel.fromRowWithDisplayOrder(imageRow));
       
       enrichedLogs.push({
         id: row.id,
@@ -403,7 +416,7 @@ export class TagService {
           created_at: row.user_created_at
         },
         associated_tags: tags,
-        images: []
+        images
       });
     }
     

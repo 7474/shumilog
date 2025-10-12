@@ -149,7 +149,15 @@ async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string):
     const title = log.title || 'ログ';
     const description = extractPlainText(log.content_md || '', 200);
     const url = `${baseUrl}/logs/${logId}`;
-    const image = log.images && log.images.length > 0 ? log.images[0].url : undefined;
+    
+    // 画像があればCloudflare Image Resizingで最適化
+    let image: string | undefined;
+    if (log.images && log.images.length > 0) {
+      const firstImage = log.images[0];
+      const imageUrl = `${apiBaseUrl}/api/logs/${logId}/images/${firstImage.id}`;
+      // OGP用に1200x630の画像を生成（X/Twitter推奨サイズ）
+      image = `${baseUrl}/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/${imageUrl}`;
+    }
 
     const html = generateOgpHtml({
       title,
@@ -191,10 +199,24 @@ async function handleTagSSR(tagName: string, baseUrl: string, apiBaseUrl: string
       : `${tag.name}に関するログを探す`;
     const url = `${baseUrl}/tags/${encodeURIComponent(tagName)}`;
 
+    // タグに関連する最初のログから画像を取得
+    let image: string | undefined;
+    if (tag.recent_logs && tag.recent_logs.length > 0) {
+      const firstLog = tag.recent_logs[0];
+      if (firstLog.images && firstLog.images.length > 0) {
+        const firstImage = firstLog.images[0];
+        // 画像URLを構築し、Cloudflare Image Resizingで最適化
+        const imageUrl = `${apiBaseUrl}/api/logs/${firstLog.id}/images/${firstImage.id}`;
+        // OGP用に1200x630の画像を生成（X/Twitter推奨サイズ）
+        image = `${baseUrl}/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/${imageUrl}`;
+      }
+    }
+
     const html = generateOgpHtml({
       title,
       description,
       url,
+      image,
       type: 'website',
     });
 

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useOgp } from '@/hooks/useOgp';
 
 export function LogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
@@ -100,6 +101,14 @@ export function LogsPage() {
     setShowForm(false);
     setSelectedLog(undefined);
   };
+
+  // OGPメタデータの設定
+  useOgp({
+    title: 'Shumilog',
+    description: 'Your Personal Hobby Logger',
+    url: window.location.href,
+    type: 'website',
+  });
 
   // 未ログインでも閲覧は可能、編集操作のみログインが必要
 

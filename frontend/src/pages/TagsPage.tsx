@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 import { getMarkdownSummary } from '@/utils/markdownUtils';
+import { useOgp } from '@/hooks/useOgp';
 
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
@@ -153,6 +154,14 @@ export function TagsPage() {
     // タグ名に空白が含まれる場合は #{tagName} 形式、そうでなければ #tagName 形式
     return tagName.includes(' ') ? `#{${tagName}}` : `#${tagName}`;
   };
+
+  // OGPメタデータの設定
+  useOgp({
+    title: 'タグ管理',
+    description: 'ログを整理するためのタグを管理しましょう',
+    url: window.location.href,
+    type: 'website',
+  });
 
   // 未ログインでも閲覧は可能、編集操作のみログインが必要
 

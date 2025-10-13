@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useOgp } from '@/hooks/useOgp';
 
 export function MyLogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
@@ -126,6 +127,14 @@ export function MyLogsPage() {
       console.error('Logout failed', error);
     }
   };
+
+  // OGPメタデータの設定
+  useOgp({
+    title: 'マイログ',
+    description: 'あなたの趣味ログを管理',
+    url: window.location.href,
+    type: 'website',
+  });
 
   if (loading) {
     return (

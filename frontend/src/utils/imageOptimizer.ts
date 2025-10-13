@@ -135,7 +135,7 @@ export function getLogDetailImageUrl(imageUrl: string): string {
  * - Twitter: 1200x630px (アスペクト比 1.91:1)
  * - Facebook: 1200x630px (アスペクト比 1.91:1)
  * 
- * @param imageUrl - 元の画像URL（完全なURL）
+ * @param imageUrl - 元の画像URL（相対パスまたは完全なURL）
  * @param baseUrl - フロントエンドのベースURL
  * @returns OGP用に最適化された画像URL
  */
@@ -151,6 +151,11 @@ export function getOgpImageUrl(imageUrl: string, baseUrl: string): string {
 
   const optionsString = optionParts.join(',');
 
+  // 相対パスの場合は絶対URLに変換
+  const absoluteImageUrl = imageUrl.startsWith('http') 
+    ? imageUrl 
+    : `${baseUrl}${imageUrl}`;
+
   // Cloudflare Image Resizing URLフォーマット
-  return `${baseUrl}/cdn-cgi/image/${optionsString}/${imageUrl}`;
+  return `${baseUrl}/cdn-cgi/image/${optionsString}/${absoluteImageUrl}`;
 }

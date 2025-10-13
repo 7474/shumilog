@@ -41,13 +41,13 @@
 ### 画像URL変換フロー
 
 ```
-元の画像URL:
-  https://shumilog.dev/api/logs/log_alice_1/images/image_1
+元の画像URL（バックエンドAPI経由）:
+  https://api.shumilog.dev/logs/log_alice_1/images/image_1
 
 ↓ getOgpImageUrl() で変換
 
 最適化された画像URL:
-  https://shumilog.dev/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/https://shumilog.dev/api/logs/log_alice_1/images/image_1
+  https://shumilog.dev/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/https://api.shumilog.dev/logs/log_alice_1/images/image_1
 ```
 
 ## Cloudflare Image Resizingについて
@@ -95,7 +95,13 @@ export function getOgpImageUrl(imageUrl: string, baseUrl: string): string {
   optionParts.push('format=auto');
 
   const optionsString = optionParts.join(',');
-  return `${baseUrl}/cdn-cgi/image/${optionsString}/${imageUrl}`;
+
+  // 相対パスの場合は絶対URLに変換
+  const absoluteImageUrl = imageUrl.startsWith('http') 
+    ? imageUrl 
+    : `${baseUrl}${imageUrl}`;
+
+  return `${baseUrl}/cdn-cgi/image/${optionsString}/${absoluteImageUrl}`;
 }
 ```
 
@@ -109,8 +115,8 @@ async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string) 
   let image: string | undefined = undefined;
   if (log.images && log.images.length > 0) {
     const firstImage = log.images[0];
-    // 画像URLを構築
-    const imageUrl = `${baseUrl}/api/logs/${logId}/images/${firstImage.id}`;
+    // 画像URLを構築（バックエンドAPI経由、フロントエンドと同じロジック）
+    const imageUrl = `${apiBaseUrl}/logs/${logId}/images/${firstImage.id}`;
     // Cloudflare Image Resizingで最適化
     image = getOgpImageUrl(imageUrl, baseUrl);
   }

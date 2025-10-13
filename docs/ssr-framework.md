@@ -73,21 +73,17 @@ shumilogは、**Cloudflare Pages Functions**を「SSRフレームワーク」と
 #### 通常のブラウザアクセス
 
 ```
-ユーザー
+ユーザー（ブラウザ）
   ↓
 Cloudflare Pages
   ↓
 _middleware.ts (パス判定)
-  ↓ (詳細ページの場合)
-SSR処理開始
-  ↓
-Backend APIにデータリクエスト
-  ↓
-OGP HTMLを生成
-  ↓
-完成したHTMLをユーザーに返却
+  ↓ (詳細ページ かつ ブラウザの場合)
+通常のSPAを返す (index.html)
   ↓
 ブラウザでJavaScriptが実行され、SPAとして動作
+  ↓
+クライアント側でOGPメタタグを動的に設定 (useOgp)
 ```
 
 #### OGPボット（SSR）
@@ -98,7 +94,7 @@ OGPボット (Twitter, Facebook, etc)
 Cloudflare Pages
   ↓
 _middleware.ts (パス判定)
-  ↓ (詳細ページの場合)
+  ↓ (詳細ページ かつ ボットの場合)
 SSR処理開始
   ↓
 Backend APIにデータリクエスト
@@ -108,7 +104,7 @@ OGP HTMLを生成
 完成したHTMLをボットに返却
 ```
 
-**注:** ログ詳細ページとタグ詳細ページは、ボットかどうかに関わらず全てのアクセスに対してSSRを実行します。
+**注:** ログ詳細ページとタグ詳細ページは、OGPボットを検出した場合にSSRを実行します。通常のブラウザアクセスの場合は、SPA（index.html）を返し、クライアント側でReactアプリが起動してOGPメタタグを動的に設定します（useOgpフックを使用）。
 
 ## 実装詳細
 

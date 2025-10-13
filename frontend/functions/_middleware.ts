@@ -7,10 +7,16 @@
  * SSR機能を実現しています。
  * 
  * 主な機能:
- * - ログ・タグページのサーバーサイドレンダリング（全てのアクセスに対して）
+ * - ログ・タグページのサーバーサイドレンダリング（OGPボットのみ）
  * - OGPメタタグの動的生成
  * - 画像の最適化（Cloudflare Image Resizing）
  * - エッジでの高速実行とキャッシュ
+ * - 静的アセットの適切なルーティング
+ * 
+ * 動作:
+ * - OGPボット（Twitter、Facebook等）には、SSRでOGPメタタグを含むHTMLを返却
+ * - 通常のブラウザには、SPA（index.html）を返し、クライアント側でReactアプリを起動
+ * - 静的アセット（JS、CSS、画像等）は、そのままCloudflare Pagesに処理させる
  * 
  * 詳細なアーキテクチャ: docs/ssr-framework.md
  */
@@ -256,6 +262,21 @@ async function handleTagSSR(tagName: string, baseUrl: string, apiBaseUrl: string
 }
 
 /**
+ * 静的アセットのパスかどうかを判定
+ */
+function isStaticAssetPath(pathname: string): boolean {
+  // 静的アセットとして扱うパスパターン
+  const staticPatterns = [
+    /^\/assets\//,           // Viteビルド後のバンドルファイル
+    /^\/src\//,              // 開発時のソースファイル
+    /^\/favicon\.(svg|ico)$/, // ファビコン
+    /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/i, // 一般的な静的ファイル拡張子
+  ];
+  
+  return staticPatterns.some(pattern => pattern.test(pathname));
+}
+
+/**
  * Pages Functions Middleware
  */
 export async function onRequest(context: {
@@ -267,13 +288,21 @@ export async function onRequest(context: {
   const url = new URL(request.url);
   const userAgent = request.headers.get('User-Agent');
 
+  // 静的アセットのリクエストはそのまま通す
+  if (isStaticAssetPath(url.pathname)) {
+    return next();
+  }
+
   // API Base URL（環境変数から取得、デフォルトは本番環境のAPI）
   const apiBaseUrl = env.API_BASE_URL || 'https://api.shumilog.dev';
   const baseUrl = url.origin;
 
-  // ログ詳細ページのSSR（常に実行）
+  // OGPボットの場合のみSSRを実行
+  const isBot = isOgpBot(userAgent);
+
+  // ログ詳細ページのSSR（ボットの場合のみ）
   const logMatch = url.pathname.match(/^\/logs\/([^/]+)$/);
-  if (logMatch) {
+  if (logMatch && isBot) {
     console.log(`[SSR] Generating SSR for log: ${url.pathname}, User-Agent: ${userAgent}`);
     const logId = logMatch[1];
     const ssrResponse = await handleLogSSR(logId, baseUrl, apiBaseUrl);
@@ -282,9 +311,9 @@ export async function onRequest(context: {
     }
   }
 
-  // タグ詳細ページのSSR（常に実行）
+  // タグ詳細ページのSSR（ボットの場合のみ）
   const tagMatch = url.pathname.match(/^\/tags\/([^/]+)$/);
-  if (tagMatch) {
+  if (tagMatch && isBot) {
     console.log(`[SSR] Generating SSR for tag: ${url.pathname}, User-Agent: ${userAgent}`);
     const tagName = decodeURIComponent(tagMatch[1]);
     const ssrResponse = await handleTagSSR(tagName, baseUrl, apiBaseUrl);
@@ -293,6 +322,6 @@ export async function onRequest(context: {
     }
   }
 
-  // 詳細ページ以外は通常のSPAを返す
+  // ボット以外、またはSSR失敗時は通常のSPAを返す
   return next();
 }

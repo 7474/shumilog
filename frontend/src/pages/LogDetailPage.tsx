@@ -6,6 +6,14 @@ import { Log } from '@/api-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -336,43 +344,39 @@ export function LogDetailPage() {
       )}
 
       {/* 削除確認ダイアログ */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-md w-full">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-red-600">ログを削除しますか？</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-700">
-                このログを削除すると、元に戻すことはできません。本当に削除してもよろしいですか？
-              </p>
-              <div className="flex gap-3 justify-end">
-                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
-                  キャンセル
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleDelete}
-                  className="flex items-center gap-2"
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>削除中...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 size={16} />
-                      <span>削除する</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-red-600">ログを削除しますか？</DialogTitle>
+            <DialogDescription className="text-gray-700">
+              このログを削除すると、元に戻すことはできません。本当に削除してもよろしいですか？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-3">
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+              キャンセル
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              className="flex items-center gap-2"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>削除中...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 size={16} />
+                  <span>削除する</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

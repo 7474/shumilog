@@ -10,6 +10,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -40,6 +42,7 @@ export function TagDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAuthenticated } = useAuth();
 
@@ -102,22 +105,21 @@ export function TagDetailPage() {
   const handleDelete = async () => {
     if (!name) return;
 
-    if (window.confirm('このタグを削除してもよろしいですか？')) {
-      try {
-        setIsDeleting(true);
-        const decodedName = decodeURIComponent(name);
-        const { error } = await api.DELETE('/tags/{tagId}', {
-          params: { path: { tagId: decodedName } },
-        });
-        if (error) {
-          throw new Error('Failed to delete tag');
-        }
-        navigate('/tags');
-      } catch (err) {
-        alert(err instanceof Error ? err.message : 'タグの削除に失敗しました');
-      } finally {
-        setIsDeleting(false);
+    try {
+      setIsDeleting(true);
+      const decodedName = decodeURIComponent(name);
+      const { error } = await api.DELETE('/tags/{tagId}', {
+        params: { path: { tagId: decodedName } },
+      });
+      if (error) {
+        throw new Error('Failed to delete tag');
       }
+      navigate('/tags');
+    } catch (err) {
+      console.error('Failed to delete tag:', err);
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -250,21 +252,12 @@ export function TagDetailPage() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={handleDelete}
+                  onClick={() => setShowDeleteConfirm(true)}
                   disabled={isDeleting}
                   className="cursor-pointer text-red-600 focus:text-red-600"
                 >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 size={16} className="mr-2 animate-spin" />
-                      <span>削除中...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 size={16} className="mr-2" />
-                      <span>削除</span>
-                    </>
-                  )}
+                  <Trash2 size={16} className="mr-2" />
+                  <span>削除</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -407,6 +400,41 @@ export function TagDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* 削除確認ダイアログ */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-red-600">タグを削除しますか？</DialogTitle>
+            <DialogDescription className="text-gray-700">
+              このタグを削除すると、元に戻すことはできません。本当に削除してもよろしいですか？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-3">
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+              キャンセル
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              className="flex items-center gap-2"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>削除中...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 size={16} />
+                  <span>削除する</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

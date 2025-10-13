@@ -149,7 +149,7 @@ describe('imageOptimizer', () => {
   });
 
   describe('getOgpImageUrl', () => {
-    it('OGP用の最適化された画像URLを生成する', () => {
+    it('OGP用の最適化された画像URLを生成する（絶対URL）', () => {
       const imageUrl = 'https://example.com/api/logs/log_1/images/image_1';
       const baseUrl = 'https://shumilog.dev';
       const result = getOgpImageUrl(imageUrl, baseUrl);
@@ -163,6 +163,23 @@ describe('imageOptimizer', () => {
       expect(result).toContain('quality=85');
       expect(result).toContain('format=auto');
       expect(result).toContain(imageUrl);
+    });
+
+    it('OGP用の最適化された画像URLを生成する（相対パス）', () => {
+      const imageUrl = '/api/logs/log_1/images/image_1';
+      const baseUrl = 'https://shumilog.dev';
+      const result = getOgpImageUrl(imageUrl, baseUrl);
+      
+      // Cloudflare Image Resizingのフォーマットを使用
+      expect(result).toMatch(/^https:\/\/shumilog\.dev\/cdn-cgi\/image\//);
+      // OGP推奨サイズ: 1200x630
+      expect(result).toContain('width=1200');
+      expect(result).toContain('height=630');
+      expect(result).toContain('fit=cover');
+      expect(result).toContain('quality=85');
+      expect(result).toContain('format=auto');
+      // 相対パスが絶対URLに変換される
+      expect(result).toContain(`${baseUrl}${imageUrl}`);
     });
 
     it('異なるbaseURLでも正しく動作する', () => {

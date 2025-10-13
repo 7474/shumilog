@@ -143,7 +143,7 @@ function generateOgpHtml(params: {
  * OGP用の画像URLを生成します
  * Cloudflare Image Resizingを使用してOGPに最適なサイズに変換します
  * 
- * @param imageUrl - 元の画像URL（完全なURL）
+ * @param imageUrl - 元の画像URL（相対パスまたは完全なURL）
  * @param baseUrl - フロントエンドのベースURL
  * @returns OGP用に最適化された画像URL
  */
@@ -159,8 +159,13 @@ function getOgpImageUrl(imageUrl: string, baseUrl: string): string {
 
   const optionsString = optionParts.join(',');
 
+  // 相対パスの場合は絶対URLに変換（フロントエンドのimageOptimizerと同じロジック）
+  const absoluteImageUrl = imageUrl.startsWith('http') 
+    ? imageUrl 
+    : `${baseUrl}${imageUrl}`;
+
   // Cloudflare Image Resizing URLフォーマット
-  return `${baseUrl}/cdn-cgi/image/${optionsString}/${imageUrl}`;
+  return `${baseUrl}/cdn-cgi/image/${optionsString}/${absoluteImageUrl}`;
 }
 
 /**
@@ -190,9 +195,9 @@ async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string):
     let image: string | undefined = undefined;
     if (log.images && log.images.length > 0) {
       const firstImage = log.images[0];
-      // 画像URLを構築（フロントエンド経由でアクセス）
-      const imageUrl = `${baseUrl}/api/logs/${logId}/images/${firstImage.id}`;
-      // Cloudflare Image Resizingで最適化
+      // 画像URLを構築（相対パス形式、フロントエンドと同じロジック）
+      const imageUrl = `/api/logs/${logId}/images/${firstImage.id}`;
+      // Cloudflare Image Resizingで最適化（絶対URLに変換される）
       image = getOgpImageUrl(imageUrl, baseUrl);
     }
 

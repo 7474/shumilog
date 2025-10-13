@@ -41,8 +41,8 @@
 ### 画像URL変換フロー
 
 ```
-元の画像URL:
-  https://shumilog.dev/api/logs/log_alice_1/images/image_1
+元の画像URL（相対パス）:
+  /api/logs/log_alice_1/images/image_1
 
 ↓ getOgpImageUrl() で変換
 
@@ -95,7 +95,13 @@ export function getOgpImageUrl(imageUrl: string, baseUrl: string): string {
   optionParts.push('format=auto');
 
   const optionsString = optionParts.join(',');
-  return `${baseUrl}/cdn-cgi/image/${optionsString}/${imageUrl}`;
+
+  // 相対パスの場合は絶対URLに変換
+  const absoluteImageUrl = imageUrl.startsWith('http') 
+    ? imageUrl 
+    : `${baseUrl}${imageUrl}`;
+
+  return `${baseUrl}/cdn-cgi/image/${optionsString}/${absoluteImageUrl}`;
 }
 ```
 
@@ -109,9 +115,9 @@ async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string) 
   let image: string | undefined = undefined;
   if (log.images && log.images.length > 0) {
     const firstImage = log.images[0];
-    // 画像URLを構築
-    const imageUrl = `${baseUrl}/api/logs/${logId}/images/${firstImage.id}`;
-    // Cloudflare Image Resizingで最適化
+    // 画像URLを構築（相対パス形式、フロントエンドと同じロジック）
+    const imageUrl = `/api/logs/${logId}/images/${firstImage.id}`;
+    // Cloudflare Image Resizingで最適化（絶対URLに変換される）
     image = getOgpImageUrl(imageUrl, baseUrl);
   }
   

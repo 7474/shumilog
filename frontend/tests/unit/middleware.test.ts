@@ -33,19 +33,19 @@ describe('SSR Middleware OGP Image Generation', () => {
 
   it('ログの先頭画像からOGP用の最適化URLを生成する', () => {
     const baseUrl = 'https://shumilog.dev';
+    const apiBaseUrl = 'https://api.shumilog.dev';
     const logId = 'log_alice_1';
     const imageId = 'image_1';
     
-    // 画像URLを構築（相対パス形式、フロントエンドと同じ）
-    const imageUrl = `/api/logs/${logId}/images/${imageId}`;
+    // 画像URLを構築（バックエンドAPI経由、フロントエンドと同じロジック）
+    const imageUrl = `${apiBaseUrl}/logs/${logId}/images/${imageId}`;
     
     // OGP用に最適化
     const ogpImageUrl = getOgpImageUrl(imageUrl, baseUrl);
     
-    // 期待される形式を確認（相対パスが絶対URLに変換される）
-    const expectedImageUrl = `${baseUrl}${imageUrl}`;
+    // 期待される形式を確認
     expect(ogpImageUrl).toBe(
-      `${baseUrl}/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/${expectedImageUrl}`
+      `${baseUrl}/cdn-cgi/image/width=1200,height=630,fit=cover,quality=85,format=auto/${imageUrl}`
     );
     
     // Cloudflare Image Resizing のパスを含む
@@ -56,31 +56,33 @@ describe('SSR Middleware OGP Image Generation', () => {
     expect(ogpImageUrl).toContain('height=630');
     expect(ogpImageUrl).toContain('fit=cover');
     
-    // 絶対URLに変換された画像URLを含む
-    expect(ogpImageUrl).toContain(expectedImageUrl);
+    // 元の画像URLを含む
+    expect(ogpImageUrl).toContain(imageUrl);
   });
 
   it('異なるbaseURLでも正しく動作する', () => {
     const baseUrl = 'https://staging.shumilog.dev';
+    const apiBaseUrl = 'https://api-staging.shumilog.dev';
     const logId = 'test_log';
     const imageId = 'test_image';
     
-    // 相対パス形式で画像URLを構築
-    const imageUrl = `/api/logs/${logId}/images/${imageId}`;
+    // バックエンドAPI経由で画像URLを構築
+    const imageUrl = `${apiBaseUrl}/logs/${logId}/images/${imageId}`;
     const ogpImageUrl = getOgpImageUrl(imageUrl, baseUrl);
     
     expect(ogpImageUrl).toContain('staging.shumilog.dev/cdn-cgi/image/');
-    // 絶対URLに変換された画像URLを含む
-    expect(ogpImageUrl).toContain(`${baseUrl}${imageUrl}`);
+    // 画像URLを含む
+    expect(ogpImageUrl).toContain(imageUrl);
   });
 
   it('HTMLメタタグに正しいOGP画像URLが設定される', () => {
     const baseUrl = 'https://shumilog.dev';
+    const apiBaseUrl = 'https://api.shumilog.dev';
     const logId = 'log_with_image';
     const imageId = 'image_123';
     
-    // 相対パス形式で画像URLを構築
-    const imageUrl = `/api/logs/${logId}/images/${imageId}`;
+    // バックエンドAPI経由で画像URLを構築
+    const imageUrl = `${apiBaseUrl}/logs/${logId}/images/${imageId}`;
     const ogpImageUrl = getOgpImageUrl(imageUrl, baseUrl);
     
     // OGPタグに設定される値を確認

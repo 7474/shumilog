@@ -73,21 +73,17 @@ shumilogは、**Cloudflare Pages Functions**を「SSRフレームワーク」と
 #### 通常のブラウザアクセス
 
 ```
-ユーザー
+ユーザー（ブラウザ）
   ↓
 Cloudflare Pages
   ↓
-_middleware.ts (パス判定)
-  ↓ (詳細ページの場合)
-SSR処理開始
-  ↓
-Backend APIにデータリクエスト
-  ↓
-OGP HTMLを生成
-  ↓
-完成したHTMLをユーザーに返却
+_middleware.ts (ボット検出)
+  ↓ (ボットではない)
+ビルド済みSPAを返却（index.html + JS/CSS）
   ↓
 ブラウザでJavaScriptが実行され、SPAとして動作
+  ↓
+useOgpフックによりOGPメタデータをCSRで動的設定
 ```
 
 #### OGPボット（SSR）
@@ -97,18 +93,18 @@ OGPボット (Twitter, Facebook, etc)
   ↓
 Cloudflare Pages
   ↓
-_middleware.ts (パス判定)
-  ↓ (詳細ページの場合)
+_middleware.ts (ボット検出)
+  ↓ (OGPボット)
 SSR処理開始
   ↓
 Backend APIにデータリクエスト
   ↓
-OGP HTMLを生成
+OGP HTMLを生成（JavaScriptなし、メタデータのみ）
   ↓
 完成したHTMLをボットに返却
 ```
 
-**注:** ログ詳細ページとタグ詳細ページは、ボットかどうかに関わらず全てのアクセスに対してSSRを実行します。
+**注:** ログ詳細ページとタグ詳細ページは、OGPボットからのアクセスに対してSSRを実行します。通常のブラウザからのアクセスには、ビルド済みのSPA（Single Page Application）が配信され、クライアントサイドでOGPメタデータが動的に設定されます。
 
 ## 実装詳細
 
@@ -156,7 +152,8 @@ async function handleTagSSR(tagName: string, baseUrl: string, apiBaseUrl: string
 
 ### ボット検出
 
-**注:** 現在は使用されていませんが、将来的に特定のボットに対して異なる動作を実装する可能性があるため、ボット検出コードは保持されています。
+ログ詳細ページおよびタグ詳細ページへのアクセス時に、User-Agentを検査してOGPボットを検出します。
+OGPボットの場合はサーバーサイドでOGPメタデータを含むHTMLを生成して返却し、通常のブラウザの場合はビルド済みSPAを配信します。
 
 以下のUser-Agentパターンを検出可能：
 
@@ -234,7 +231,10 @@ npm run build
 # 3. Pages Functionsをローカル実行
 npx wrangler pages dev dist
 
-# 4. 詳細ページとしてテスト（通常のブラウザまたはボット）
+# 4. ボットとしてテスト（SSR）
+curl -H "User-Agent: Twitterbot/1.0" http://localhost:8788/logs/log_alice_1
+
+# 5. 通常のブラウザとしてテスト（SPA）
 curl http://localhost:8788/logs/log_alice_1
 ```
 
@@ -295,14 +295,17 @@ npm run build
 ### E2Eテスト
 
 ```bash
-# 詳細ページのSSRをテスト（通常のUser-Agent）
-curl https://shumilog.dev/logs/log_alice_1
-
-# ボットとしてもテスト可能
+# OGPボットとしてログ詳細ページのSSRをテスト
 curl -H "User-Agent: Twitterbot/1.0" https://shumilog.dev/logs/log_alice_1
 
-# レスポンスにOGPメタタグが含まれることを確認
-curl https://shumilog.dev/tags/Anime | grep 'og:title'
+# 通常のブラウザとしてSPAをテスト
+curl https://shumilog.dev/logs/log_alice_1
+
+# ボット向けレスポンスにOGPメタタグが含まれることを確認
+curl -H "User-Agent: Twitterbot/1.0" https://shumilog.dev/tags/Anime | grep 'og:title'
+
+# ブラウザ向けレスポンスにビルド済みJavaScriptが含まれることを確認
+curl https://shumilog.dev/logs/log_alice_1 | grep 'assets/index-'
 ```
 
 ## 拡張性

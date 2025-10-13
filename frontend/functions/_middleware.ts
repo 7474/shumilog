@@ -7,9 +7,11 @@
  * SSR機能を実現しています。
  * 
  * 主な機能:
- * - ログ・タグページのサーバーサイドレンダリング（全てのアクセスに対して）
+ * - OGPボット検出（Twitter、Facebook、Slack等）
+ * - ログ・タグページのサーバーサイドレンダリング（OGPボット向け）
  * - OGPメタタグの動的生成
  * - 画像の最適化（Cloudflare Image Resizing）
+ * - 通常のブラウザにはSPAを配信（CSRでOGP対応）
  * - エッジでの高速実行とキャッシュ
  * 
  * 詳細なアーキテクチャ: docs/ssr-framework.md
@@ -78,7 +80,7 @@ function extractPlainText(markdown: string, maxLength = 200): string {
 }
 
 /**
- * OGP HTMLを生成
+ * OGP HTMLを生成（OGPボット専用、JavaScriptは含まない）
  */
 function generateOgpHtml(params: {
   title: string;
@@ -129,12 +131,13 @@ function generateOgpHtml(params: {
       <div style="max-width: 800px; margin: 40px auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
         <h1 style="color: #06aedd; margin-bottom: 20px;">${escapedTitle}</h1>
         <p style="color: #666; line-height: 1.6;">${escapedDesc}</p>
-        <p style="margin-top: 20px; color: #999;">
-          このページをブラウザで表示するには、JavaScriptを有効にしてください。
-        </p>
+        <noscript>
+          <p style="margin-top: 20px; color: #999;">
+            このページをブラウザで表示するには、JavaScriptを有効にしてください。
+          </p>
+        </noscript>
       </div>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>`;
 }
@@ -276,10 +279,13 @@ export async function onRequest(context: {
   const apiBaseUrl = env.API_BASE_URL || 'https://api.shumilog.dev';
   const baseUrl = url.origin;
 
-  // ログ詳細ページのSSR（常に実行）
+  // OGPボット検出
+  const isBot = isOgpBot(userAgent);
+
+  // ログ詳細ページのSSR（OGPボットの場合のみ）
   const logMatch = url.pathname.match(/^\/logs\/([^/]+)$/);
-  if (logMatch) {
-    console.log(`[SSR] Generating SSR for log: ${url.pathname}, User-Agent: ${userAgent}`);
+  if (logMatch && isBot) {
+    console.log(`[SSR] Generating SSR for log (bot): ${url.pathname}, User-Agent: ${userAgent}`);
     const logId = logMatch[1];
     const ssrResponse = await handleLogSSR(logId, baseUrl, apiBaseUrl);
     if (ssrResponse) {
@@ -287,10 +293,10 @@ export async function onRequest(context: {
     }
   }
 
-  // タグ詳細ページのSSR（常に実行）
+  // タグ詳細ページのSSR（OGPボットの場合のみ）
   const tagMatch = url.pathname.match(/^\/tags\/([^/]+)$/);
-  if (tagMatch) {
-    console.log(`[SSR] Generating SSR for tag: ${url.pathname}, User-Agent: ${userAgent}`);
+  if (tagMatch && isBot) {
+    console.log(`[SSR] Generating SSR for tag (bot): ${url.pathname}, User-Agent: ${userAgent}`);
     const tagName = decodeURIComponent(tagMatch[1]);
     const ssrResponse = await handleTagSSR(tagName, baseUrl, apiBaseUrl);
     if (ssrResponse) {
@@ -298,6 +304,6 @@ export async function onRequest(context: {
     }
   }
 
-  // 詳細ページ以外は通常のSPAを返す
+  // OGPボット以外、またはSSR失敗時は通常のSPAを返す
   return next();
 }

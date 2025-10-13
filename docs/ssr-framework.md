@@ -77,13 +77,17 @@ shumilogは、**Cloudflare Pages Functions**を「SSRフレームワーク」と
   ↓
 Cloudflare Pages
   ↓
-_middleware.ts (User-Agent判定)
-  ↓ (通常ブラウザ)
-Static SPA (React)
+_middleware.ts (パス判定)
+  ↓ (詳細ページの場合)
+SSR処理開始
   ↓
-ユーザーのブラウザで実行
+Backend APIにデータリクエスト
   ↓
-Backend APIを呼び出し (CSR)
+OGP HTMLを生成
+  ↓
+完成したHTMLをユーザーに返却
+  ↓
+ブラウザでJavaScriptが実行され、SPAとして動作
 ```
 
 #### OGPボット（SSR）
@@ -93,8 +97,8 @@ OGPボット (Twitter, Facebook, etc)
   ↓
 Cloudflare Pages
   ↓
-_middleware.ts (User-Agent判定)
-  ↓ (ボット検出)
+_middleware.ts (パス判定)
+  ↓ (詳細ページの場合)
 SSR処理開始
   ↓
 Backend APIにデータリクエスト
@@ -104,6 +108,8 @@ OGP HTMLを生成
 完成したHTMLをボットに返却
 ```
 
+**注:** ログ詳細ページとタグ詳細ページは、ボットかどうかに関わらず全てのアクセスに対してSSRを実行します。
+
 ## 実装詳細
 
 ### ミドルウェア構造
@@ -111,10 +117,9 @@ OGP HTMLを生成
 `frontend/functions/_middleware.ts`は以下の責務を持ちます：
 
 1. **リクエストインターセプト** - すべてのリクエストを受信
-2. **ボット検出** - User-Agentベースの判定
-3. **ルーティング** - パスに応じたSSRハンドラー選択
-4. **SSR実行** - OGP HTMLの動的生成
-5. **フォールバック** - 失敗時はSPAへ
+2. **パスルーティング** - パスに応じたSSRハンドラー選択
+3. **SSR実行** - ログ・タグ詳細ページのOGP HTML動的生成
+4. **フォールバック** - SSR失敗時またはその他のページはSPAへ
 
 ### SSRハンドラー
 
@@ -151,7 +156,9 @@ async function handleTagSSR(tagName: string, baseUrl: string, apiBaseUrl: string
 
 ### ボット検出
 
-対応するUser-Agentパターン：
+**注:** 現在は使用されていませんが、将来的に特定のボットに対して異なる動作を実装する可能性があるため、ボット検出コードは保持されています。
+
+以下のUser-Agentパターンを検出可能：
 
 - Twitterbot (Twitter/X)
 - facebookexternalhit (Facebook)
@@ -227,8 +234,8 @@ npm run build
 # 3. Pages Functionsをローカル実行
 npx wrangler pages dev dist
 
-# 4. ボットとしてテスト
-curl -H "User-Agent: Twitterbot/1.0" http://localhost:8788/logs/log_alice_1
+# 4. 詳細ページとしてテスト（通常のブラウザまたはボット）
+curl http://localhost:8788/logs/log_alice_1
 ```
 
 ### デプロイ
@@ -288,12 +295,14 @@ npm run build
 ### E2Eテスト
 
 ```bash
-# OGPボットとしてSSRをテスト
+# 詳細ページのSSRをテスト（通常のUser-Agent）
+curl https://shumilog.dev/logs/log_alice_1
+
+# ボットとしてもテスト可能
 curl -H "User-Agent: Twitterbot/1.0" https://shumilog.dev/logs/log_alice_1
 
 # レスポンスにOGPメタタグが含まれることを確認
-curl -H "User-Agent: facebookexternalhit/1.1" https://shumilog.dev/tags/Anime \
-  | grep 'og:title'
+curl https://shumilog.dev/tags/Anime | grep 'og:title'
 ```
 
 ## 拡張性
@@ -409,19 +418,17 @@ CSRで設定するメタデータは、SSRで生成される内容と完全に�
 ### OGPプレビューが表示されない
 
 **確認項目:**
-1. ボット検出が正しく動作しているか
-2. バックエンドAPIが正常に応答しているか
-3. OGPメタタグが正しく生成されているか
-4. 画像URLが有効か
+1. バックエンドAPIが正常に応答しているか
+2. OGPメタタグが正しく生成されているか
+3. 画像URLが有効か
 
 **デバッグ方法:**
 ```bash
-# レスポンスのHTMLを確認
-curl -H "User-Agent: Twitterbot/1.0" https://shumilog.dev/logs/YOUR_LOG_ID
+# レスポンスのHTMLを確認（通常のUser-Agent）
+curl https://shumilog.dev/logs/YOUR_LOG_ID
 
 # メタタグの確認
-curl -H "User-Agent: Twitterbot/1.0" https://shumilog.dev/logs/YOUR_LOG_ID \
-  | grep -i "og:"
+curl https://shumilog.dev/logs/YOUR_LOG_ID | grep -i "og:"
 ```
 
 ## まとめ

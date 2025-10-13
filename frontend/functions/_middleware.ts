@@ -79,14 +79,18 @@ function extractPlainText(markdown: string, maxLength = 200): string {
 
 /**
  * OGP HTMLを生成
+ * ビルド済みindex.htmlを取得し、OGPメタタグを注入してSSRからCSRへシームレスに移行
  */
-function generateOgpHtml(params: {
-  title: string;
-  description: string;
-  url: string;
-  image?: string;
-  type?: string;
-}): string {
+async function generateOgpHtml(
+  params: {
+    title: string;
+    description: string;
+    url: string;
+    image?: string;
+    type?: string;
+  },
+  baseIndexHtml: string
+): Promise<string> {
   const { title, description, url, image, type = 'website' } = params;
   const siteName = 'Shumilog';
   
@@ -99,14 +103,8 @@ function generateOgpHtml(params: {
   const escapedUrl = escapeHtml(url);
   const escapedSiteName = escapeHtml(siteName);
 
-  return `<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#06aedd" />
-    
+  // OGPメタタグを生成
+  const ogpMetaTags = `
     <title>${escapedTitle} - ${escapedSiteName}</title>
     <meta name="title" content="${escapedTitle}" />
     <meta name="description" content="${escapedDesc}" />
@@ -122,21 +120,28 @@ function generateOgpHtml(params: {
     <meta property="twitter:url" content="${escapedUrl}" />
     <meta property="twitter:title" content="${escapedTitle}" />
     <meta property="twitter:description" content="${escapedDesc}" />
-    ${image ? `<meta property="twitter:image" content="${escapeHtml(image)}" />` : ''}
-  </head>
-  <body>
-    <div id="root">
+    ${image ? `<meta property="twitter:image" content="${escapeHtml(image)}" />` : ''}`;
+
+  // ビルド済みHTMLのheadにOGPメタタグを注入
+  // <title>タグを置き換え、残りのメタタグを追加
+  let modifiedHtml = baseIndexHtml.replace(
+    /<title>.*?<\/title>/,
+    ogpMetaTags
+  );
+
+  // SSR用の初期コンテンツをrootに注入（CSRが引き継ぐまでの表示用）
+  const ssrContent = `
       <div style="max-width: 800px; margin: 40px auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
         <h1 style="color: #06aedd; margin-bottom: 20px;">${escapedTitle}</h1>
         <p style="color: #666; line-height: 1.6;">${escapedDesc}</p>
-        <p style="margin-top: 20px; color: #999;">
-          このページをブラウザで表示するには、JavaScriptを有効にしてください。
-        </p>
-      </div>
-    </div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>`;
+      </div>`;
+  
+  modifiedHtml = modifiedHtml.replace(
+    /<div id="root"><\/div>/,
+    `<div id="root">${ssrContent}</div>`
+  );
+
+  return modifiedHtml;
 }
 
 /**
@@ -173,6 +178,14 @@ function getOgpImageUrl(imageUrl: string, baseUrl: string): string {
  */
 async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string): Promise<Response | null> {
   try {
+    // ビルド済みindex.htmlを取得
+    const indexHtmlResponse = await fetch(`${baseUrl}/`);
+    if (!indexHtmlResponse.ok) {
+      console.error('[SSR] Failed to fetch base index.html');
+      return null;
+    }
+    const baseIndexHtml = await indexHtmlResponse.text();
+
     const apiUrl = `${apiBaseUrl}/api/logs/${logId}`;
     const response = await fetch(apiUrl);
 
@@ -201,13 +214,13 @@ async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string):
       image = getOgpImageUrl(imageUrl, baseUrl);
     }
 
-    const html = generateOgpHtml({
+    const html = await generateOgpHtml({
       title,
       description,
       url,
       image,
       type: 'article',
-    });
+    }, baseIndexHtml);
 
     return new Response(html, {
       headers: {
@@ -226,6 +239,14 @@ async function handleLogSSR(logId: string, baseUrl: string, apiBaseUrl: string):
  */
 async function handleTagSSR(tagName: string, baseUrl: string, apiBaseUrl: string): Promise<Response | null> {
   try {
+    // ビルド済みindex.htmlを取得
+    const indexHtmlResponse = await fetch(`${baseUrl}/`);
+    if (!indexHtmlResponse.ok) {
+      console.error('[SSR] Failed to fetch base index.html');
+      return null;
+    }
+    const baseIndexHtml = await indexHtmlResponse.text();
+
     const apiUrl = `${apiBaseUrl}/api/tags/${encodeURIComponent(tagName)}`;
     const response = await fetch(apiUrl);
 
@@ -241,12 +262,12 @@ async function handleTagSSR(tagName: string, baseUrl: string, apiBaseUrl: string
       : `${tag.name}に関するログを探す`;
     const url = `${baseUrl}/tags/${encodeURIComponent(tagName)}`;
 
-    const html = generateOgpHtml({
+    const html = await generateOgpHtml({
       title,
       description,
       url,
       type: 'website',
-    });
+    }, baseIndexHtml);
 
     return new Response(html, {
       headers: {

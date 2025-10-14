@@ -34,8 +34,8 @@ export function MyLogsPage() {
     logs: { total: number; public: number; recent: number };
     tags: {
       total: number;
-      top_tags: Array<{ id: string; name: string; description: string | null; count: number }>;
-      recent_tags: Array<{ id: string; name: string; description: string | null; lastUsed: string }>;
+      top_tags: Array<{ id: string; name: string; description?: string | null; count: number }>;
+      recent_tags: Array<{ id: string; name: string; description?: string | null; lastUsed: string }>;
     };
   } | null>(null);
 

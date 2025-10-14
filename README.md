@@ -245,7 +245,6 @@ shumilog/
 - Twitter、Facebook、Slackなどのリンクプレビュー対応
 - ログ詳細ページとタグ詳細ページのOGPメタタグ自動生成
 - ボット検出による自動SSR切り替え
-- 詳細は[SSRフレームワーク アーキテクチャ](./docs/ssr-framework.md)および[SSR対応ドキュメント](./docs/ssr-support.md)を参照
 
 ### タグシステム
 - ハッシュタグ形式でのタグ付け
@@ -257,28 +256,19 @@ shumilog/
 - ユーザープロフィール
 - ログの所有権管理
 
-## パフォーマンス
-
-APIレスポンスの高速化について詳しくは[API応答高速化計画](./docs/api-performance-optimization-plan.md)を参照してください。
-
-**目標:**
-- 90パーセンタイル: 100ms以下
-- 99パーセンタイル: 500ms以下
-
 ## デプロイメント
 
 ### フロントエンド (Cloudflare Pages)
 
-**SSR対応のデプロイ手順**: [Cloudflare Pages デプロイメントガイド（SSR対応）](./docs/cloudflare-pages-deployment.md)を参照してください。
+Cloudflare Pagesを使用してフロントエンドをデプロイします。GitHubリポジトリと連携することで、プッシュ時に自動的にビルドとデプロイが行われます。
 
-このガイドでは以下を説明しています：
-- Cloudflare Pagesプロジェクトの作成
-- ビルド設定（Pages Functions含む）
-- 環境変数の設定
-- SSR機能の確認方法
-- トラブルシューティング
+**ビルド設定:**
+- ビルドコマンド: `npm run build`
+- ビルド出力ディレクトリ: `frontend/dist`
+- ルートディレクトリ: `frontend`
 
-**従来のデプロイ情報**: [フロントエンドデプロイメントガイド](./docs/frontend-deployment.md)も参照可能です。
+**環境変数:**
+- `VITE_API_BASE_URL`: バックエンドAPIのエンドポイントURL
 
 ### バックエンド (Cloudflare Workers)
 

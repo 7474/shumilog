@@ -21,7 +21,7 @@
   "dependencies": {
     "@mixmark-io/domino": "^2.2.0",
     "@types/turndown": "^5.0.5",
-    "hono": "^4.9.10",
+    "hono": "^4.9.12",
     "turndown": "^7.2.1",
     "uuid": "^13.0.0"
   },

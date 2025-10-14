@@ -6,7 +6,6 @@ import {
   createTestSession,
   seedTestLogs
 } from '../helpers/app';
-import { toOpenApiResponse } from '../helpers/openapi-setup';
 
 /**
  * Contract Test: GET /logs/{logId}/related
@@ -40,10 +39,6 @@ describe('Contract: GET /logs/{logId}/related', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Type')).toContain('application/json');
-
-    // Validate response against OpenAPI specification
-    const openApiResponse = await toOpenApiResponse(response, `/logs/${targetLog.id}/related`, 'GET');
-    expect(openApiResponse).toSatisfyApiSpec();
 
     const payload = await response.json();
     expect(payload).toMatchObject({
@@ -96,11 +91,6 @@ describe('Contract: GET /logs/{logId}/related', () => {
     });
 
     expect(response.status).toBe(200);
-
-    // Validate response against OpenAPI specification
-    const openApiResponse = await toOpenApiResponse(response, `/logs/${logData.id}/related`, 'GET');
-    expect(openApiResponse).toSatisfyApiSpec();
-
     const payload = await response.json();
     expect(payload.items).toEqual([]);
     expect(payload.total).toBe(0);

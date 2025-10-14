@@ -301,6 +301,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/me/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user's statistics
+         * @description Returns comprehensive statistics about the user's activity, including log counts and tag usage
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description User statistics */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            logs: {
+                                /** @description Total number of logs */
+                                total: number;
+                                /** @description Number of public logs */
+                                public: number;
+                                /** @description Number of logs created in the last 7 days */
+                                recent: number;
+                            };
+                            tags: {
+                                /** @description Total number of unique tags used */
+                                total: number;
+                                /** @description Most frequently used tags */
+                                top_tags: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    name: string;
+                                    description?: string | null;
+                                    /** @description Number of times this tag has been used */
+                                    count: number;
+                                }[];
+                                /** @description Recently used tags (last 7 days) */
+                                recent_tags: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    name: string;
+                                    description?: string | null;
+                                    /** Format: date-time */
+                                    lastUsed: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tags": {
         parameters: {
             query?: never;

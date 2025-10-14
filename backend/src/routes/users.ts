@@ -66,4 +66,30 @@ users.get('/me/logs', async (c) => {
   });
 });
 
+// GET /users/me/stats - Get current user's statistics
+users.get('/me/stats', async (c) => {
+  const user = getAuthUser(c);
+  const userService = resolveUserService(c);
+  const logService = resolveLogService(c);
+
+  // Get both log and tag statistics in parallel
+  const [logStats, tagStats] = await Promise.all([
+    logService.getUserLogStats(user.id),
+    userService.getUserTagStats(user.id, 5)
+  ]);
+
+  return c.json({
+    logs: {
+      total: logStats.totalLogs,
+      public: logStats.publicLogs,
+      recent: logStats.recentLogsCount
+    },
+    tags: {
+      total: tagStats.totalTags,
+      top_tags: tagStats.topTags,
+      recent_tags: tagStats.recentTags
+    }
+  });
+});
+
 export default users;

@@ -269,19 +269,19 @@ export function MyLogsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-fresh-600">
-                {stats?.logs.total ?? logs.length}
+                {stats?.logs?.total ?? logs.length}
               </div>
               <div className="text-sm text-gray-600 mt-1">総ログ数</div>
             </div>
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-sky-600">
-                {stats?.logs.public ?? logs.filter((log) => log.is_public).length}
+                {stats?.logs?.public ?? logs.filter((log) => log.is_public).length}
               </div>
               <div className="text-sm text-gray-600 mt-1">公開中</div>
             </div>
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-teal-600">
-                {stats?.logs.total !== undefined 
+                {stats?.logs?.total !== undefined 
                   ? stats.logs.total - stats.logs.public 
                   : logs.filter((log) => !log.is_public).length}
               </div>
@@ -289,14 +289,14 @@ export function MyLogsPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-purple-600">
-                {stats?.tags.total ?? 0}
+                {stats?.tags?.total ?? 0}
               </div>
               <div className="text-sm text-gray-600 mt-1">使用タグ数</div>
             </div>
           </div>
 
           {/* タグ統計情報 */}
-          {stats?.tags.top_tags && stats.tags.top_tags.length > 0 && (
+          {stats?.tags?.top_tags && stats.tags.top_tags.length > 0 && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <TagIcon size={16} />

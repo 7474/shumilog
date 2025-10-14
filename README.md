@@ -172,6 +172,12 @@ npm run lint
 
 バックエンドはOpenAPI仕様に対する自動検証を実装しており、フロントエンドはOpenAPI仕様からTypeScript型定義を自動生成することで、API実装とクライアントコードが常に仕様と一致していることを保証します。
 
+**CI/CD統合:**
+- バックエンドCI: コントラクトテスト（OpenAPI検証）を明示的に実行
+- フロントエンドCI: 型定義を再生成し、差分がある場合はビルドを失敗させる
+
+詳細は [`docs/api-validation-guide.md`](docs/api-validation-guide.md) を参照してください。
+
 ## API開発
 
 正規のAPI仕様書は`/api/v1/openapi.yaml`にあります。このファイルはすべてのAPI開発の**信頼できる情報源**であり、継続的に保守する必要があります。

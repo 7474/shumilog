@@ -4,14 +4,6 @@ node_modules/
 # ESLint cache
 .eslintcache
 
-# Legacy directories intentionally pruned
-backend/docs/
-specs/002-docker-compose-up/
-specs/003-web-cloudflare-cloudflare/
-frontend/src/pages/legacy/
-tests/performance/
-tests/integration/legacy/
-
 # Frontend build output
 frontend/dist/
 

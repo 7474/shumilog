@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { app, clearTestData, setupTestEnvironment } from '../helpers/app';
+import { toOpenApiResponse } from '../helpers/openapi-setup';
 
 describe('Contract: Support routes', () => {
   let sessionToken: string;
@@ -63,6 +64,12 @@ describe('Contract: Support routes', () => {
 
       // Should not be 401 - either 200 (success) or 404/500 (Wikipedia API issues)
       expect(response.status).not.toBe(401);
+
+      // If we get 200, validate against OpenAPI spec
+      if (response.status === 200) {
+        const openApiResponse = await toOpenApiResponse(response, '/support/tags', 'POST');
+        expect(openApiResponse).toSatisfyApiSpec();
+      }
     });
 
     it('should return 400 for invalid request body', async () => {

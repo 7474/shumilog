@@ -29,7 +29,7 @@ export function LogImages({ logId, images }: LogImagesProps) {
               <img
                 src={getLogDetailImageUrl(imageUrl)}
                 alt={image.file_name}
-                className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200"
+                className="w-full object-contain group-hover:scale-105 transition-transform duration-200"
                 loading="lazy"
               />
             </a>

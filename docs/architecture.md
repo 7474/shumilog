@@ -160,13 +160,13 @@ graph TB
         end
         
         subgraph "Routes"
-            HealthRoute[/health]
-            AuthRoutes[/auth/*<br/>Twitter OAuth]
-            UserRoutes[/users/*]
-            LogRoutes[/logs/*]
-            TagRoutes[/tags/*]
-            ImageRoutes[/images/*]
-            SearchRoute[/search]
+            HealthRoute["/health"]
+            AuthRoutes["/auth/*<br/>Twitter OAuth"]
+            UserRoutes["/users/*"]
+            LogRoutes["/logs/*"]
+            TagRoutes["/tags/*"]
+            ImageRoutes["/images/*"]
+            SearchRoute["/search"]
         end
         
         subgraph "Services"

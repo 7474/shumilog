@@ -44,6 +44,7 @@ export function TagDetailPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [logFormInitialContent, setLogFormInitialContent] = useState<string>('');
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -139,6 +140,20 @@ export function TagDetailPage() {
     return tagName.includes(' ') ? `#{${tagName}}` : `#${tagName}`;
   };
 
+  const handleCreateLogWithParentOnly = () => {
+    if (!tag) return;
+    setLogFormInitialContent(formatTagHashtag(tag.name));
+    setShowLogForm(true);
+  };
+
+  const handleCreateLogWithParentAndChild = (childTag: Tag) => {
+    if (!tag) return;
+    const parentHashtag = formatTagHashtag(tag.name);
+    const childHashtag = formatTagHashtag(childTag.name);
+    setLogFormInitialContent(`${parentHashtag} ${childHashtag}`);
+    setShowLogForm(true);
+  };
+
   // OGPメタデータの設定（SSRと同じ内容）
   useOgp(tag ? {
     title: `#${tag.name}`,
@@ -202,7 +217,13 @@ export function TagDetailPage() {
           {/* プライマリアクション: このタグでログを作成（認証済みユーザーのみ） */}
           {isAuthenticated && (
             <Button
-              onClick={() => setShowLogForm(!showLogForm)}
+              onClick={() => {
+                if (showLogForm) {
+                  setShowLogForm(false);
+                } else {
+                  handleCreateLogWithParentOnly();
+                }
+              }}
               size="sm"
               className={showLogForm ? 'bg-gray-500 hover:bg-gray-600' : 'btn-fresh'}
             >
@@ -276,7 +297,7 @@ export function TagDetailPage() {
           </DialogHeader>
           <LogForm
             key={tag.id}
-            initialContent={formatTagHashtag(tag.name)}
+            initialContent={logFormInitialContent}
             onSuccess={handleLogSuccess}
             onCancel={() => setShowLogForm(false)}
           />
@@ -364,19 +385,42 @@ export function TagDetailPage() {
           {tag.associated_tags && tag.associated_tags.length > 0 && (
             <div className="border-t border-gray-100 pt-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">🔗 関連タグ</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
                 {tag.associated_tags.map((associatedTag) => (
-                  <Link
-                    key={associatedTag.id}
-                    to={`/tags/${encodeURIComponent(associatedTag.name)}`}
-                  >
-                    <span className="inline-flex items-center space-x-1 px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm hover:bg-sky-100 transition-colors cursor-pointer">
-                      <span className="w-2 h-2 rounded-full bg-sky-400"></span>
-                      <span>{associatedTag.name}</span>
-                    </span>
-                  </Link>
+                  <div key={associatedTag.id} className="flex items-center gap-2">
+                    {/* タグ名（タップで詳細ページへ） */}
+                    <Link 
+                      to={`/tags/${encodeURIComponent(associatedTag.name)}`}
+                      className="flex-1"
+                    >
+                      <span className="inline-flex items-center space-x-1 px-3 py-2 bg-sky-50 text-sky-700 rounded-lg text-sm active:bg-sky-100 transition-colors w-full">
+                        <span className="w-2 h-2 rounded-full bg-sky-400"></span>
+                        <span>{associatedTag.name}</span>
+                      </span>
+                    </Link>
+                    
+                    {/* ログ作成ボタン（常時表示、モバイルでタップ可能） */}
+                    {isAuthenticated && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleCreateLogWithParentAndChild(associatedTag);
+                        }}
+                        className="flex-shrink-0 bg-fresh-500 text-white rounded-lg p-2 active:bg-fresh-600 transition-colors shadow-sm min-w-[44px] min-h-[44px] flex items-center justify-center"
+                        title={`${associatedTag.name}でログを作成`}
+                        aria-label={`${associatedTag.name}でログを作成`}
+                      >
+                        <PenLine size={16} />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
+              
+              {/* モバイル向けヘルプテキスト */}
+              <p className="text-xs text-gray-500 mt-2">
+                💡 タグ名タップで詳細表示、✏️ボタンタップでログ作成
+              </p>
             </div>
           )}
         </CardContent>

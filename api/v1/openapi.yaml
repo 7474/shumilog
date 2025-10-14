@@ -170,6 +170,94 @@ paths:
         '401':
           description: Not authenticated
 
+  /users/me/stats:
+    get:
+      summary: Get current user's statistics
+      description: Returns comprehensive statistics about the user's activity, including log counts and tag usage
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - logs
+                  - tags
+                properties:
+                  logs:
+                    type: object
+                    required:
+                      - total
+                      - public
+                      - recent
+                    properties:
+                      total:
+                        type: integer
+                        description: Total number of logs
+                      public:
+                        type: integer
+                        description: Number of public logs
+                      recent:
+                        type: integer
+                        description: Number of logs created in the last 7 days
+                  tags:
+                    type: object
+                    required:
+                      - total
+                      - top_tags
+                      - recent_tags
+                    properties:
+                      total:
+                        type: integer
+                        description: Total number of unique tags used
+                      top_tags:
+                        type: array
+                        description: Most frequently used tags
+                        items:
+                          type: object
+                          required:
+                            - id
+                            - name
+                            - count
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            description:
+                              type: string
+                              nullable: true
+                            count:
+                              type: integer
+                              description: Number of times this tag has been used
+                      recent_tags:
+                        type: array
+                        description: Recently used tags (last 7 days)
+                        items:
+                          type: object
+                          required:
+                            - id
+                            - name
+                            - lastUsed
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            description:
+                              type: string
+                              nullable: true
+                            lastUsed:
+                              type: string
+                              format: date-time
+        '401':
+          description: Not authenticated
+
   /tags:
     get:
       summary: Search and list tags

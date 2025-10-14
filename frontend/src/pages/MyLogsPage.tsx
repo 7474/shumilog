@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PenLine, X, FileText, LogOut, MoreVertical } from 'lucide-react';
+import { PenLine, X, FileText, LogOut, MoreVertical, Tag as TagIcon } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOgp } from '@/hooks/useOgp';
 
@@ -30,6 +30,14 @@ export function MyLogsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [stats, setStats] = useState<{
+    logs: { total: number; public: number; recent: number };
+    tags: {
+      total: number;
+      top_tags: Array<{ id: string; name: string; description: string | null; count: number }>;
+      recent_tags: Array<{ id: string; name: string; description: string | null; lastUsed: string }>;
+    };
+  } | null>(null);
 
   const fetchLogs = async (search?: string, isInitialLoad = false) => {
     try {
@@ -64,6 +72,24 @@ export function MyLogsPage() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const { data, error: fetchError, response } = await api.GET('/users/me/stats', {});
+      if (fetchError || !data) {
+        if (response?.status === 401) {
+          // Not authenticated, redirect to login
+          navigate('/login');
+          return;
+        }
+        console.error('Failed to fetch stats');
+        return;
+      }
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to fetch stats', err);
+    }
+  };
+
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     
@@ -91,6 +117,7 @@ export function MyLogsPage() {
 
   useEffect(() => {
     fetchLogs(undefined, true);
+    fetchStats();
   }, []);
 
   const handleSuccess = (_logId?: string) => {
@@ -239,24 +266,58 @@ export function MyLogsPage() {
       {/* 統計情報 */}
       <Card className="card-fresh bg-gradient-to-br from-fresh-50 to-sky-50">
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-fresh-600">{logs.length}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-fresh-600">
+                {stats?.logs.total ?? logs.length}
+              </div>
               <div className="text-sm text-gray-600 mt-1">総ログ数</div>
             </div>
             <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-sky-600">
-                {logs.filter((log) => log.is_public).length}
+                {stats?.logs.public ?? logs.filter((log) => log.is_public).length}
               </div>
               <div className="text-sm text-gray-600 mt-1">公開中</div>
             </div>
-            <div className="text-center col-span-2 sm:col-span-1">
+            <div className="text-center">
               <div className="text-2xl sm:text-3xl font-bold text-teal-600">
-                {logs.filter((log) => !log.is_public).length}
+                {stats?.logs.total !== undefined 
+                  ? stats.logs.total - stats.logs.public 
+                  : logs.filter((log) => !log.is_public).length}
               </div>
               <div className="text-sm text-gray-600 mt-1">非公開</div>
             </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600">
+                {stats?.tags.total ?? 0}
+              </div>
+              <div className="text-sm text-gray-600 mt-1">使用タグ数</div>
+            </div>
           </div>
+
+          {/* タグ統計情報 */}
+          {stats?.tags.top_tags && stats.tags.top_tags.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <TagIcon size={16} />
+                よく使うタグ
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {stats.tags.top_tags.map((tag) => (
+                  <Link
+                    key={tag.id}
+                    to={`/tags/${tag.id}`}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full hover:border-fresh-300 hover:bg-fresh-50 transition-colors text-sm"
+                  >
+                    <span className="font-medium text-gray-900">#{tag.name}</span>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {tag.count}回
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -173,6 +173,78 @@ export class UserService {
   }
 
   /**
+   * Get user's tag statistics
+   */
+  async getUserTagStats(userId: string, topTagsLimit = 5): Promise<{
+    totalTags: number;
+    topTags: Array<{ id: string; name: string; description: string | null; count: number }>;
+    recentTags: Array<{ id: string; name: string; description: string | null; lastUsed: string }>;
+  }> {
+    // Get total unique tags count
+    const totalTagsResult = await this.db.queryFirst<{ count: number }>(
+      `SELECT COUNT(DISTINCT lta.tag_id) as count 
+       FROM log_tag_associations lta 
+       JOIN logs l ON l.id = lta.log_id 
+       WHERE l.user_id = ?`,
+      [userId]
+    );
+
+    // Get top used tags
+    const topTagsRows = await this.db.query<{ 
+      id: string; 
+      name: string; 
+      description: string | null; 
+      count: number 
+    }>(
+      `SELECT t.id, t.name, t.description, COUNT(*) as count
+       FROM log_tag_associations lta
+       JOIN logs l ON l.id = lta.log_id
+       JOIN tags t ON lta.tag_id = t.id
+       WHERE l.user_id = ?
+       GROUP BY t.id, t.name, t.description
+       ORDER BY count DESC, t.name ASC
+       LIMIT ?`,
+      [userId, topTagsLimit]
+    );
+
+    // Get recently used tags (last 7 days)
+    const recentDate = new Date();
+    recentDate.setDate(recentDate.getDate() - 7);
+    const recentTagsRows = await this.db.query<{
+      id: string;
+      name: string;
+      description: string | null;
+      lastUsed: string;
+    }>(
+      `SELECT DISTINCT t.id, t.name, t.description, MAX(l.created_at) as lastUsed
+       FROM log_tag_associations lta
+       JOIN logs l ON l.id = lta.log_id
+       JOIN tags t ON lta.tag_id = t.id
+       WHERE l.user_id = ? AND l.created_at >= ?
+       GROUP BY t.id, t.name, t.description
+       ORDER BY lastUsed DESC
+       LIMIT ?`,
+      [userId, recentDate.toISOString(), topTagsLimit]
+    );
+
+    return {
+      totalTags: totalTagsResult?.count || 0,
+      topTags: topTagsRows.map(row => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        count: row.count
+      })),
+      recentTags: recentTagsRows.map(row => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        lastUsed: row.lastUsed
+      }))
+    };
+  }
+
+  /**
    * Check if user has admin privileges
    */
   isAdmin(user: User): boolean {

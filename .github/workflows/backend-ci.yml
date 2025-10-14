@@ -42,4 +42,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
-      - run: npm test
+      - name: Run contract tests (OpenAPI validation)
+        run: npm run test:contract
+      - name: Run all tests
+        run: npm test

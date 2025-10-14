@@ -8,6 +8,7 @@ import {
   setupTestEnvironment,
   TEST_TAG_IDS,
 } from '../helpers/app';
+import { toOpenApiResponse } from '../helpers/openapi-setup';
 
 /**
  * Contract Suite: Tags routes
@@ -31,6 +32,10 @@ describe('Contract: Tags routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toContain('application/json');
+
+      // Validate response against OpenAPI specification
+      const openApiResponse = await toOpenApiResponse(response, '/tags', 'GET');
+      expect(openApiResponse).toSatisfyApiSpec();
 
       const payload = await response.json();
       expect(payload).toMatchObject({
@@ -103,6 +108,10 @@ describe('Contract: Tags routes', () => {
       expect(response.status).toBe(201);
       expect(response.headers.get('Content-Type')).toContain('application/json');
 
+      // Validate response against OpenAPI specification
+      const openApiResponse = await toOpenApiResponse(response, '/tags', 'POST');
+      expect(openApiResponse).toSatisfyApiSpec();
+
       const tag = await response.json();
       expect(tag).toMatchObject({
         id: expect.any(String),
@@ -158,6 +167,10 @@ describe('Contract: Tags routes', () => {
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toContain('application/json');
 
+      // Validate response against OpenAPI specification
+      const openApiResponse = await toOpenApiResponse(response, `/tags/${TEST_TAG_IDS.ANIME}`, 'GET');
+      expect(openApiResponse).toSatisfyApiSpec();
+
       const tag = await response.json();
       expect(tag).toMatchObject({
         id: TEST_TAG_IDS.ANIME,
@@ -197,6 +210,11 @@ describe('Contract: Tags routes', () => {
       });
 
       expect(response.status).toBe(200);
+
+      // Validate response against OpenAPI specification
+      const openApiResponse = await toOpenApiResponse(response, `/tags/${TEST_TAG_IDS.ANIME}`, 'PUT');
+      expect(openApiResponse).toSatisfyApiSpec();
+
       const tag = await response.json();
       expect(tag).toMatchObject({
         id: TEST_TAG_IDS.ANIME,
@@ -329,8 +347,16 @@ describe('Contract: Tags routes', () => {
 
       expect(createResponse.status).toBe(201);
 
+      // Validate create response against OpenAPI specification
+      const createOpenApiResponse = await toOpenApiResponse(createResponse, `/tags/${TEST_TAG_IDS.ANIME}/associations`, 'POST');
+      expect(createOpenApiResponse).toSatisfyApiSpec();
+
       const listResponse = await app.request(`/tags/${TEST_TAG_IDS.ANIME}/associations`, { method: 'GET' });
       expect(listResponse.status).toBe(200);
+
+      // Validate list response against OpenAPI specification
+      const listOpenApiResponse = await toOpenApiResponse(listResponse, `/tags/${TEST_TAG_IDS.ANIME}/associations`, 'GET');
+      expect(listOpenApiResponse).toSatisfyApiSpec();
 
       const associations = await listResponse.json();
       expect(Array.isArray(associations)).toBe(true);

@@ -1,8 +1,11 @@
+import type { KVNamespace } from '@cloudflare/workers-types';
 import { Session, SessionModel } from '../models/Session.js';
-import { Database } from '../db/database.js';
+
+// KVでユーザーIDからセッショントークンのセットを管理するためのキープレフィックス
+const USER_SESSIONS_PREFIX = 'user_sessions:';
 
 export class SessionService {
-  constructor(private db: Database) {}
+  constructor(private kv: KVNamespace) {}
 
   /**
    * Issue a new session token for a user
@@ -12,12 +15,22 @@ export class SessionService {
     const expiresAt = SessionModel.createExpiryDate(daysToExpire);
     const now = new Date().toISOString();
 
-    const stmt = this.db.prepare(`
-      INSERT INTO sessions (token, user_id, created_at, expires_at)
-      VALUES (?, ?, ?, ?)
-    `);
+    const session: Session = {
+      token,
+      user_id: userId,
+      created_at: now,
+      expires_at: expiresAt
+    };
 
-    await stmt.run([token, userId, now, expiresAt]);
+    // セッションをKVに保存（TTL付き）
+    const ttlSeconds = daysToExpire * 24 * 60 * 60;
+    await this.kv.put(`session:${token}`, JSON.stringify(session), {
+      expirationTtl: ttlSeconds
+    });
+
+    // ユーザーIDからセッションを検索できるようにインデックスを保存
+    await this.addTokenToUserIndex(userId, token, ttlSeconds);
+
     return token;
   }
 
@@ -29,20 +42,15 @@ export class SessionService {
       return null;
     }
 
-    const row = await this.db.queryFirst(
-      'SELECT token, user_id, created_at, expires_at FROM sessions WHERE token = ?',
-      [token]
-    );
-
-    if (!row) {
+    const sessionJson = await this.kv.get(`session:${token}`);
+    if (!sessionJson) {
       return null;
     }
 
-    const session = SessionModel.fromRow(row);
+    const session = JSON.parse(sessionJson) as Session;
     
-    // Check if session is expired
+    // Check if session is expired (KV TTLで自動削除されるが念のため確認)
     if (SessionModel.isExpired(session)) {
-      // Clean up expired session
       await this.revokeSession(token);
       return null;
     }
@@ -58,49 +66,113 @@ export class SessionService {
       return;
     }
 
-    const stmt = this.db.prepare('DELETE FROM sessions WHERE token = ?');
-    await stmt.run([token]);
+    // セッション情報を取得してユーザーIDを確認
+    const sessionJson = await this.kv.get(`session:${token}`);
+    if (sessionJson) {
+      const session = JSON.parse(sessionJson) as Session;
+      await this.removeTokenFromUserIndex(session.user_id, token);
+    }
+
+    await this.kv.delete(`session:${token}`);
   }
 
   /**
    * Revoke all sessions for a user
    */
   async revokeUserSessions(userId: string): Promise<void> {
-    const stmt = this.db.prepare('DELETE FROM sessions WHERE user_id = ?');
-    await stmt.run([userId]);
+    const tokens = await this.getUserTokens(userId);
+    
+    // すべてのセッショントークンを削除
+    await Promise.all(
+      tokens.map(token => this.kv.delete(`session:${token}`))
+    );
+    
+    // ユーザーインデックスを削除
+    await this.kv.delete(`${USER_SESSIONS_PREFIX}${userId}`);
   }
 
   /**
    * Clean up expired sessions
+   * KVのTTL機能により自動的に期限切れセッションが削除されるため、このメソッドは何もしない
    */
   async cleanupExpiredSessions(): Promise<number> {
-    const now = new Date().toISOString();
-    const stmt = this.db.prepare('DELETE FROM sessions WHERE expires_at < ?');
-    const result = await stmt.run([now]);
-    return result.meta.changes || 0;
+    // KV uses TTL for automatic expiration, so no manual cleanup is needed
+    return 0;
   }
 
   /**
    * Get session by user ID (most recent if multiple)
    */
   async getSessionByUserId(userId: string): Promise<Session | null> {
-    const row = await this.db.queryFirst(
-      'SELECT token, user_id, created_at, expires_at FROM sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-      [userId]
-    );
-
-    if (!row) {
-      return null;
-    }
-
-    const session = SessionModel.fromRow(row);
+    const tokens = await this.getUserTokens(userId);
     
-    // Check if session is expired
-    if (SessionModel.isExpired(session)) {
-      await this.revokeSession(session.token);
+    if (tokens.length === 0) {
       return null;
     }
 
-    return session;
+    // すべてのセッションを取得して最新のものを返す
+    const sessions: Session[] = [];
+    for (const token of tokens) {
+      const sessionJson = await this.kv.get(`session:${token}`);
+      if (sessionJson) {
+        const session = JSON.parse(sessionJson) as Session;
+        if (!SessionModel.isExpired(session)) {
+          sessions.push(session);
+        }
+      }
+    }
+
+    if (sessions.length === 0) {
+      return null;
+    }
+
+    // created_atで降順ソート
+    sessions.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return sessions[0];
+  }
+
+  /**
+   * ユーザーIDに紐づくセッショントークンのリストを取得
+   */
+  private async getUserTokens(userId: string): Promise<string[]> {
+    const tokensJson = await this.kv.get(`${USER_SESSIONS_PREFIX}${userId}`);
+    if (!tokensJson) {
+      return [];
+    }
+    return JSON.parse(tokensJson) as string[];
+  }
+
+  /**
+   * ユーザーインデックスにトークンを追加
+   */
+  private async addTokenToUserIndex(userId: string, token: string, ttlSeconds: number): Promise<void> {
+    const tokens = await this.getUserTokens(userId);
+    if (!tokens.includes(token)) {
+      tokens.push(token);
+      await this.kv.put(
+        `${USER_SESSIONS_PREFIX}${userId}`,
+        JSON.stringify(tokens),
+        { expirationTtl: ttlSeconds }
+      );
+    }
+  }
+
+  /**
+   * ユーザーインデックスからトークンを削除
+   */
+  private async removeTokenFromUserIndex(userId: string, token: string): Promise<void> {
+    const tokens = await this.getUserTokens(userId);
+    const newTokens = tokens.filter(t => t !== token);
+    
+    if (newTokens.length === 0) {
+      await this.kv.delete(`${USER_SESSIONS_PREFIX}${userId}`);
+    } else {
+      // 残りのトークンで最も長いTTLを使用（簡単のため30日固定）
+      await this.kv.put(
+        `${USER_SESSIONS_PREFIX}${userId}`,
+        JSON.stringify(newTokens),
+        { expirationTtl: 30 * 24 * 60 * 60 }
+      );
+    }
   }
 }

@@ -3,7 +3,7 @@
  * セッション発行スクリプト
  * 
  * 開発時に特定のユーザーでログインした状態を作成するためのスクリプト
- * サービス層を介してセッションを発行します。
+ * KVを使用してセッションを発行します。
  * 
  * 使用方法:
  *   npm run dev:create-session <user_id>
@@ -52,7 +52,7 @@ const userIdMap: Record<string, string> = {
 
 const userId = userIdMap[userInput.toLowerCase()] || userInput;
 
-function createSession() {
+async function createSession() {
   console.log('セッション発行を開始します...');
   console.log(`ユーザーID: ${userId}`);
   console.log('');
@@ -110,27 +110,62 @@ function createSession() {
     const expiresAt = SessionModel.createExpiryDate(30); // 30日間有効
     const now = new Date().toISOString();
 
-    // セッション挿入SQLを生成
-    const insertSessionSql = `
-INSERT INTO sessions (token, user_id, created_at, expires_at)
-VALUES ('${sessionToken}', '${userId}', '${now}', '${expiresAt}');
-`.trim();
+    // セッションデータをJSON形式で作成
+    const sessionData = {
+      token: sessionToken,
+      user_id: userId,
+      created_at: now,
+      expires_at: expiresAt
+    };
 
-    const tempInsertFile = '/tmp/insert-session.sql';
-    writeFileSync(tempInsertFile, insertSessionSql);
+    // KVにセッションを保存（wrangler kv:key put コマンドを使用）
+    const sessionKey = `session:${sessionToken}`;
+    const sessionValue = JSON.stringify(sessionData);
+    const ttlSeconds = 30 * 24 * 60 * 60; // 30日
 
-    // セッションを挿入
     try {
       execSync(
-        `NO_D1_WARNING=true wrangler d1 execute shumilog-db-dev --local --file ${tempInsertFile}`,
+        `wrangler kv:key put --local "${sessionKey}" '${sessionValue}' --ttl ${ttlSeconds} --binding SESSIONS`,
         { encoding: 'utf8', stdio: 'pipe' }
       );
     } catch (error: any) {
-      console.error('エラー: セッションの挿入に失敗しました');
+      console.error('エラー: セッションのKVへの保存に失敗しました');
       console.error(error.message);
+      console.error('');
+      console.error('開発サーバーが起動していることを確認してください:');
+      console.error('  npm run dev');
       process.exit(1);
-    } finally {
-      unlinkSync(tempInsertFile);
+    }
+
+    // ユーザーインデックスも更新
+    const userSessionsKey = `user_sessions:${userId}`;
+    try {
+      // 既存のトークンリストを取得
+      let existingTokens: string[] = [];
+      try {
+        const existingValue = execSync(
+          `wrangler kv:key get --local "${userSessionsKey}" --binding SESSIONS`,
+          { encoding: 'utf8', stdio: 'pipe' }
+        ).trim();
+        if (existingValue) {
+          existingTokens = JSON.parse(existingValue);
+        }
+      } catch {
+        // キーが存在しない場合は空配列
+      }
+
+      // 新しいトークンを追加
+      if (!existingTokens.includes(sessionToken)) {
+        existingTokens.push(sessionToken);
+      }
+
+      execSync(
+        `wrangler kv:key put --local "${userSessionsKey}" '${JSON.stringify(existingTokens)}' --ttl ${ttlSeconds} --binding SESSIONS`,
+        { encoding: 'utf8', stdio: 'pipe' }
+      );
+    } catch (error: any) {
+      console.warn('警告: ユーザーインデックスの更新に失敗しました（セッション自体は有効です）');
+      console.warn(error.message);
     }
 
     console.log('✓ セッションの発行に成功しました！');

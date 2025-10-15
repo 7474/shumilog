@@ -4,80 +4,87 @@
 
 このプロジェクトでは、OpenAPI仕様 (`/api/v1/openapi.yaml`) と実装の整合性を保証するため、**二重の検証メカニズム**を採用しています：
 
-1. **バックエンド**: 一元化されたコントラクトテストによるOpenAPI検証
+1. **バックエンド**: 自動的なOpenAPI検証（個別のテスト実装不要）
 2. **フロントエンド**: 型定義の自動生成とCI検証
 
-## バックエンド: 一元化されたOpenAPI検証
+## バックエンド: 自動的なOpenAPI検証
 
-### 新しいアプローチ
+### 革新的なアプローチ
 
-すべてのAPI endpointの OpenAPI 検証は **単一の専用テストファイル** で集中管理されています：
+**重要**: 個別のエンドポイントごとにテストを書く必要はありません。
 
-**`backend/tests/contract/openapi-validation.test.ts`**
+すべてのAPI応答は `openapi-backend` ライブラリを使用して**自動的に**OpenAPI仕様と照合されます。
 
-このアプローチの利点：
-- ✅ **一元管理**: すべてのエンドポイントの検証が1箇所に集約
-- ✅ **保守性の向上**: 個別のテストファイルに検証コードを追加する必要なし
-- ✅ **網羅的**: すべてのCRUD操作と主要なエンドポイントを自動検証
-- ✅ **CI統合**: 専用のCIステップで明示的に実行
+### 仕組み
 
-### 対象範囲
+1. **仕様の検証**: `openapi-spec-validation.test.ts` がOpenAPI仕様自体の妥当性を検証
+2. **自動応答検証**: `validateAppRequest()` ヘルパー関数がすべてのAPI応答を自動検証
+3. **透過的な検証**: 既存のテストは変更不要、自動的に検証が適用される
 
-一元化されたテストは以下をカバーします：
+### 使用方法
 
-**公開エンドポイント:**
-- `GET /health`
-- `GET /logs`, `GET /logs/{logId}`, `GET /logs/{logId}/related`
-- `GET /tags`, `GET /tags/{tagId}`, `GET /tags/{tagId}/associations`
+#### テストでの自動検証
 
-**認証が必要なエンドポイント:**
-- `GET /users/me`, `GET /users/me/logs`, `GET /users/me/stats`
-- `POST /logs`, `PUT /logs/{logId}`
-- `POST /tags`, `PUT /tags/{tagId}`
-- `POST /support/tags`
+既存のテストで `validateAppRequest()` を使用するだけ：
 
-### 個別テストでの検証は不要
+```typescript
+import { validateAppRequest } from '../helpers/openapi-auto-validator';
 
-**重要**: 個別のコントラクトテスト（例: `logs.contract.test.ts`, `tags.contract.test.ts`）に `toSatisfyApiSpec()` を追加する必要は**ありません**。
+it('should return logs', async () => {
+  // この呼び出しは自動的にOpenAPI仕様と照合されます
+  const response = await validateAppRequest(app, '/logs', { method: 'GET' });
+  expect(response.status).toBe(200);
+  
+  // ビジネスロジックのテストに集中できます
+  const data = await response.json();
+  expect(data.items).toBeDefined();
+});
+```
 
-すべてのエンドポイントは `openapi-validation.test.ts` で自動的に検証されます。個別テストはビジネスロジックや特定の動作の検証に専念できます。
+#### 既存のテストを変更せずに検証
 
-### 既知の制限事項
+`validateAppRequest()` を使わない既存のテストも、そのまま動作します。
+必要に応じて、徐々に `validateAppRequest()` に移行できます。
 
-1. **GET /tags/{tagId}**: スキーマ不一致のため検証がスキップされています（`docs/api-spec-discrepancies.md` 参照）
-2. **エラーレスポンス**: OpenAPI 仕様にエラーレスポンスのスキーマが定義されていないため、エラーレスポンスの検証はスキップされています
+### 検証内容
+
+自動検証は以下をチェックします：
+
+- ✅ レスポンスステータスコードが仕様で定義されている
+- ✅ レスポンススキーマが仕様と一致
+- ✅ 必須フィールドがすべて存在
+- ✅ フィールドの型が正しい
+- ✅ 値が制約（min/max、enum等）を満たす
+
+### テストファイル
+
+| ファイル | 目的 |
+|---------|------|
+| `openapi-spec-validation.test.ts` | OpenAPI仕様自体の妥当性を検証 |
+| `openapi-auto-validation-demo.test.ts` | 自動検証の動作デモ |
+| `helpers/openapi-auto-validator.ts` | 自動検証ヘルパー関数 |
 
 ### CI統合
 
-バックエンドCIでは、一元化されたOpenAPI検証テストを**明示的に**実行します：
+バックエンドCIでは、OpenAPI仕様の検証を明示的に実行します：
 
 ```yaml
-- name: Run comprehensive OpenAPI validation
-  run: npm run test:contract -- tests/contract/openapi-validation.test.ts
-- name: Run all tests
+- name: Validate OpenAPI specification
+  run: npm run test:contract -- tests/contract/openapi-spec-validation.test.ts
+- name: Run all tests (includes automatic validation)
   run: npm test
 ```
-
-これにより、API仕様の検証が確実に実行され、結果が可視化されます。
 
 ### 新しいエンドポイントの追加
 
 新しいエンドポイントを追加する場合：
 
 1. OpenAPI仕様にエンドポイントを定義（`/api/v1/openapi.yaml`）
-2. `backend/tests/contract/openapi-validation.test.ts` に検証テストを追加
-3. バックエンド実装を追加
-4. テストを実行して検証
+2. バックエンド実装を追加
+3. 通常のビジネスロジックテストを作成（`validateAppRequest()`を使用）
+4. 自動的にOpenAPI検証が適用される
 
-```typescript
-it('GET /new-endpoint - validates against spec', async () => {
-  const response = await app.request('/new-endpoint', { method: 'GET' });
-  expect(response.status).toBe(200);
-  
-  const openApiResponse = await toOpenApiResponse(response, '/new-endpoint', 'GET');
-  expect(openApiResponse).toSatisfyApiSpec();
-});
-```
+**個別の検証テストは不要** - ビジネスロジックのテストだけで十分です。
 
 ## フロントエンド: 型定義の自動生成と検証
 

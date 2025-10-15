@@ -42,7 +42,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
-      - name: Run comprehensive OpenAPI validation
-        run: npm run test:contract -- tests/contract/openapi-validation.test.ts
-      - name: Run all tests
+      - name: Validate OpenAPI specification
+        run: npm run test:contract -- tests/contract/openapi-spec-validation.test.ts
+      - name: Run all tests (includes automatic validation)
         run: npm test

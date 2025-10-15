@@ -12,11 +12,12 @@ export const TEST_TAG_IDS = {
 const mf = new Miniflare({
   modules: true,
   script: `export default { async fetch() { return new Response('test helper', { status: 404 }); } };`,
-  kvNamespaces: ['KV'],
+  kvNamespaces: ['KV', 'SESSIONS'],
   d1Databases: ['DB'],
 });
 
 const testKV = await mf.getKVNamespace('KV');
+const testSessionsKV = await mf.getKVNamespace('SESSIONS');
 const testD1 = await mf.getD1Database('DB');
 
 const TABLES_IN_DEPENDENCY_ORDER = [
@@ -141,6 +142,7 @@ function buildEnv() {
   return {
     DB: testD1,
     KV: testKV,
+    SESSIONS: testSessionsKV,
     TWITTER_CLIENT_ID: 'test_client_id',
     TWITTER_CLIENT_SECRET: 'test_client_secret',
     TWITTER_REDIRECT_URI: 'http://localhost:8787/auth/callback',
@@ -151,14 +153,17 @@ function buildEnv() {
 const app = createApp(buildEnv());
 
 async function purgeKVNamespace(): Promise<void> {
-  let cursor: string | undefined;
-  do {
-    const list = await testKV.list({ cursor });
-    if (list.keys.length > 0) {
-      await Promise.all(list.keys.map((key) => testKV.delete(key.name)));
-    }
-    cursor = list.list_complete ? undefined : ('cursor' in list ? list.cursor : undefined);
-  } while (cursor);
+  // KVとSESSIONS KVの両方をクリア
+  for (const kv of [testKV, testSessionsKV]) {
+    let cursor: string | undefined;
+    do {
+      const list = await kv.list({ cursor });
+      if (list.keys.length > 0) {
+        await Promise.all(list.keys.map((key) => kv.delete(key.name)));
+      }
+      cursor = list.list_complete ? undefined : ('cursor' in list ? list.cursor : undefined);
+    } while (cursor);
+  }
 }
 
 async function insertUser({
@@ -196,13 +201,33 @@ async function insertSession({
   createdAt: string;
   expiresAt: string;
 }): Promise<void> {
-  await testD1
-    .prepare(
-      `INSERT OR REPLACE INTO sessions (token, user_id, created_at, expires_at)
-       VALUES (?, ?, ?, ?)`
-    )
-    .bind(token, userId, createdAt, expiresAt)
-    .run();
+  // KVにセッションを保存
+  const session = {
+    token,
+    user_id: userId,
+    created_at: createdAt,
+    expires_at: expiresAt
+  };
+  
+  // TTLを計算（expiresAtまでの秒数）
+  const expiryDate = new Date(expiresAt);
+  const now = new Date();
+  const ttlSeconds = Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / 1000));
+  
+  await testSessionsKV.put(`session:${token}`, JSON.stringify(session), {
+    expirationTtl: ttlSeconds > 0 ? ttlSeconds : 30 * 24 * 60 * 60 // デフォルト30日
+  });
+  
+  // ユーザーインデックスも追加
+  const userSessionsKey = `user_sessions:${userId}`;
+  const existingTokensJson = await testSessionsKV.get(userSessionsKey);
+  const tokens = existingTokensJson ? JSON.parse(existingTokensJson) : [];
+  if (!tokens.includes(token)) {
+    tokens.push(token);
+    await testSessionsKV.put(userSessionsKey, JSON.stringify(tokens), {
+      expirationTtl: ttlSeconds > 0 ? ttlSeconds : 30 * 24 * 60 * 60
+    });
+  }
 }
 
 async function insertTag(tag: {
@@ -401,5 +426,9 @@ export function getTestD1Database() {
   return testD1;
 }
 
-export { app, testKV as mockKV };
+export function getTestSessionsKV() {
+  return testSessionsKV;
+}
+
+export { app, testKV as mockKV, testSessionsKV as mockSessionsKV };
 export default app;

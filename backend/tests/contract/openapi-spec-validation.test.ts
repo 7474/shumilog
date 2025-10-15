@@ -60,7 +60,7 @@ describe('OpenAPI Specification Validation', () => {
     let totalOperations = 0;
     let operationsWithResponseSchemas = 0;
 
-    for (const [pathname, pathItem] of Object.entries(paths)) {
+    for (const [_pathname, pathItem] of Object.entries(paths)) {
       const methods = ['get', 'post', 'put', 'delete', 'patch'] as const;
       
       for (const method of methods) {
@@ -70,7 +70,7 @@ describe('OpenAPI Specification Validation', () => {
           
           // Check if operation has response schemas
           if (operation.responses) {
-            for (const [statusCode, response] of Object.entries(operation.responses)) {
+            for (const [_statusCode, response] of Object.entries(operation.responses)) {
               if ((response as any).content) {
                 operationsWithResponseSchemas++;
                 break;

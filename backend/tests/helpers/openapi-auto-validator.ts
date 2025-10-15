@@ -40,7 +40,7 @@ async function initValidator(): Promise<OpenAPIBackend> {
  * @param path Request path (e.g., /api/logs)
  * @param statusCode Response status code
  * @param responseBody Response body
- * @param headers Response headers
+ * @param _headers Response headers (currently unused, reserved for future use)
  * @returns Validation result with errors if any
  */
 export async function validateResponse(
@@ -48,7 +48,7 @@ export async function validateResponse(
   path: string,
   statusCode: number,
   responseBody: any,
-  headers: Record<string, string>
+  _headers: Record<string, string>
 ): Promise<{ valid: boolean; errors: any[] }> {
   try {
     const validator = await initValidator();
@@ -107,7 +107,7 @@ export async function validateResponse(
 export async function validateAppRequest(
   app: any,
   path: string,
-  init?: RequestInit
+  init?: Record<string, any>
 ): Promise<Response> {
   const method = init?.method || 'GET';
   const response = await app.request(path, init);
@@ -156,7 +156,7 @@ export async function validateAppRequest(
 export function enableAutomaticValidation(app: any): any {
   const originalRequest = app.request.bind(app);
   
-  app.request = async function(path: string, init?: RequestInit) {
+  app.request = async function(path: string, init?: Record<string, any>) {
     return validateAppRequest({ request: originalRequest }, path, init);
   };
   

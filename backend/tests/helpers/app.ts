@@ -27,7 +27,6 @@ const TABLES_IN_DEPENDENCY_ORDER = [
   'tag_associations',
   'images',
   'logs',
-  'sessions',
   'tags',
   'users',
 ];

@@ -16,7 +16,7 @@ async function initValidator(): Promise<OpenAPIBackend> {
     return apiValidator;
   }
 
-  const openapiPath = path.resolve(__dirname, '../../api/v1/openapi.yaml');
+  const openapiPath = path.resolve(__dirname, '../../../api/v1/openapi.yaml');
   
   apiValidator = new OpenAPIBackend({
     definition: openapiPath,

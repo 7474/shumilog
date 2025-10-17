@@ -106,8 +106,8 @@ describe('MarkdownToolbar', () => {
     // ハッシュタグボタンをクリック
     await user.click(hashtagButton);
 
-    // 選択されたテキストの前に#が追加されることを確認
-    expect(textarea.value).toBe('#サンプルテキスト');
+    // 選択されたテキストの前に#が追加され、後ろにスペースが追加されることを確認
+    expect(textarea.value).toBe('#サンプル テキスト');
   });
 
   it('should insert horizontal rule at cursor position', async () => {
@@ -198,5 +198,166 @@ describe('MarkdownToolbar', () => {
 
     // プレースホルダーテキストが挿入されることを確認
     expect(textarea.value).toContain('#テキスト');
+  });
+
+  it('should trim whitespace when adding hashtag', async () => {
+    const user = userEvent.setup();
+    
+    // ラッパーコンポーネントを空白を含むテキストで初期化
+    function TestWrapperWithSpaces() {
+      const [value, setValue] = useState('  サンプル  テキスト');
+      const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+      return (
+        <div>
+          <MarkdownToolbar
+            textareaRef={textareaRef}
+            onValueChange={setValue}
+            getValue={() => value}
+          />
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            data-testid="textarea"
+          />
+        </div>
+      );
+    }
+
+    render(<TestWrapperWithSpaces />);
+
+    const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
+    const hashtagButton = screen.getByTitle('ハッシュタグ化');
+
+    textarea.focus();
+    textarea.setSelectionRange(0, 6); // "  サンプル" を選択（前後に空白）
+
+    // ハッシュタグボタンをクリック
+    await user.click(hashtagButton);
+
+    // 空白がトリミングされてハッシュタグが追加されることを確認
+    expect(textarea.value).toBe('  #サンプル  テキスト');
+  });
+
+  it('should not add space after hashtag if followed by newline', async () => {
+    const user = userEvent.setup();
+    
+    // ラッパーコンポーネントを改行を含むテキストで初期化
+    function TestWrapperWithNewline() {
+      const [value, setValue] = useState('サンプル\nテキスト');
+      const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+      return (
+        <div>
+          <MarkdownToolbar
+            textareaRef={textareaRef}
+            onValueChange={setValue}
+            getValue={() => value}
+          />
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            data-testid="textarea"
+          />
+        </div>
+      );
+    }
+
+    render(<TestWrapperWithNewline />);
+
+    const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
+    const hashtagButton = screen.getByTitle('ハッシュタグ化');
+
+    textarea.focus();
+    textarea.setSelectionRange(0, 4); // "サンプル" を選択
+
+    // ハッシュタグボタンをクリック
+    await user.click(hashtagButton);
+
+    // 改行の前にはスペースを追加しない
+    expect(textarea.value).toBe('#サンプル\nテキスト');
+  });
+
+  it('should not add space after hashtag if followed by space', async () => {
+    const user = userEvent.setup();
+    
+    // ラッパーコンポーネントをスペースを含むテキストで初期化
+    function TestWrapperWithSpace() {
+      const [value, setValue] = useState('サンプル テキスト');
+      const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+      return (
+        <div>
+          <MarkdownToolbar
+            textareaRef={textareaRef}
+            onValueChange={setValue}
+            getValue={() => value}
+          />
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            data-testid="textarea"
+          />
+        </div>
+      );
+    }
+
+    render(<TestWrapperWithSpace />);
+
+    const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
+    const hashtagButton = screen.getByTitle('ハッシュタグ化');
+
+    textarea.focus();
+    textarea.setSelectionRange(0, 4); // "サンプル" を選択
+
+    // ハッシュタグボタンをクリック
+    await user.click(hashtagButton);
+
+    // 既にスペースがある場合は追加しない
+    expect(textarea.value).toBe('#サンプル テキスト');
+  });
+
+  it('should ignore whitespace-only selection', async () => {
+    const user = userEvent.setup();
+    
+    // ラッパーコンポーネントを複数のスペースを含むテキストで初期化
+    function TestWrapperWithMultipleSpaces() {
+      const [value, setValue] = useState('サンプル   テキスト');
+      const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+      return (
+        <div>
+          <MarkdownToolbar
+            textareaRef={textareaRef}
+            onValueChange={setValue}
+            getValue={() => value}
+          />
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            data-testid="textarea"
+          />
+        </div>
+      );
+    }
+
+    render(<TestWrapperWithMultipleSpaces />);
+
+    const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
+    const hashtagButton = screen.getByTitle('ハッシュタグ化');
+
+    const originalValue = textarea.value;
+    textarea.focus();
+    textarea.setSelectionRange(4, 7); // 空白3つを選択
+
+    // ハッシュタグボタンをクリック
+    await user.click(hashtagButton);
+
+    // 空白のみの選択は無視され、変更されないことを確認
+    expect(textarea.value).toBe(originalValue);
   });
 });

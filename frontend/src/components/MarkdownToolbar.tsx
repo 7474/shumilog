@@ -117,22 +117,48 @@ export function MarkdownToolbar({ textareaRef, onValueChange, getValue }: Markdo
       return;
     }
 
-    // 選択範囲の前に#があるかチェック
-    const hasHashBefore = start > 0 && currentValue[start - 1] === '#';
-
-    if (hasHashBefore) {
-      // すでに#がある場合は何もしない、または#を削除
+    // 選択範囲の前後の空白をトリミング
+    const trimmedText = selectedText.trim();
+    if (!trimmedText) {
+      // 空白のみの選択は無視
       return;
     }
 
+    // 選択範囲内の先頭と末尾の空白数を計算
+    const leadingSpaces = selectedText.length - selectedText.trimStart().length;
+    const trailingSpaces = selectedText.length - selectedText.trimEnd().length;
+
+    // トリミング後の実際の選択範囲を計算
+    const actualStart = start + leadingSpaces;
+    const actualEnd = end - trailingSpaces;
+
+    // 選択範囲の前に#があるかチェック
+    const hasHashBefore = actualStart > 0 && currentValue[actualStart - 1] === '#';
+
+    if (hasHashBefore) {
+      // すでに#がある場合は何もしない
+      return;
+    }
+
+    // 選択範囲の後ろに空白以外の文字がある場合、スペースを追加
+    let suffix = '';
+    if (actualEnd < currentValue.length && currentValue[actualEnd] !== ' ' && currentValue[actualEnd] !== '\n') {
+      suffix = ' ';
+    }
+
     // 選択範囲の前に#を追加
-    const newValue = currentValue.substring(0, start) + '#' + selectedText + currentValue.substring(end);
+    const newValue =
+      currentValue.substring(0, actualStart) +
+      '#' +
+      trimmedText +
+      suffix +
+      currentValue.substring(actualEnd);
     onValueChange(newValue);
 
     setTimeout(() => {
       textarea.focus();
-      // #を含めて選択
-      textarea.setSelectionRange(start, end + 1);
+      // #を含めて選択（スペースは含めない）
+      textarea.setSelectionRange(actualStart, actualStart + 1 + trimmedText.length);
     }, 0);
   };
 

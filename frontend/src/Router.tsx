@@ -5,6 +5,7 @@ import { MyLogsPage } from './pages/MyLogsPage';
 import { TagsPage } from './pages/TagsPage';
 import { TagDetailPage } from './pages/TagDetailPage';
 import { LogDetailPage } from './pages/LogDetailPage';
+import { ApiDocsPage } from './pages/ApiDocsPage';
 import { AppLayout } from './components/AppLayout';
 
 const router = createBrowserRouter([
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
       {
         path: 'login',
         element: <LoginPage />,
+      },
+      {
+        path: 'api-docs',
+        element: <ApiDocsPage />,
       },
     ],
   },

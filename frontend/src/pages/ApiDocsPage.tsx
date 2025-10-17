@@ -10,10 +10,7 @@ export function ApiDocsPage() {
     <div className="w-full h-screen">
       <ApiReferenceReact
         configuration={{
-          spec: {
-            url: '/openapi.yaml',
-          },
-          layout: 'modern',
+          url: '/openapi.yaml',
           theme: 'default',
           showSidebar: true,
           darkMode: false,

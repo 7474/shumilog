@@ -6,6 +6,7 @@ node_modules/
 
 # Frontend build output
 frontend/dist/
+frontend/public/openapi.yaml
 
 # Screenshots
 .screenshots/

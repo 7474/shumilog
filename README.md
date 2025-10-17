@@ -9,6 +9,8 @@
 ## ドキュメント
 
 - **[システムアーキテクチャ](./docs/architecture.md)** - システム全体構成の概観（Mermaid図解付き）
+- **[レスポンスタイム改善計画](./docs/performance-improvement-plan.md)** - パフォーマンスボトルネックの特定と改善アプローチ
+- **[パフォーマンス改善コード例](./docs/performance-code-examples.md)** - 具体的な実装例とベストプラクティス
 
 ## 技術スタック
 

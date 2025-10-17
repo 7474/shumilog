@@ -165,7 +165,8 @@ describe('Contract: Tags routes', () => {
         description: expect.any(String),
         metadata: expect.any(Object),
         created_by: expect.any(String),
-        associated_tags: expect.any(Array)
+        associated_tags: expect.any(Array),
+        recent_referring_tags: expect.any(Array)
       });
     });
 
@@ -173,6 +174,46 @@ describe('Contract: Tags routes', () => {
       const response = await app.request('/tags/non-existent-tag', { method: 'GET' });
 
       expect(response.status).toBe(404);
+    });
+
+    it('includes referring tags in tag detail', async () => {
+      const sessionToken = await setupTestEnvironment();
+
+      // Create a new tag that will reference ANIME
+      const createResponse = await app.request('/tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({
+          name: 'Test Referring Tag',
+          description: 'This references #Anime tag'
+        })
+      });
+
+      expect(createResponse.status).toBe(201);
+      const newTag = await createResponse.json();
+
+      // Create association: new tag -> ANIME
+      const associationResponse = await app.request(`/tags/${newTag.id}/associations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({ associated_tag_id: TEST_TAG_IDS.ANIME })
+      });
+
+      expect(associationResponse.status).toBe(201);
+
+      // Get ANIME tag detail - it should include the new tag in recent_referring_tags
+      const animeResponse = await app.request(`/tags/${TEST_TAG_IDS.ANIME}`, { method: 'GET' });
+      expect(animeResponse.status).toBe(200);
+
+      const animeTag = await animeResponse.json();
+      expect(animeTag.recent_referring_tags).toBeInstanceOf(Array);
+      expect(animeTag.recent_referring_tags.some((tag: any) => tag.id === newTag.id)).toBe(true);
     });
   });
 

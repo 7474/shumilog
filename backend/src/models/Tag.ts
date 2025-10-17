@@ -34,6 +34,7 @@ export interface TagDetail extends Tag {
   log_count: number;
   recent_logs: any[];
   associated_tags: Tag[];
+  recent_referring_tags: Tag[];
 }
 
 export const TAG_TABLE_SCHEMA = `

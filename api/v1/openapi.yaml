@@ -1069,6 +1069,7 @@ components:
             - log_count
             - recent_logs
             - associated_tags
+            - recent_referring_tags
           properties:
             log_count:
               type: integer
@@ -1081,6 +1082,11 @@ components:
               items:
                 $ref: '#/components/schemas/Tag'
               description: Tags associated with this tag
+            recent_referring_tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+              description: Tags that reference this tag (reverse associations)
 
     Log:
       type: object

@@ -3,7 +3,7 @@ import { Bold, Italic, Strikethrough, Hash, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MarkdownToolbarProps {
-  textareaRef: RefObject<HTMLTextAreaElement>;
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
   onValueChange: (value: string) => void;
   getValue: () => string;
 }

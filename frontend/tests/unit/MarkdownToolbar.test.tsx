@@ -92,7 +92,7 @@ describe('MarkdownToolbar', () => {
     expect(textarea.value).toBe('~~サンプル~~テキスト');
   });
 
-  it('should add hashtag to selected text', async () => {
+  it('should add hashtag to selected text without spaces', async () => {
     const user = userEvent.setup();
     render(<TestWrapper />);
 
@@ -359,5 +359,45 @@ describe('MarkdownToolbar', () => {
 
     // 空白のみの選択は無視され、変更されないことを確認
     expect(textarea.value).toBe(originalValue);
+  });
+
+  it('should use extended format for hashtag with spaces', async () => {
+    const user = userEvent.setup();
+    
+    // ラッパーコンポーネントをスペースを含むテキストで初期化
+    function TestWrapperWithSpacedText() {
+      const [value, setValue] = useState('Attack on Titan テキスト');
+      const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+      return (
+        <div>
+          <MarkdownToolbar
+            textareaRef={textareaRef}
+            onValueChange={setValue}
+            getValue={() => value}
+          />
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            data-testid="textarea"
+          />
+        </div>
+      );
+    }
+
+    render(<TestWrapperWithSpacedText />);
+
+    const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
+    const hashtagButton = screen.getByTitle('ハッシュタグ化');
+
+    textarea.focus();
+    textarea.setSelectionRange(0, 16); // "Attack on Titan" を選択
+
+    // ハッシュタグボタンをクリック
+    await user.click(hashtagButton);
+
+    // 空白を含むテキストは拡張形式 #{tagName} でハッシュタグ化されることを確認
+    expect(textarea.value).toBe('#{Attack on Titan} テキスト');
   });
 });

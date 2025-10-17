@@ -140,25 +140,35 @@ export function MarkdownToolbar({ textareaRef, onValueChange, getValue }: Markdo
       return;
     }
 
+    // ハッシュタグの形式を決定
+    // 空白を含む場合は拡張形式 #{tagName}、含まない場合はシンプル形式 #tagName
+    let hashtagText: string;
+    if (trimmedText.includes(' ')) {
+      // 空白を含む場合は拡張形式を使用
+      hashtagText = `#{${trimmedText}}`;
+    } else {
+      // 空白を含まない場合はシンプル形式を使用
+      hashtagText = `#${trimmedText}`;
+    }
+
     // 選択範囲の後ろに空白以外の文字がある場合、スペースを追加
     let suffix = '';
     if (actualEnd < currentValue.length && currentValue[actualEnd] !== ' ' && currentValue[actualEnd] !== '\n') {
       suffix = ' ';
     }
 
-    // 選択範囲の前に#を追加
+    // 選択範囲をハッシュタグに置き換え
     const newValue =
       currentValue.substring(0, actualStart) +
-      '#' +
-      trimmedText +
+      hashtagText +
       suffix +
       currentValue.substring(actualEnd);
     onValueChange(newValue);
 
     setTimeout(() => {
       textarea.focus();
-      // #を含めて選択（スペースは含めない）
-      textarea.setSelectionRange(actualStart, actualStart + 1 + trimmedText.length);
+      // ハッシュタグ全体を選択（スペースは含めない）
+      textarea.setSelectionRange(actualStart, actualStart + hashtagText.length);
     }, 0);
   };
 

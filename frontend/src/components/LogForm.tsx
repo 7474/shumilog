@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PenLine, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Log } from '@/api-types';
 import { ImageUpload } from './ImageUpload';
+import { MarkdownToolbar } from './MarkdownToolbar';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -38,6 +39,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel: _onCancel }:
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const form = useForm<LogFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -147,12 +149,21 @@ export function LogForm({ log, initialContent, onSuccess, onCancel: _onCancel }:
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-gray-700 font-semibold">内容</FormLabel>
+              <MarkdownToolbar
+                textareaRef={contentTextareaRef}
+                onValueChange={(value) => form.setValue('content_md', value)}
+                getValue={() => form.getValues('content_md')}
+              />
               <FormControl>
                 <Textarea
                   placeholder="趣味の体験を詳しく記録しましょう..."
                   rows={8}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fresh-500 focus:border-transparent transition-all resize-y"
                   {...field}
+                  ref={(e) => {
+                    field.ref(e);
+                    contentTextareaRef.current = e;
+                  }}
                 />
               </FormControl>
               <FormMessage />

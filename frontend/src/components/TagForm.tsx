@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Tag } from '@/api-types';
+import { MarkdownToolbar } from './MarkdownToolbar';
 
 const formSchema = z.object({
   name: z
@@ -243,6 +244,11 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
                   )}
                 </Button>
               </div>
+              <MarkdownToolbar
+                textareaRef={descriptionRef}
+                onValueChange={(value) => form.setValue('description', value)}
+                getValue={() => form.getValues('description') || ''}
+              />
               <FormControl>
                 <Textarea
                   placeholder="このタグが表すものを説明してください..."

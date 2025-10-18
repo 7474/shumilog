@@ -12,8 +12,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Initiate Twitter OAuth flow
-         * @description Redirects user to Twitter for authentication
+         * Twitter OAuthフローの開始
+         * @description ユーザーをTwitter認証にリダイレクトします
          */
         get: {
             parameters: {
@@ -57,8 +57,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Handle Twitter OAuth callback
-         * @description Process OAuth callback and create user session
+         * Twitter OAuthコールバックの処理
+         * @description OAuthコールバックを処理し、ユーザーセッションを作成します
          */
         get: {
             parameters: {
@@ -107,8 +107,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Logout user
-         * @description Invalidate user session
+         * ユーザーログアウト
+         * @description ユーザーセッションを無効化します
          */
         post: {
             parameters: {
@@ -148,7 +148,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get current user profile */
+        /** 現在のユーザー情報を取得 */
         get: {
             parameters: {
                 query?: never;
@@ -158,7 +158,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description User profile */
+                /** @description ユーザー情報 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -167,7 +167,7 @@ export interface paths {
                         "application/json": components["schemas"]["User"];
                     };
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -192,8 +192,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get current user's logs (both public and private)
-         * @description Returns all logs belonging to the authenticated user, including private logs. Useful for reviewing personal log history.
+         * 現在のユーザーのログを取得（公開・非公開両方）
+         * @description 認証されたユーザーに属するすべてのログを返します
          */
         get: {
             parameters: {
@@ -247,8 +247,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get current user's statistics
-         * @description Returns comprehensive statistics about the user's activity, including log counts and tag usage
+         * 現在のユーザーの統計情報を取得
+         * @description ログ数やタグ使用状況を含むユーザーの活動に関する包括的な統計情報を返します
          */
         get: {
             parameters: {
@@ -259,7 +259,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description User statistics */
+                /** @description ユーザー統計情報 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -267,26 +267,26 @@ export interface paths {
                     content: {
                         "application/json": {
                             logs: {
-                                /** @description Total number of logs */
+                                /** @description ログの総数 */
                                 total: number;
-                                /** @description Number of public logs */
+                                /** @description 公開ログの数 */
                                 public: number;
-                                /** @description Number of logs created in the last 7 days */
+                                /** @description 過去7日間に作成されたログの数 */
                                 recent: number;
                             };
                             tags: {
-                                /** @description Total number of unique tags used */
+                                /** @description 使用されたユニークなタグの総数 */
                                 total: number;
-                                /** @description Most frequently used tags */
+                                /** @description 最も頻繁に使用されたタグ */
                                 top_tags: {
                                     /** Format: uuid */
                                     id: string;
                                     name: string;
                                     description?: string | null;
-                                    /** @description Number of times this tag has been used */
+                                    /** @description このタグが使用された回数 */
                                     count: number;
                                 }[];
-                                /** @description Recently used tags (last 7 days) */
+                                /** @description 最近使用されたタグ（過去7日間） */
                                 recent_tags: {
                                     /** Format: uuid */
                                     id: string;
@@ -323,7 +323,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search and list tags */
+        /** タグの検索と一覧表示 */
         get: {
             parameters: {
                 query?: {
@@ -337,7 +337,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of tags */
+                /** @description タグの一覧 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -356,11 +356,11 @@ export interface paths {
         };
         put?: never;
         /**
-         * Create new tag
-         * @description Create a new tag with automatic hashtag processing.
+         * 新しいタグを作成
+         * @description 自動ハッシュタグ処理で新しいタグを作成します。
          *
-         *     **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`),
-         *     the system will automatically create associations with existing tags or create new tags if they don't exist.
+         *     **ハッシュタグ処理**: 説明にハッシュタグパターン（`#{tagName}` または `#tagName`）が含まれている場合、
+         *     システムは自動的に既存のタグとの関連付けを作成するか、存在しない場合は新しいタグを作成します。
          *
          */
         post: {
@@ -376,7 +376,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Tag created */
+                /** @description タグが作成されました */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -385,14 +385,14 @@ export interface paths {
                         "application/json": components["schemas"]["Tag"];
                     };
                 };
-                /** @description Invalid tag data */
+                /** @description 無効なタグデータ */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -415,12 +415,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get tag details
-         * @description Get detailed information about a tag. The `tagId` parameter accepts both:
-         *     - Tag name (user-friendly, URL-encoded if needed)
-         *     - Tag ID (for backward compatibility)
+         * タグ詳細を取得
+         * @description タグの詳細情報を取得します。`tagId` パラメータは以下の両方を受け付けます：
+         *     - タグ名（ユーザーフレンドリー、必要に応じてURLエンコード）
+         *     - タグID（後方互換性のため）
          *
-         *     The tag name is checked first, then the tag ID if not found by name.
+         *     まずタグ名がチェックされ、見つからない場合はタグIDがチェックされます。
          *
          */
         get: {
@@ -429,7 +429,7 @@ export interface paths {
                 header?: never;
                 path: {
                     /**
-                     * @description Tag name (preferred) or tag ID
+                     * @description タグ名（推奨）またはタグID
                      * @example Anime
                      */
                     tagId: string;
@@ -438,7 +438,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Tag details */
+                /** @description タグ詳細 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -447,7 +447,7 @@ export interface paths {
                         "application/json": components["schemas"]["TagDetail"];
                     };
                 };
-                /** @description Tag not found */
+                /** @description タグが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -457,12 +457,12 @@ export interface paths {
             };
         };
         /**
-         * Update tag
-         * @description Update an existing tag with automatic hashtag processing.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+         * タグを更新
+         * @description 自動ハッシュタグ処理で既存のタグを更新します。
+         *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
          *
-         *     **Hashtag Processing**: If the description contains hashtag patterns (`#{tagName}` or `#tagName`),
-         *     the system will automatically create associations with existing tags or create new tags if they don't exist.
+         *     **ハッシュタグ処理**: 説明にハッシュタグパターン（`#{tagName}` または `#tagName`）が含まれている場合、
+         *     システムは自動的に既存のタグとの関連付けを作成するか、存在しない場合は新しいタグを作成します。
          *
          */
         put: {
@@ -471,7 +471,7 @@ export interface paths {
                 header?: never;
                 path: {
                     /**
-                     * @description Tag name (preferred) or tag ID
+                     * @description タグ名（推奨）またはタグID
                      * @example Anime
                      */
                     tagId: string;
@@ -484,7 +484,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Tag updated */
+                /** @description タグが更新されました */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -493,21 +493,21 @@ export interface paths {
                         "application/json": components["schemas"]["Tag"];
                     };
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not tag owner */
+                /** @description タグ所有者ではありません */
                 403: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Tag not found */
+                /** @description タグが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -518,10 +518,10 @@ export interface paths {
         };
         post?: never;
         /**
-         * Delete tag
-         * @description Delete a tag. The `tagId` parameter accepts both tag name (preferred) and tag ID.
+         * タグを削除
+         * @description タグを削除します。`tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
          *
-         *     **Admin privileges required**: Only users with the 'admin' role can delete tags.
+         *     **管理者権限が必要です**: 'admin' ロールを持つユーザーのみがタグを削除できます。
          *
          */
         delete: {
@@ -530,7 +530,7 @@ export interface paths {
                 header?: never;
                 path: {
                     /**
-                     * @description Tag name (preferred) or tag ID
+                     * @description タグ名（推奨）またはタグID
                      * @example Anime
                      */
                     tagId: string;
@@ -539,28 +539,28 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Tag deleted */
+                /** @description タグが削除されました */
                 204: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Admin privileges required */
+                /** @description 管理者権限が必要です */
                 403: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Tag not found */
+                /** @description タグが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -582,9 +582,9 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get tags associated with this tag
-         * @description Get all tags associated with the specified tag.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+         * このタグに関連付けられたタグを取得
+         * @description 指定されたタグに関連付けられたすべてのタグを取得します。
+         *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
          *
          */
         get: {
@@ -593,7 +593,7 @@ export interface paths {
                 header?: never;
                 path: {
                     /**
-                     * @description Tag name (preferred) or tag ID
+                     * @description タグ名（推奨）またはタグID
                      * @example Anime
                      */
                     tagId: string;
@@ -602,7 +602,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of associated tags */
+                /** @description 関連付けられたタグの一覧 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -611,7 +611,7 @@ export interface paths {
                         "application/json": components["schemas"]["Tag"][];
                     };
                 };
-                /** @description Tag not found */
+                /** @description タグが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -622,9 +622,9 @@ export interface paths {
         };
         put?: never;
         /**
-         * Create association between tags
-         * @description Create an association between two tags.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+         * タグ間の関連付けを作成
+         * @description 2つのタグ間の関連付けを作成します。
+         *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
          *
          */
         post: {
@@ -633,7 +633,7 @@ export interface paths {
                 header?: never;
                 path: {
                     /**
-                     * @description Tag name (preferred) or tag ID
+                     * @description タグ名（推奨）またはタグID
                      * @example Anime
                      */
                     tagId: string;
@@ -643,34 +643,34 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @description ID of tag to associate with */
+                        /** @description 関連付けるタグのID */
                         associated_tag_id: string;
                     };
                 };
             };
             responses: {
-                /** @description Tag association created */
+                /** @description タグ関連付けが作成されました */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Invalid association data */
+                /** @description 無効な関連付けデータ */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Tag not found */
+                /** @description タグが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -680,9 +680,9 @@ export interface paths {
             };
         };
         /**
-         * Remove association between tags
-         * @description Remove an association between two tags.
-         *     The `tagId` parameter accepts both tag name (preferred) and tag ID.
+         * タグ間の関連付けを削除
+         * @description 2つのタグ間の関連付けを削除します。
+         *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
          *
          */
         delete: {
@@ -693,7 +693,7 @@ export interface paths {
                 header?: never;
                 path: {
                     /**
-                     * @description Tag name (preferred) or tag ID
+                     * @description タグ名（推奨）またはタグID
                      * @example Anime
                      */
                     tagId: string;
@@ -702,21 +702,21 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Tag association removed */
+                /** @description タグ関連付けが削除されました */
                 204: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Tag or association not found */
+                /** @description タグまたは関連付けが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -740,18 +740,18 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Get content support for tag editing
-         * @description Retrieve supporting content for a tag based on the tag name and support type.
-         *     The content is returned in Markdown format with relevant hashtags.
+         * タグ編集用のコンテンツサポートを取得
+         * @description タグ名とサポートタイプに基づいて、タグのサポートコンテンツを取得します。
+         *     コンテンツは関連するハッシュタグ付きのMarkdown形式で返されます。
          *
-         *     This endpoint can be used when creating new tags or editing existing tags,
-         *     as it only requires the tag name, not an existing tag ID.
+         *     このエンドポイントは、新しいタグを作成したり既存のタグを編集したりする際に使用できます。
+         *     既存のタグIDを必要とせず、タグ名のみで使用可能です。
          *
-         *     Currently supported types:
-         *     - `ai_enhanced`: Uses AI to generate enhanced content based on Wikipedia data
-         *     - `wikipedia_summary`: Fetches a summary directly from Wikipedia
+         *     現在サポートされているタイプ:
+         *     - `ai_enhanced`: Wikipediaデータを基にAIで拡張コンテンツを生成
+         *     - `wikipedia_summary`: Wikipediaから直接概要を取得
          *
-         *     The response includes Markdown-formatted content where relevant terms are converted to hashtags.
+         *     レスポンスには、関連する用語がハッシュタグに変換されたMarkdown形式のコンテンツが含まれます。
          *
          */
         post: {
@@ -765,14 +765,14 @@ export interface paths {
                 content: {
                     "application/json": {
                         /**
-                         * @description Name of the tag to get support for
+                         * @description サポートを取得するタグの名前
                          * @example アニメ
                          */
                         tag_name: string;
                         /**
-                         * @description Type of support content to retrieve:
-                         *     - `ai_enhanced`: AI-generated content
-                         *     - `wikipedia_summary`: Direct Wikipedia summary
+                         * @description 取得するサポートコンテンツのタイプ:
+                         *     - `ai_enhanced`: AI生成コンテンツ
+                         *     - `wikipedia_summary`: Wikipediaの直接概要
                          *
                          * @example ai_enhanced
                          * @enum {string}
@@ -782,7 +782,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Support content retrieved successfully */
+                /** @description サポートコンテンツが正常に取得されました */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -790,12 +790,12 @@ export interface paths {
                     content: {
                         "application/json": {
                             /**
-                             * @description Markdown-formatted content with hashtags
+                             * @description ハッシュタグ付きのMarkdown形式コンテンツ
                              * @example アニメ（#anime）は日本の文化を代表するメディアです。#manga や #gaming とともに広く親しまれています。
                              */
                             content: string;
                             /**
-                             * @description The type of support that was used
+                             * @description 使用されたサポートのタイプ
                              * @example ai_enhanced
                              * @enum {string}
                              */
@@ -803,28 +803,28 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Invalid support type or request */
+                /** @description 無効なサポートタイプまたはリクエスト */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description No content available for the specified tag name */
+                /** @description 指定されたタグ名で利用可能なコンテンツがありません */
                 404: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description External service error or server error */
+                /** @description 外部サービスエラーまたはサーバーエラー */
                 500: {
                     headers: {
                         [name: string]: unknown;
@@ -846,11 +846,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List public logs */
+        /** 公開ログの一覧表示 */
         get: {
             parameters: {
                 query?: {
-                    /** @description Search logs by title or content (case-insensitive partial match) */
+                    /** @description タイトルまたはコンテンツでログを検索（大文字小文字を区別しない部分一致） */
                     search?: string;
                     tag_ids?: string[];
                     user_id?: string;
@@ -863,7 +863,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of public logs */
+                /** @description 公開ログの一覧 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -882,10 +882,10 @@ export interface paths {
         };
         put?: never;
         /**
-         * Create new log
-         * @description Create a new log entry. Hashtags in the content (#{tagName} or #tagName format)
-         *     will be automatically extracted and associated with the log as tags.
-         *     Supports both explicit tag specification and automatic hashtag extraction.
+         * 新しいログを作成
+         * @description 新しいログエントリを作成します。コンテンツ内のハッシュタグ（#{tagName} または #tagName 形式）
+         *     は自動的に抽出され、ログにタグとして関連付けられます。
+         *     明示的なタグ指定と自動ハッシュタグ抽出の両方をサポートします。
          *
          */
         post: {
@@ -901,7 +901,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Log created */
+                /** @description ログが作成されました */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -910,14 +910,14 @@ export interface paths {
                         "application/json": components["schemas"]["Log"];
                     };
                 };
-                /** @description Invalid log data */
+                /** @description 無効なログデータ */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -939,7 +939,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get log details */
+        /** ログ詳細を取得 */
         get: {
             parameters: {
                 query?: never;
@@ -951,7 +951,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Log details */
+                /** @description ログ詳細 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -960,7 +960,7 @@ export interface paths {
                         "application/json": components["schemas"]["LogDetail"];
                     };
                 };
-                /** @description Log not found */
+                /** @description ログが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -970,9 +970,9 @@ export interface paths {
             };
         };
         /**
-         * Update log
-         * @description Update an existing log entry. When content_md is updated, hashtags in the content
-         *     (#{tagName} or #tagName format) will be automatically extracted and associated with the log as tags.
+         * ログを更新
+         * @description 既存のログエントリを更新します。content_mdが更新される場合、コンテンツ内のハッシュタグ
+         *     （#{tagName} または #tagName 形式）は自動的に抽出され、ログにタグとして関連付けられます。
          *
          */
         put: {
@@ -990,7 +990,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Log updated */
+                /** @description ログが更新されました */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -999,21 +999,21 @@ export interface paths {
                         "application/json": components["schemas"]["Log"];
                     };
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not log owner */
+                /** @description ログ所有者ではありません */
                 403: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Log not found */
+                /** @description ログが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1023,7 +1023,7 @@ export interface paths {
             };
         };
         post?: never;
-        /** Delete log */
+        /** ログを削除 */
         delete: {
             parameters: {
                 query?: never;
@@ -1035,28 +1035,28 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Log deleted */
+                /** @description ログが削除されました */
                 204: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not log owner */
+                /** @description ログ所有者ではありません */
                 403: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Log not found */
+                /** @description ログが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1078,10 +1078,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get related logs
-         * @description Get logs that are related to the specified log.
-         *     Relation is determined by shared tags - logs with more common tags are ranked higher.
-         *     Only public logs are returned, excluding the specified log itself.
+         * 関連ログを取得
+         * @description 指定されたログに関連するログを取得します。
+         *     関連性は共有タグによって決定されます - 共通のタグが多いログほど上位にランク付けされます。
+         *     指定されたログ自体を除く公開ログのみが返されます。
          *
          */
         get: {
@@ -1097,7 +1097,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of related logs */
+                /** @description 関連ログの一覧 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1109,7 +1109,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Log not found */
+                /** @description ログが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1134,8 +1134,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get all images for a log
-         * @description Retrieve all images attached to a log
+         * ログのすべての画像を取得
+         * @description ログに添付されたすべての画像を取得します
          */
         get: {
             parameters: {
@@ -1148,7 +1148,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of images */
+                /** @description 画像の一覧 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1159,7 +1159,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Log not found */
+                /** @description ログが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1170,8 +1170,8 @@ export interface paths {
         };
         put?: never;
         /**
-         * Upload image to log
-         * @description Upload an image file and attach it to a log
+         * ログに画像をアップロード
+         * @description 画像ファイルをアップロードし、ログに添付します
          */
         post: {
             parameters: {
@@ -1187,15 +1187,15 @@ export interface paths {
                     "multipart/form-data": {
                         /**
                          * Format: binary
-                         * @description Image file (JPEG, PNG, GIF, WebP). Max size 10MB.
+                         * @description 画像ファイル（JPEG、PNG、GIF、WebP）。最大サイズ10MB。
                          */
                         file: string;
-                        /** @description Image width in pixels */
+                        /** @description 画像の幅（ピクセル単位） */
                         width?: number;
-                        /** @description Image height in pixels */
+                        /** @description 画像の高さ（ピクセル単位） */
                         height?: number;
                         /**
-                         * @description Display order for the image (lower numbers appear first)
+                         * @description 画像の表示順序（小さい数字が先頭に表示されます）
                          * @default 0
                          */
                         display_order?: number;
@@ -1203,7 +1203,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Image uploaded successfully */
+                /** @description 画像が正常にアップロードされました */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -1212,28 +1212,28 @@ export interface paths {
                         "application/json": components["schemas"]["LogImage"];
                     };
                 };
-                /** @description Invalid request (missing file, wrong format, file too large) */
+                /** @description 無効なリクエスト（ファイルなし、形式が間違っている、ファイルが大きすぎる） */
                 400: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not log owner */
+                /** @description ログ所有者ではありません */
                 403: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Log not found */
+                /** @description ログが見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1256,8 +1256,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get image data
-         * @description Retrieve the actual image file
+         * 画像データを取得
+         * @description 実際の画像ファイルを取得します
          */
         get: {
             parameters: {
@@ -1271,7 +1271,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Image file */
+                /** @description 画像ファイル */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1295,8 +1295,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Delete image
-         * @description Delete an image attached to a log
+         * 画像を削除
+         * @description ログに添付された画像を削除します
          */
         delete: {
             parameters: {
@@ -1310,28 +1310,28 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Image deleted successfully */
+                /** @description 画像が正常に削除されました */
                 204: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not log owner */
+                /** @description ログ所有者ではありません */
                 403: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Image not found */
+                /** @description 画像が見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -1353,10 +1353,10 @@ export interface components {
             id: string;
             twitter_username: string;
             display_name: string;
-            /** @description User's avatar URL. null when user has no avatar set. */
+            /** @description ユーザーのアバターURL。アバターが設定されていない場合はnull。 */
             avatar_url: string | null;
             /**
-             * @description User role for privilege management. 'admin' users can delete any tags.
+             * @description 権限管理のためのユーザーロール。'admin'ユーザーは任意のタグを削除できます。
              * @default user
              * @enum {string}
              */
@@ -1367,11 +1367,11 @@ export interface components {
         Tag: {
             id: string;
             name: string;
-            /** @description Optional description for the tag. null when not provided by user. */
+            /** @description タグのオプションの説明。ユーザーが提供しない場合はnull。 */
             description: string | null;
-            /** @description Flexible metadata storage */
+            /** @description 柔軟なメタデータストレージ */
             metadata: Record<string, never>;
-            /** @description User ID who created this tag */
+            /** @description このタグを作成したユーザーID */
             created_by: string;
             /** Format: date-time */
             created_at: string;
@@ -1380,28 +1380,28 @@ export interface components {
         };
         TagCreate: {
             name: string;
-            /** @description Optional description for the tag. Supports hashtag patterns in two formats:
-             *     - #{tagName} - Extended format (supports spaces and special characters)
-             *     - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+            /** @description タグのオプションの説明。2つの形式のハッシュタグパターンをサポート:
+             *     - #{tagName} - 拡張形式（スペースと特殊文字をサポート）
+             *     - #tagName - シンプル形式（英数字、日本語文字、アンダースコア、ハイフン）
              *
-             *     When hashtag patterns are found, the system will automatically:
-             *     1. Look for existing tags with matching names
-             *     2. Create new tags if they don't exist (with empty description and metadata)
-             *     3. Create associations between this tag and the referenced tags
+             *     ハッシュタグパターンが検出されると、システムは自動的に:
+             *     1. 一致する名前を持つ既存のタグを検索
+             *     2. 存在しない場合は新しいタグを作成（空の説明とメタデータ付き）
+             *     3. このタグと参照されたタグ間の関連付けを作成
              *      */
             description?: string;
             metadata?: Record<string, never>;
         };
         TagUpdate: {
             name?: string;
-            /** @description Optional description for the tag. Supports hashtag patterns in two formats:
-             *     - #{tagName} - Extended format (supports spaces and special characters)
-             *     - #tagName - Simple format (alphanumeric, Japanese characters, underscores, hyphens)
+            /** @description タグのオプションの説明。2つの形式のハッシュタグパターンをサポート:
+             *     - #{tagName} - 拡張形式（スペースと特殊文字をサポート）
+             *     - #tagName - シンプル形式（英数字、日本語文字、アンダースコア、ハイフン）
              *
-             *     When hashtag patterns are found, the system will automatically:
-             *     1. Look for existing tags with matching names
-             *     2. Create new tags if they don't exist (with empty description and metadata)
-             *     3. Create associations between this tag and the referenced tags
+             *     ハッシュタグパターンが検出されると、システムは自動的に:
+             *     1. 一致する名前を持つ既存のタグを検索
+             *     2. 存在しない場合は新しいタグを作成（空の説明とメタデータ付き）
+             *     3. このタグと参照されたタグ間の関連付けを作成
              *      */
             description?: string;
             metadata?: Record<string, never>;
@@ -1409,21 +1409,21 @@ export interface components {
         TagDetail: components["schemas"]["Tag"] & {
             log_count: number;
             recent_logs: components["schemas"]["Log"][];
-            /** @description Tags associated with this tag */
+            /** @description このタグに関連付けられたタグ */
             associated_tags: components["schemas"]["Tag"][];
         };
         Log: {
             id: string;
             user: components["schemas"]["User"];
-            /** @description Tags associated with this log */
+            /** @description このログに関連付けられたタグ */
             associated_tags: components["schemas"]["Tag"][];
-            /** @description Optional title for the log. null when not provided by user. */
+            /** @description ログのオプションのタイトル。ユーザーが提供しない場合はnull。 */
             title: string | null;
-            /** @description Content in Markdown format */
+            /** @description Markdown形式のコンテンツ */
             content_md: string;
-            /** @description Whether this log is publicly visible */
+            /** @description このログが公開されているかどうか */
             is_public: boolean;
-            /** @description Images attached to this log */
+            /** @description このログに添付された画像 */
             images: components["schemas"]["LogImage"][];
             /** Format: date-time */
             created_at: string;
@@ -1431,59 +1431,59 @@ export interface components {
             updated_at: string;
         };
         LogCreate: {
-            /** @description IDs of existing tags to associate with this log */
+            /** @description このログに関連付ける既存のタグのID */
             tag_ids?: string[];
-            /** @description Names of tags to associate with this log (will create new tags if they don't exist) */
+            /** @description このログに関連付けるタグの名前（存在しない場合は新しいタグを作成します） */
             tag_names?: string[];
             title?: string;
-            /** @description Markdown content of the log. Hashtags in the format #{tagName} or #tagName
-             *     will be automatically extracted and associated with the log as tags.
+            /** @description ログのMarkdownコンテンツ。#{tagName} または #tagName 形式のハッシュタグは
+             *     自動的に抽出され、ログにタグとして関連付けられます。
              *      */
             content_md: string;
             /**
-             * @description Whether the log is publicly visible. Defaults to true (public) when not specified.
+             * @description ログが公開されているかどうか。指定されていない場合はデフォルトでtrue（公開）になります。
              * @default true
              */
             is_public: boolean;
         };
         LogUpdate: {
-            /** @description Update the tags associated with this log using existing tag IDs */
+            /** @description 既存のタグIDを使用してこのログに関連付けられたタグを更新します */
             tag_ids?: string[];
-            /** @description Update the tags associated with this log using tag names (will create new tags if they don't exist) */
+            /** @description タグ名を使用してこのログに関連付けられたタグを更新します（存在しない場合は新しいタグを作成します） */
             tag_names?: string[];
             title?: string;
-            /** @description Markdown content of the log. Hashtags in the format #{tagName} or #tagName
-             *     will be automatically extracted and associated with the log as tags when content is updated.
+            /** @description ログのMarkdownコンテンツ。コンテンツが更新される場合、#{tagName} または #tagName 形式のハッシュタグは
+             *     自動的に抽出され、ログにタグとして関連付けられます。
              *      */
             content_md?: string;
             is_public?: boolean;
         };
         LogDetail: components["schemas"]["Log"] & Record<string, never>;
         LogImage: {
-            /** @description Unique image identifier */
+            /** @description ユニークな画像識別子 */
             id: string;
-            /** @description ID of the log this image is attached to */
+            /** @description この画像が添付されているログのID */
             log_id: string;
-            /** @description R2 storage key for the image */
+            /** @description 画像のR2ストレージキー */
             r2_key: string;
-            /** @description Original filename */
+            /** @description 元のファイル名 */
             file_name: string;
             /**
-             * @description MIME type of the image
+             * @description 画像のMIMEタイプ
              * @example image/jpeg
              */
             content_type: string;
-            /** @description File size in bytes */
+            /** @description ファイルサイズ（バイト単位） */
             file_size: number;
-            /** @description Image width in pixels. null when dimension information is not available. */
+            /** @description 画像の幅（ピクセル単位）。寸法情報が利用できない場合はnull。 */
             width: number | null;
-            /** @description Image height in pixels. null when dimension information is not available. */
+            /** @description 画像の高さ（ピクセル単位）。寸法情報が利用できない場合はnull。 */
             height: number | null;
-            /** @description Display order (lower numbers appear first) */
+            /** @description 表示順序（小さい数字が先頭に表示されます） */
             display_order: number;
             /**
              * Format: date-time
-             * @description When the image was uploaded
+             * @description 画像がアップロードされた日時
              */
             created_at: string;
         };

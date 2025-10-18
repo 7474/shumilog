@@ -8,7 +8,7 @@ import {
   seedTestLogs,
   TEST_TAG_IDS,
 } from '../helpers/app';
-import { toOpenApiResponse } from '../helpers/openapi-setup';
+import { toOpenApiResponse, validateOpenApiResponse } from '../helpers/openapi-setup';
 
 /**
  * Contract Suite: Logs routes
@@ -531,6 +531,10 @@ describe('Contract: Logs routes', () => {
       });
 
       expect(response.status).toBe(200);
+      
+      // Validate response against OpenAPI specification
+      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
+      
       const body = await response.json();
       expect(body).toMatchObject({
         twitter_post_id: expect.any(String)
@@ -551,6 +555,9 @@ describe('Contract: Logs routes', () => {
       });
 
       expect(response.status).toBe(401);
+      
+      // Validate response against OpenAPI specification
+      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
     });
 
     it('returns 403 when user is not the owner', async () => {
@@ -569,6 +576,9 @@ describe('Contract: Logs routes', () => {
       });
 
       expect(response.status).toBe(403);
+      
+      // Validate response against OpenAPI specification
+      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
     });
 
     it('returns 400 when log is private', async () => {
@@ -587,6 +597,9 @@ describe('Contract: Logs routes', () => {
       });
 
       expect(response.status).toBe(400);
+      
+      // Validate response against OpenAPI specification
+      await validateOpenApiResponse(response, `/logs/${privateLogId}/share`, 'POST');
     });
 
     it('returns 404 when log does not exist', async () => {
@@ -606,6 +619,9 @@ describe('Contract: Logs routes', () => {
       });
 
       expect(response.status).toBe(404);
+      
+      // Validate response against OpenAPI specification
+      await validateOpenApiResponse(response, '/logs/log_missing/share', 'POST');
     });
 
     it('surfaces upstream Twitter failures as 502', async () => {
@@ -624,6 +640,9 @@ describe('Contract: Logs routes', () => {
       });
 
       expect(response.status).toBe(502);
+      
+      // Validate response against OpenAPI specification
+      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
     });
   });
 });

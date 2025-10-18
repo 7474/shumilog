@@ -134,7 +134,8 @@ tags.get('/:tagId', async (c) => {
 
   return c.json({
     ...detail,
-    associated_tags: detail.associations
+    associated_tags: detail.associations,
+    recent_referring_tags: detail.recent_referring_tags
   });
 });
 

@@ -25,8 +25,10 @@ describe('Contract Test: Cache Control Headers', () => {
   });
 
   describe('公開エンドポイント（認証不要）', () => {
-    it('GET /health - キャッシュヘッダが設定されている', async () => {
-      const response = await app.request('/health', { method: 'GET' });
+    it('GET /logs - キャッシュヘッダが設定されている', async () => {
+      await seedTestLogs();
+      
+      const response = await app.request('/logs', { method: 'GET' });
       
       expect(response.status).toBe(200);
       expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, s-maxage=300, stale-while-revalidate=60');

@@ -1,6 +1,8 @@
 import path from 'path';
 import jestOpenAPI from 'jest-openapi';
 import { fileURLToPath } from 'url';
+import { expect } from 'vitest';
+import { requireEndpointInSpec } from './spec-compliance';
 
 // Convert import.meta.url to __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -53,5 +55,29 @@ export async function toOpenApiResponse(
   };
 
   return res;
+}
+
+/**
+ * 強制的にOpenAPI検証を行うヘルパー関数
+ * すべてのコントラクトテストでこの関数を使用することで、
+ * 仕様と実装の齟齬を確実に検出する
+ * 
+ * @param response Hono Response object
+ * @param requestPath The request path (e.g., '/users/me')
+ * @param requestMethod The HTTP method (e.g., 'GET')
+ * @throws Error if response doesn't satisfy OpenAPI spec
+ */
+export async function validateOpenApiResponse(
+  response: Response,
+  requestPath: string,
+  requestMethod: string = 'GET'
+) {
+  // 1. まずエンドポイントが仕様に存在するかチェック
+  requireEndpointInSpec(requestPath, requestMethod);
+  
+  // 2. レスポンスが仕様に適合するかチェック
+  const openApiResponse = await toOpenApiResponse(response, requestPath, requestMethod);
+  expect(openApiResponse).toSatisfyApiSpec();
+  return openApiResponse;
 }
 

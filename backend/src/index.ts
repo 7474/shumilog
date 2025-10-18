@@ -21,7 +21,6 @@ import userRoutes from './routes/users.js';
 import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
 import imageRoutes from './routes/images.js';
-import healthRoutes from './routes/health.js';
 import devRoutes from './routes/dev.js';
 import supportRoutes from './routes/support.js';
 
@@ -230,7 +229,6 @@ export function createApp(env: RuntimeEnv = {}) {
     await next();
   });
 
-  app.route('/health', healthRoutes);
   app.route('/dev', devRoutes);
 
   registerApiRoutes(app.basePath('/api'), sessionService, userService);

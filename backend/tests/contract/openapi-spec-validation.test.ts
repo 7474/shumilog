@@ -89,7 +89,7 @@ describe('OpenAPI Specification Validation', () => {
 
   it('should be able to validate operation by path and method', () => {
     // Test that we can look up and validate operations
-    // The spec defines paths without /api prefix (e.g., /health)
+    // The spec defines paths without /api prefix (e.g., /auth/twitter)
     // but server base URL includes /api
     const paths = Object.keys(api.definition.paths || {});
     expect(paths.length).toBeGreaterThan(0);

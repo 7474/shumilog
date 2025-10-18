@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { LogService } from '../services/LogService.js';
-import { TwitterService } from '../services/TwitterService.js';
 import { SessionService } from '../services/SessionService.js';
 import { UserService } from '../services/UserService.js';
 import { Log } from '../models/Log.js';
@@ -12,7 +11,6 @@ import type { AppBindings } from '../index.js';
 const MAX_LIMIT = 100;
 
 const getLogService = (c: any): LogService => c.get('logService') as LogService;
-const getTwitterService = (c: any): TwitterService => c.get('twitterService') as TwitterService;
 const getSessionService = (c: any): SessionService => c.get('sessionService') as SessionService;
 const getUserService = (c: any): UserService => c.get('userService') as UserService;
 
@@ -490,75 +488,6 @@ logs.delete('/:logId', async (c) => {
     }
     console.error('Error deleting log:', error);
     throw new HTTPException(500, { message: 'Failed to delete log' });
-  }
-});
-
-// POST /logs/{logId}/share - Share log to Twitter  
-logs.post('/:logId/share', async (c) => {
-  const logId = c.req.param('logId');
-  const logService = getLogService(c);
-  const twitterService = getTwitterService(c);
-  const user = getAuthUser(c);
-
-  try {
-    // Check if log exists and user owns it
-    const log = await logService.getLogById(logId, user.id);
-    
-    if (!log) {
-      throw new HTTPException(404, { message: 'Log not found' });
-    }
-
-    if (log.user_id !== user.id) {
-      throw new HTTPException(403, { message: 'Not log owner' });
-    }
-
-    // Check if log is public
-    if (!log.is_public) {
-      throw new HTTPException(400, { message: 'Cannot share private log' });
-    }
-
-    // Parse request body
-    let body;
-    try {
-      body = await c.req.json();
-    } catch (_) {
-      body = {};
-    }
-    
-    // Simulate Twitter API failure for test
-    if (body.simulate_failure) {
-      throw new HTTPException(502, { message: 'Twitter API error' });
-    }
-
-    // Share to Twitter using the Twitter service
-    try {
-      const requestUrl = new URL(c.req.url);
-      const shareUrl = `${requestUrl.origin}/logs/${logId}`;
-
-      const result = await twitterService.shareLogToTwitter(
-        'mock_access_token', // In real implementation, get from user's stored tokens
-        log.title || 'Shared Log',
-        log.content_md,
-        shareUrl
-      );
-      
-      if (!result.success) {
-        throw new Error(result.message);
-      }
-      
-      return c.json({
-        twitter_post_id: result.tweetId
-      });
-    } catch (twitterError) {
-      console.error('Twitter API error:', twitterError);
-      throw new HTTPException(502, { message: 'Twitter API error' });
-    }
-  } catch (error) {
-    if (error instanceof HTTPException) {
-      throw error;
-    }
-    console.error('Error sharing log:', error);
-    throw new HTTPException(500, { message: 'Failed to share log' });
   }
 });
 

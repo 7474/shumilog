@@ -26,8 +26,8 @@ describe('Automatic OpenAPI Validation - Demo', () => {
       // Each request is automatically validated against OpenAPI spec
       // No need to call toSatisfyApiSpec() manually
       
-      const health = await validateAppRequest(app, '/health', { method: 'GET' });
-      expect(health.status).toBe(200);
+      const auth = await validateAppRequest(app, '/auth/twitter', { method: 'GET' });
+      expect(auth.status).toBe(302);
       
       const logs = await validateAppRequest(app, '/logs', { method: 'GET' });
       expect(logs.status).toBe(200);

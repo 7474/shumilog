@@ -8,7 +8,7 @@ import {
   seedTestLogs,
   TEST_TAG_IDS,
 } from '../helpers/app';
-import { toOpenApiResponse, validateOpenApiResponse } from '../helpers/openapi-setup';
+import { toOpenApiResponse } from '../helpers/openapi-setup';
 
 /**
  * Contract Suite: Logs routes
@@ -511,138 +511,6 @@ describe('Contract: Logs routes', () => {
       });
 
       expect(response.status).toBe(404);
-    });
-  });
-
-  describe('POST /logs/:logId/share', () => {
-    it('shares a public log for the owner', async () => {
-      const { publicLogId, ownerId } = await seedTestLogs();
-      const sessionToken = await createTestSession(ownerId);
-
-      const response = await app.request(`/logs/${publicLogId}/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          message: 'Check out my new log!'
-        })
-      });
-
-      expect(response.status).toBe(200);
-      
-      // Validate response against OpenAPI specification
-      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
-      
-      const body = await response.json();
-      expect(body).toMatchObject({
-        twitter_post_id: expect.any(String)
-      });
-    });
-
-    it('returns 401 when unauthenticated', async () => {
-      const { publicLogId } = await seedTestLogs();
-
-      const response = await app.request(`/logs/${publicLogId}/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: 'Should fail'
-        })
-      });
-
-      expect(response.status).toBe(401);
-      
-      // Validate response against OpenAPI specification
-      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
-    });
-
-    it('returns 403 when user is not the owner', async () => {
-      const { publicLogId, otherUserId } = await seedTestLogs();
-      const sessionToken = await createTestSession(otherUserId);
-
-      const response = await app.request(`/logs/${publicLogId}/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          message: 'Unauthorized share'
-        })
-      });
-
-      expect(response.status).toBe(403);
-      
-      // Validate response against OpenAPI specification
-      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
-    });
-
-    it('returns 400 when log is private', async () => {
-      const { privateLogId, ownerId } = await seedTestLogs();
-      const sessionToken = await createTestSession(ownerId);
-
-      const response = await app.request(`/logs/${privateLogId}/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          message: 'Should not be shareable'
-        })
-      });
-
-      expect(response.status).toBe(400);
-      
-      // Validate response against OpenAPI specification
-      await validateOpenApiResponse(response, `/logs/${privateLogId}/share`, 'POST');
-    });
-
-    it('returns 404 when log does not exist', async () => {
-      const userId = 'user_writer';
-      await createTestUser(userId, 'writer');
-      const sessionToken = await createTestSession(userId);
-
-      const response = await app.request('/logs/log_missing/share', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          message: 'Missing log'
-        })
-      });
-
-      expect(response.status).toBe(404);
-      
-      // Validate response against OpenAPI specification
-      await validateOpenApiResponse(response, '/logs/log_missing/share', 'POST');
-    });
-
-    it('surfaces upstream Twitter failures as 502', async () => {
-      const { publicLogId, ownerId } = await seedTestLogs();
-      const sessionToken = await createTestSession(ownerId);
-
-      const response = await app.request(`/logs/${publicLogId}/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: `session=${sessionToken}`
-        },
-        body: JSON.stringify({
-          simulate_failure: true
-        })
-      });
-
-      expect(response.status).toBe(502);
-      
-      // Validate response against OpenAPI specification
-      await validateOpenApiResponse(response, `/logs/${publicLogId}/share`, 'POST');
     });
   });
 });

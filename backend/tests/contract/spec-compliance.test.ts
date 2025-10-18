@@ -17,7 +17,6 @@ describe('OpenAPI Specification Compliance', () => {
    * 新しいエンドポイントを追加した際は、ここに追加して仕様との整合性をチェック
    */
   const implementedEndpoints = [
-    { path: '/health', method: 'GET' },
     { path: '/auth/twitter', method: 'GET' },
     { path: '/auth/callback', method: 'GET' },
     { path: '/auth/logout', method: 'POST' },
@@ -43,9 +42,6 @@ describe('OpenAPI Specification Compliance', () => {
     { path: '/logs/{logId}/images', method: 'POST' },
     { path: '/logs/{logId}/images/{imageId}', method: 'GET' },
     { path: '/logs/{logId}/images/{imageId}', method: 'DELETE' },
-    
-    // 以下は実装されているが仕様に存在しないエンドポイント（検出されるべき）
-    { path: '/logs/{logId}/share', method: 'POST' },
   ];
 
   it('all implemented endpoints exist in OpenAPI specification', () => {
@@ -108,9 +104,9 @@ describe('OpenAPI Specification Compliance', () => {
     expect(endpoints.length).toBeGreaterThan(0);
     
     // 既知のエンドポイントが存在することを確認
-    const healthEndpoint = endpoints.find(ep => 
-      ep.path === '/health' && ep.method === 'GET'
+    const authEndpoint = endpoints.find(ep => 
+      ep.path === '/auth/twitter' && ep.method === 'GET'
     );
-    expect(healthEndpoint).toBeDefined();
+    expect(authEndpoint).toBeDefined();
   });
 });

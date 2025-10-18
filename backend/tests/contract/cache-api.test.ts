@@ -24,8 +24,8 @@ describe('Contract Test: Cache API', () => {
   });
 
   describe('公開エンドポイント（キャッシュ対象）', () => {
-    it('GET /health - 初回リクエストはキャッシュミス', async () => {
-      const response = await app.request('/health', { method: 'GET' });
+    it('GET /logs - 初回リクエストはキャッシュミス', async () => {
+      const response = await app.request('/logs', { method: 'GET' });
       
       expect(response.status).toBe(200);
       // Cache API が利用できない環境（テスト環境）では X-Cache-Status ヘッダーは設定されない
@@ -57,10 +57,10 @@ describe('Contract Test: Cache API', () => {
   describe('非キャッシュ対象', () => {
     it('POST リクエストはキャッシュされない', async () => {
       // POST リクエストでは X-Cache-Status ヘッダーは設定されない
-      const response = await app.request('/health', { method: 'POST' });
+      const response = await app.request('/logs', { method: 'POST' });
       
-      // health エンドポイントは POST を受け付けないので 404 または 405 になる
-      expect([404, 405]).toContain(response.status);
+      // logs エンドポイントの POST は認証必要なので 401 になる
+      expect(response.status).toBe(401);
       expect(response.headers.get('X-Cache-Status')).toBeNull();
     });
 

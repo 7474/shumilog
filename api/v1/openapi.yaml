@@ -1,6 +1,6 @@
-openapi: 3.0.3
+openapi: 3.1.1
 info:
-  title: Hobby Content Log API
+  title: Shumilog API
   description: |
     API for logging and sharing personal content logs
     
@@ -8,53 +8,14 @@ info:
     All development, testing, and documentation should reference this file.
     
     Maintain this specification continuously as features are developed.
-  version: 1.0.0
+  version: 0.1.0
 servers:
-  - url: https://shumilog.example.com/api
+  - url: https://shumilog.com/api
     description: Production server
   - url: http://localhost:8787/api
     description: Development server
 
 paths:
-  /health:
-    get:
-      summary: Health check endpoint
-      description: Returns the health status of the API and its services
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - status
-                  - timestamp
-                  - services
-                properties:
-                  status:
-                    type: string
-                    enum: [healthy]
-                    example: healthy
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: "2025-10-03T12:00:00.000Z"
-                  services:
-                    type: object
-                    required:
-                      - database
-                      - backend
-                    properties:
-                      database:
-                        type: string
-                        enum: [connected, disconnected, unknown]
-                        example: connected
-                      backend:
-                        type: string
-                        enum: [running, degraded]
-                        example: running
-
   /auth/twitter:
     get:
       summary: Initiate Twitter OAuth flow
@@ -772,36 +733,6 @@ paths:
                       $ref: '#/components/schemas/Log'
                   total:
                     type: integer
-        '404':
-          description: Log not found
-
-  /logs/{logId}/share:
-    post:
-      summary: Share log to Twitter
-      security:
-        - sessionAuth: []
-      parameters:
-        - name: logId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successfully shared to Twitter
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - twitter_post_id
-                properties:
-                  twitter_post_id:
-                    type: string
-        '401':
-          description: Not authenticated
-        '403':
-          description: Not log owner
         '404':
           description: Log not found
 

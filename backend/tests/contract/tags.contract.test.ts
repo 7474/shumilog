@@ -165,7 +165,8 @@ describe('Contract: Tags routes', () => {
         description: expect.any(String),
         metadata: expect.any(Object),
         created_by: expect.any(String),
-        associated_tags: expect.any(Array)
+        associated_tags: expect.any(Array),
+        recent_referring_tags: expect.any(Array)
       });
     });
 

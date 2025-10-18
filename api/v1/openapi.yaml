@@ -1000,6 +1000,7 @@ components:
             - log_count
             - recent_logs
             - associated_tags
+            - recent_referring_tags
           properties:
             log_count:
               type: integer
@@ -1012,6 +1013,11 @@ components:
               items:
                 $ref: '#/components/schemas/Tag'
               description: このタグに関連付けられたタグ
+            recent_referring_tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+              description: このタグを参照している他のタグ（被参照タグ）
 
     Log:
       type: object

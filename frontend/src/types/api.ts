@@ -1411,6 +1411,8 @@ export interface components {
             recent_logs: components["schemas"]["Log"][];
             /** @description このタグに関連付けられたタグ */
             associated_tags: components["schemas"]["Tag"][];
+            /** @description このタグを参照している他のタグ（被参照タグ） */
+            recent_referring_tags: components["schemas"]["Tag"][];
         };
         Log: {
             id: string;

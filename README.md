@@ -8,7 +8,7 @@ https://shumilog.dev/
 
 ## ドキュメント
 
-- [システムアーキテクチャ](./docs/architecture.md) - システム全体構成の概観（Mermaid図解付き）
+- [システムアーキテクチャ](./docs/architecture.md) - システム全体構成の概観
 
 ## 技術スタック
 

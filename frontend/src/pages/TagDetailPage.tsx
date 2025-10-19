@@ -386,17 +386,17 @@ export function TagDetailPage() {
           {tag.associated_tags && tag.associated_tags.length > 0 && (
             <div className="border-t border-gray-100 pt-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">🔗 関連タグ</h3>
-              <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {tag.associated_tags.map((associatedTag) => (
                   <div key={associatedTag.id} className="flex items-center gap-2">
                     {/* タグ名（タップで詳細ページへ） */}
                     <Link 
                       to={`/tags/${encodeURIComponent(associatedTag.name)}`}
-                      className="flex-1"
+                      className="flex-1 min-w-0"
                     >
                       <span className="inline-flex items-center space-x-1 px-3 py-2 bg-sky-50 text-sky-700 rounded-lg text-sm active:bg-sky-100 transition-colors w-full">
-                        <span className="w-2 h-2 rounded-full bg-sky-400"></span>
-                        <span>{associatedTag.name}</span>
+                        <span className="w-2 h-2 rounded-full bg-sky-400 flex-shrink-0"></span>
+                        <span className="truncate">{associatedTag.name}</span>
                       </span>
                     </Link>
                     
@@ -430,17 +430,17 @@ export function TagDetailPage() {
             <div className="border-t border-gray-100 pt-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">🔖 被参照タグ</h3>
               <p className="text-xs text-gray-600 mb-2">このタグを参照している他のタグ</p>
-              <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {tag.recent_referring_tags.map((referringTag) => (
                   <div key={referringTag.id} className="flex items-center gap-2">
                     {/* タグ名（タップで詳細ページへ） */}
                     <Link 
                       to={`/tags/${encodeURIComponent(referringTag.name)}`}
-                      className="flex-1"
+                      className="flex-1 min-w-0"
                     >
                       <span className="inline-flex items-center space-x-1 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm active:bg-purple-100 transition-colors w-full">
-                        <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                        <span>{referringTag.name}</span>
+                        <span className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+                        <span className="truncate">{referringTag.name}</span>
                       </span>
                     </Link>
                     

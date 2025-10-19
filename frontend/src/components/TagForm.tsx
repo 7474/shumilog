@@ -244,7 +244,7 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
                   )}
                 </Button>
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col">
                 <FormControl>
                   <Textarea
                     placeholder="このタグが表すものを説明してください..."

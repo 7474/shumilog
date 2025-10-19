@@ -76,6 +76,8 @@ TWITTER_REDIRECT_URI = "https://api.shumilog.dev/api/auth/callback"
 # TWITTER_CLIENT_ID
 # TWITTER_CLIENT_SECRET
 # SESSION_SECRET
+# DMM_API_ID
+# DMM_AFFILIATE_ID
 
 [observability.logs]
 enabled = true

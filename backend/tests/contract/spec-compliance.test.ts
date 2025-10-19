@@ -42,6 +42,8 @@ describe('OpenAPI Specification Compliance', () => {
     { path: '/logs/{logId}/images', method: 'POST' },
     { path: '/logs/{logId}/images/{imageId}', method: 'GET' },
     { path: '/logs/{logId}/images/{imageId}', method: 'DELETE' },
+    { path: '/advertisements/logs/{logId}', method: 'GET' },
+    { path: '/advertisements/tags/{tagId}', method: 'GET' },
   ];
 
   it('all implemented endpoints exist in OpenAPI specification', () => {

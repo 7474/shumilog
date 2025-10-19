@@ -22,6 +22,7 @@ import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
 import imageRoutes from './routes/images.js';
 import supportRoutes from './routes/support.js';
+import advertisementRoutes from './routes/advertisements.js';
 
 export interface RuntimeEnv {
   DB?: D1Database;
@@ -37,6 +38,8 @@ export interface RuntimeEnv {
   TWITTER_REDIRECT_URI?: string;
   APP_BASE_URL?: string;
   APP_LOGIN_URL?: string;
+  DMM_API_ID?: string;
+  DMM_AFFILIATE_ID?: string;
   database?: Database;
 }
 
@@ -147,6 +150,9 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
   // Support routes require authentication for all methods
   app.use('/support/*', requireAuth);
   app.route('/support', supportRoutes);
+
+  // Advertisement routes are public (no authentication required)
+  app.route('/advertisements', advertisementRoutes);
 }
 
 export function createApp(env: RuntimeEnv = {}) {

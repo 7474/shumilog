@@ -877,6 +877,79 @@ paths:
         '404':
           description: 画像が見つかりません
 
+  /advertisements/logs/{logId}:
+    get:
+      summary: ログに関連する広告を取得
+      description: |
+        ログの内容とタグに基づいて、関連する広告を取得します。
+        DMMアフィリエイトAPIを使用して、ログのタイトルとタグ名をキーワードとして広告を検索します。
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 3
+            maximum: 10
+      responses:
+        '200':
+          description: 広告の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Advertisement'
+        '404':
+          description: ログが見つかりません
+
+  /advertisements/tags/{tagId}:
+    get:
+      summary: タグに関連する広告を取得
+      description: |
+        タグの名前と説明に基づいて、関連する広告を取得します。
+        DMMアフィリエイトAPIを使用して、タグ名をキーワードとして広告を検索します。
+        `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
+      parameters:
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: タグ名（推奨）またはタグID
+          example: "Anime"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 3
+            maximum: 10
+      responses:
+        '200':
+          description: 広告の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Advertisement'
+        '404':
+          description: タグが見つかりません
+
 components:
   securitySchemes:
     sessionAuth:
@@ -1175,3 +1248,33 @@ components:
           type: string
           format: date-time
           description: 画像がアップロードされた日時
+
+    Advertisement:
+      type: object
+      additionalProperties: false
+      required:
+        - productId
+        - title
+        - imageUrl
+        - affiliateUrl
+      properties:
+        productId:
+          type: string
+          description: 商品ID
+        title:
+          type: string
+          description: 商品タイトル
+        imageUrl:
+          type: string
+          description: 商品画像のURL
+        affiliateUrl:
+          type: string
+          description: アフィリエイトリンクURL
+        price:
+          type: string
+          nullable: true
+          description: 商品価格（存在する場合）
+        serviceName:
+          type: string
+          nullable: true
+          description: サービス名（存在する場合）

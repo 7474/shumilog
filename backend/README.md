@@ -10,6 +10,7 @@ ShumilogのバックエンドAPIサーバーです。Cloudflare Workers上で動
 
 - **ランタイム**: Cloudflare Workers (Node.js互換)
 - **フレームワーク**: Hono v4
+- **ORM**: Drizzle ORM
 - **データベース**: Cloudflare D1 (SQLite)
 - **ストレージ**: Cloudflare R2 (画像ファイル)
 - **AI**: Cloudflare Workers AI (タグ支援機能)
@@ -36,16 +37,12 @@ ShumilogのバックエンドAPIサーバーです。Cloudflare Workers上で動
 - AI支援によるタグ説明生成 (Wikipedia連携)
 - タグ関連付け管理
 - タグ統計
+- 最近の参照タグ表示
 
 ### 画像管理
 - 画像アップロード・管理
 - Cloudflare R2ストレージ連携
 - ログへの画像添付
-
-### 開発支援機能
-- 開発環境設定確認API
-- Dockerコンテナ再起動API
-- ログ取得API
 
 ## 開発環境セットアップ
 
@@ -71,6 +68,14 @@ npm run db:migrate
 # シードデータ投入
 npm run db:seed
 ```
+
+### Drizzle ORM
+
+このプロジェクトではDrizzle ORMを使用してデータベース操作を行っています：
+
+- **スキーマ定義**: `src/db/schema.ts`
+- **マイグレーション**: `migrations/` ディレクトリ
+- **クエリビルダー**: 型安全なSQLクエリ生成
 
 ### 開発サーバー起動
 
@@ -176,6 +181,15 @@ npm run format
 # D1データベースのリセット
 npm run db:migrate
 npm run db:seed
+```
+
+#### Drizzle ORM関連の問題
+```bash
+# スキーマの型生成（必要な場合）
+npx drizzle-kit generate
+
+# マイグレーションの作成（スキーマ変更時）
+npx drizzle-kit migrate
 ```
 
 #### AI機能が動作しない

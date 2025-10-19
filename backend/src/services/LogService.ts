@@ -728,7 +728,7 @@ export class LogService {
         FROM log_tag_associations lta
         JOIN tags t ON lta.tag_id = t.id
         WHERE lta.log_id IN (${placeholders})
-        ORDER BY t.name
+        ORDER BY lta.log_id, lta.association_order ASC
       `, logIds),
       // Get all images for these logs in one query
       this.db.query(`

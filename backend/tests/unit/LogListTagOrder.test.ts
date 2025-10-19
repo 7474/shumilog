@@ -19,7 +19,7 @@ describe('Tag Order in Log List', () => {
 
   it('should maintain tag order when fetching logs via searchLogs', async () => {
     // Create a log with tags in specific order (reverse alphabetical)
-    const log = await logService.createLog(
+    await logService.createLog(
       {
         title: 'Tag Order Test',
         content_md: 'Content with #Zebra #Yak #Xray tags',
@@ -43,7 +43,7 @@ describe('Tag Order in Log List', () => {
   });
 
   it('should maintain tag order when fetching public logs', async () => {
-    const log = await logService.createLog(
+    await logService.createLog(
       {
         title: 'Public Log Tag Order',
         content_md: 'Testing #Zulu #Yankee #Whiskey',

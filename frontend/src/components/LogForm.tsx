@@ -149,23 +149,25 @@ export function LogForm({ log, initialContent, onSuccess, onCancel: _onCancel }:
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-gray-700 font-semibold">内容</FormLabel>
-              <MarkdownToolbar
-                textareaRef={contentTextareaRef}
-                onValueChange={(value) => form.setValue('content_md', value)}
-                getValue={() => form.getValues('content_md')}
-              />
-              <FormControl>
-                <Textarea
-                  placeholder="趣味の体験を詳しく記録しましょう..."
-                  rows={8}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fresh-500 focus:border-transparent transition-all resize-y"
-                  {...field}
-                  ref={(e) => {
-                    field.ref(e);
-                    contentTextareaRef.current = e;
-                  }}
+              <div className="space-y-2">
+                <FormControl>
+                  <Textarea
+                    placeholder="趣味の体験を詳しく記録しましょう..."
+                    rows={8}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fresh-500 focus:border-transparent transition-all resize-y"
+                    {...field}
+                    ref={(e) => {
+                      field.ref(e);
+                      contentTextareaRef.current = e;
+                    }}
+                  />
+                </FormControl>
+                <MarkdownToolbar
+                  textareaRef={contentTextareaRef}
+                  onValueChange={(value) => form.setValue('content_md', value)}
+                  getValue={() => form.getValues('content_md')}
                 />
-              </FormControl>
+              </div>
               <FormMessage />
             </FormItem>
           )}

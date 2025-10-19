@@ -2,7 +2,10 @@
  * Database connection and query utilities
  * 
  * Provides connection management and query utilities for Cloudflare D1
+ * 統合されたDrizzle ORMサポート
  */
+
+import { createDrizzleDB, type DrizzleDB } from './drizzle.js';
 
 export interface DatabaseConfig {
   // For local development
@@ -49,6 +52,7 @@ export interface PaginatedResult<T> {
 export class Database {
   private db: any;
   private config: DatabaseConfig;
+  private drizzle: DrizzleDB | null = null;
 
   constructor(config: DatabaseConfig) {
     this.config = config;
@@ -56,6 +60,8 @@ export class Database {
     // For D1 databases, we can connect immediately since they're just bindings
     if (config.d1Database) {
       this.db = config.d1Database;
+      // Drizzle ORMインスタンスも初期化
+      this.drizzle = createDrizzleDB(config.d1Database);
     } else {
       this.db = null;
     }
@@ -69,6 +75,7 @@ export class Database {
       if (this.config.d1Database) {
         // Cloudflare D1 database - already connected in constructor
         this.db = this.config.d1Database;
+        this.drizzle = createDrizzleDB(this.config.d1Database);
       } else if (this.config.databasePath) {
         // Local development - use SQLite file directly
         // TODO: In actual production, this would use D1 API
@@ -228,6 +235,16 @@ export class Database {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Drizzle ORMインスタンスを取得
+   */
+  getDrizzle(): DrizzleDB {
+    if (!this.drizzle) {
+      throw new Error('Drizzle ORM not initialized. Make sure D1 database is configured.');
+    }
+    return this.drizzle;
   }
 }
 

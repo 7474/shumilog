@@ -7,42 +7,13 @@
  * SSR機能を実現しています。
  * 
  * 主な機能:
- * - ログ・タグページのサーバーサイドレンダリング（全てのアクセスに対して）
+ * - ログ・タグページのサーバーサイドレンダリング
  * - OGPメタタグの動的生成
  * - 画像の最適化（Cloudflare Image Resizing）
  * - エッジでの高速実行とキャッシュ
  * 
  * 詳細なアーキテクチャ: docs/ssr-framework.md
  */
-
-// OGPボットのUser-Agentパターン
-const BOT_PATTERNS = [
-  /Twitterbot/i,
-  /facebookexternalhit/i,
-  /LinkedInBot/i,
-  /Slackbot/i,
-  /Discordbot/i,
-  /WhatsApp/i,
-  /TelegramBot/i,
-  /Pinterestbot/i,
-  /redditbot/i,
-  /SkypeUriPreview/i,
-  /vkShare/i,
-  /W3C_Validator/i,
-  /Googlebot/i,
-  /bingbot/i,
-  /Baiduspider/i,
-];
-
-/**
- * User-AgentからOGPボットを検出
- */
-function isOgpBot(userAgent: string | null): boolean {
-  if (!userAgent) {
-    return false;
-  }
-  return BOT_PATTERNS.some(pattern => pattern.test(userAgent));
-}
 
 /**
  * HTMLエスケープ

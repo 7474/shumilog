@@ -19,7 +19,7 @@ Auto-generated from all feature plans. Last updated: 2025-01-08
 - Cloudflare D1 (SQLiteベースデータベース)
 - React 19 (フロントエンドライブラリ)
 - Vite 7+ (フロントエンドビルドツール)
-- **Cloudflare Pages Functions (SSRフレームワーク)** - OGPボット向けサーバーサイドレンダリング
+- Cloudflare Pages Functions (SSRフレームワーク)
 - Tailwind CSS 4.1+ (ユーティリティファーストCSSフレームワーク)
 - shadcn/ui (アクセシブルUIコンポーネントライブラリ)
 - Vitest (テストフレームワーク)
@@ -32,7 +32,7 @@ api/                    # 正規API仕様書（信頼できる情報源）
 backend/                # Cloudflare Workers バックエンド
 frontend/               # React 19 + Tailwind CSS フロントエンド
   ├── functions/        # Cloudflare Pages Functions (SSRフレームワーク)
-  │   └── _middleware.ts # SSRミドルウェア（ボット検出、OGP生成）
+  │   └── _middleware.ts # SSRミドルウェア（OGP生成）
 tests/                  # テストファイル
 ```
 
@@ -48,7 +48,6 @@ shumilogは**Cloudflare Pages Functions**をSSRフレームワークとして採
 ### SSRフレームワークの責務
 
 `frontend/functions/_middleware.ts`が以下を担当：
-- OGPボット検出（Twitter、Facebook、Slack等）
 - ログ・タグページのSSR処理
 - OGPメタタグ生成（画像最適化含む）
 - エッジでの高速実行とキャッシュ

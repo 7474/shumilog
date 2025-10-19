@@ -65,7 +65,7 @@ graph TB
     Browser -->|HTTPS| PagesFunctions
     Bot -->|HTTPS| PagesFunctions
     PagesFunctions -->|通常リクエスト| StaticAssets
-    PagesFunctions -->|ボット検出時| API
+    PagesFunctions -->|OGP対応リクエスト| API
     Browser -->|API呼び出し| API
     API --> Database
     API --> Storage
@@ -97,7 +97,7 @@ graph TB
 graph TB
     subgraph "Frontend Application"
         subgraph "Pages Functions (SSR)"
-            Middleware[_middleware.ts<br/>ボット検出・OGP生成]
+            Middleware[_middleware.ts<br/>OGP生成]
         end
         
         subgraph "React Application"
@@ -131,7 +131,7 @@ graph TB
         end
     end
     
-    Middleware -.->|ボット以外| Router
+    Middleware -.->|OGP対応リクエスト以外| Router
     Router --> Pages
     Pages --> Components
     Components --> Services
@@ -388,7 +388,7 @@ sequenceDiagram
     
     Browser->>Pages: GET /logs/123
     
-    alt ボット検出
+    alt OGP対応リクエスト
         Pages->>Worker: API呼び出し（SSR用）
         Worker->>D1: データ取得
         D1-->>Worker: ログデータ

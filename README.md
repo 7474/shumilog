@@ -9,6 +9,7 @@ https://shumilog.dev/
 ## ドキュメント
 
 - [システムアーキテクチャ](./docs/architecture.md) - システム全体構成の概観
+- [広告機能ガイド](./docs/advertising.md) - 広告表示機能の設定と使い方
 
 ## 技術スタック
 

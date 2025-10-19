@@ -22,14 +22,14 @@ paths:
       description: ユーザーをTwitter認証にリダイレクトします
       responses:
         '302':
-          description: Redirect to Twitter OAuth
+          description: Twitter OAuthへリダイレクト
           headers:
             Location:
               schema:
                 type: string
                 example: https://twitter.com/i/oauth2/authorize?...
         '400':
-          description: Invalid request parameters
+          description: 無効なリクエストパラメータ
 
   /auth/callback:
     get:
@@ -48,14 +48,14 @@ paths:
             type: string
       responses:
         '302':
-          description: Redirect to application with session
+          description: セッション付きでアプリケーションへリダイレクト
           headers:
             Set-Cookie:
               schema:
                 type: string
                 example: session=token; HttpOnly; Secure
         '401':
-          description: Authentication failed
+          description: 認証に失敗しました
 
   /auth/logout:
     post:
@@ -65,9 +65,9 @@ paths:
         - sessionAuth: []
       responses:
         '200':
-          description: Successfully logged out
+          description: 正常にログアウトしました
         '401':
-          description: Not authenticated
+          description: 認証されていません
 
   /users/me:
     get:
@@ -104,7 +104,7 @@ paths:
             default: 0
       responses:
         '200':
-          description: List of user's logs
+          description: ユーザーのログ一覧
           content:
             application/json:
               schema:
@@ -129,7 +129,7 @@ paths:
                   has_more:
                     type: boolean
         '401':
-          description: Not authenticated
+          description: 認証されていません
 
   /users/me/stats:
     get:
@@ -217,7 +217,7 @@ paths:
                               type: string
                               format: date-time
         '401':
-          description: Not authenticated
+          description: 認証されていません
 
   /tags:
     get:
@@ -849,7 +849,7 @@ paths:
                 type: string
                 format: binary
         '404':
-          description: Image not found
+          description: 画像が見つかりません
 
     delete:
       summary: 画像を削除

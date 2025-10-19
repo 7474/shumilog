@@ -149,11 +149,6 @@ export function LogForm({ log, initialContent, onSuccess, onCancel: _onCancel }:
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-gray-700 font-semibold">内容</FormLabel>
-              <MarkdownToolbar
-                textareaRef={contentTextareaRef}
-                onValueChange={(value) => form.setValue('content_md', value)}
-                getValue={() => form.getValues('content_md')}
-              />
               <FormControl>
                 <Textarea
                   placeholder="趣味の体験を詳しく記録しましょう..."
@@ -166,6 +161,11 @@ export function LogForm({ log, initialContent, onSuccess, onCancel: _onCancel }:
                   }}
                 />
               </FormControl>
+              <MarkdownToolbar
+                textareaRef={contentTextareaRef}
+                onValueChange={(value) => form.setValue('content_md', value)}
+                getValue={() => form.getValues('content_md')}
+              />
               <FormMessage />
             </FormItem>
           )}

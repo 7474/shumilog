@@ -244,11 +244,6 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
                   )}
                 </Button>
               </div>
-              <MarkdownToolbar
-                textareaRef={descriptionRef}
-                onValueChange={(value) => form.setValue('description', value)}
-                getValue={() => form.getValues('description') || ''}
-              />
               <FormControl>
                 <Textarea
                   placeholder="このタグが表すものを説明してください..."
@@ -260,6 +255,11 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
                   }}
                 />
               </FormControl>
+              <MarkdownToolbar
+                textareaRef={descriptionRef}
+                onValueChange={(value) => form.setValue('description', value)}
+                getValue={() => form.getValues('description') || ''}
+              />
               <FormMessage className="text-sm text-red-600" />
             </FormItem>
           )}

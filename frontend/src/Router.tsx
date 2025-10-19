@@ -41,11 +41,11 @@ const router = createBrowserRouter([
         path: 'login',
         element: <LoginPage />,
       },
-      {
-        path: 'api-docs',
-        element: <ApiDocsPage />,
-      },
     ],
+  },
+  {
+    path: 'api-docs',
+    element: <ApiDocsPage />,
   },
 ]);
 

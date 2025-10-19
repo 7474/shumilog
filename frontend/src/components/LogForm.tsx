@@ -149,7 +149,7 @@ export function LogForm({ log, initialContent, onSuccess, onCancel: _onCancel }:
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-gray-700 font-semibold">内容</FormLabel>
-              <div className="space-y-2">
+              <div className="flex flex-col">
                 <FormControl>
                   <Textarea
                     placeholder="趣味の体験を詳しく記録しましょう..."

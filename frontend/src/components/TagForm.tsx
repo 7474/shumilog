@@ -244,22 +244,24 @@ export function TagForm({ tag, onSuccess, onCancel: _onCancel }: TagFormProps) {
                   )}
                 </Button>
               </div>
-              <FormControl>
-                <Textarea
-                  placeholder="このタグが表すものを説明してください..."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-colors bg-white shadow-sm min-h-[100px] resize-y"
-                  {...field}
-                  ref={(e) => {
-                    field.ref(e);
-                    descriptionRef.current = e;
-                  }}
+              <div className="space-y-2">
+                <FormControl>
+                  <Textarea
+                    placeholder="このタグが表すものを説明してください..."
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-colors bg-white shadow-sm min-h-[100px] resize-y"
+                    {...field}
+                    ref={(e) => {
+                      field.ref(e);
+                      descriptionRef.current = e;
+                    }}
+                  />
+                </FormControl>
+                <MarkdownToolbar
+                  textareaRef={descriptionRef}
+                  onValueChange={(value) => form.setValue('description', value)}
+                  getValue={() => form.getValues('description') || ''}
                 />
-              </FormControl>
-              <MarkdownToolbar
-                textareaRef={descriptionRef}
-                onValueChange={(value) => form.setValue('description', value)}
-                getValue={() => form.getValues('description') || ''}
-              />
+              </div>
               <FormMessage className="text-sm text-red-600" />
             </FormItem>
           )}

@@ -471,7 +471,7 @@ export function TagDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {tag.recent_logs.map((log) => (
                 <LogCard key={log.id} log={log} />
               ))}

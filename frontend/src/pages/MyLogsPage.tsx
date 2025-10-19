@@ -365,10 +365,12 @@ export function MyLogsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {logs.map((log) => (
-              <LogCard key={log.id} log={log} />
-            ))}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {logs.map((log) => (
+                <LogCard key={log.id} log={log} />
+              ))}
+            </div>
             {hasMore && (
               <div className="flex justify-center pt-4">
                 <Button
@@ -387,7 +389,7 @@ export function MyLogsPage() {
                 </Button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

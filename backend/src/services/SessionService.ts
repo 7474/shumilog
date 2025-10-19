@@ -1,5 +1,7 @@
 import { Session, SessionModel } from '../models/Session.js';
 import { Database } from '../db/database.js';
+import { sessions } from '../db/schema.js';
+import { eq, lt, desc } from 'drizzle-orm';
 
 export class SessionService {
   constructor(private db: Database) {}
@@ -12,12 +14,15 @@ export class SessionService {
     const expiresAt = SessionModel.createExpiryDate(daysToExpire);
     const now = new Date().toISOString();
 
-    const stmt = this.db.prepare(`
-      INSERT INTO sessions (token, user_id, created_at, expires_at)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    await stmt.run([token, userId, now, expiresAt]);
+    const drizzle = this.db.getDrizzle();
+    
+    await drizzle.insert(sessions).values({
+      token,
+      userId,
+      createdAt: now,
+      expiresAt,
+    });
+    
     return token;
   }
 
@@ -29,16 +34,25 @@ export class SessionService {
       return null;
     }
 
-    const row = await this.db.queryFirst(
-      'SELECT token, user_id, created_at, expires_at FROM sessions WHERE token = ?',
-      [token]
-    );
+    const drizzle = this.db.getDrizzle();
+    
+    const result = await drizzle
+      .select()
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
 
-    if (!row) {
+    if (!result || result.length === 0) {
       return null;
     }
 
-    const session = SessionModel.fromRow(row);
+    const row = result[0];
+    const session: Session = {
+      token: row.token,
+      user_id: row.userId,
+      created_at: row.createdAt,
+      expires_at: row.expiresAt,
+    };
     
     // Check if session is expired
     if (SessionModel.isExpired(session)) {
@@ -58,16 +72,16 @@ export class SessionService {
       return;
     }
 
-    const stmt = this.db.prepare('DELETE FROM sessions WHERE token = ?');
-    await stmt.run([token]);
+    const drizzle = this.db.getDrizzle();
+    await drizzle.delete(sessions).where(eq(sessions.token, token));
   }
 
   /**
    * Revoke all sessions for a user
    */
   async revokeUserSessions(userId: string): Promise<void> {
-    const stmt = this.db.prepare('DELETE FROM sessions WHERE user_id = ?');
-    await stmt.run([userId]);
+    const drizzle = this.db.getDrizzle();
+    await drizzle.delete(sessions).where(eq(sessions.userId, userId));
   }
 
   /**
@@ -75,25 +89,36 @@ export class SessionService {
    */
   async cleanupExpiredSessions(): Promise<number> {
     const now = new Date().toISOString();
-    const stmt = this.db.prepare('DELETE FROM sessions WHERE expires_at < ?');
-    const result = await stmt.run([now]);
-    return result.meta.changes || 0;
+    const drizzle = this.db.getDrizzle();
+    const result = await drizzle.delete(sessions).where(lt(sessions.expiresAt, now));
+    // D1 doesn't return changes count, so we return 0
+    return 0;
   }
 
   /**
    * Get session by user ID (most recent if multiple)
    */
   async getSessionByUserId(userId: string): Promise<Session | null> {
-    const row = await this.db.queryFirst(
-      'SELECT token, user_id, created_at, expires_at FROM sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-      [userId]
-    );
+    const drizzle = this.db.getDrizzle();
+    
+    const result = await drizzle
+      .select()
+      .from(sessions)
+      .where(eq(sessions.userId, userId))
+      .orderBy(desc(sessions.createdAt))
+      .limit(1);
 
-    if (!row) {
+    if (!result || result.length === 0) {
       return null;
     }
 
-    const session = SessionModel.fromRow(row);
+    const row = result[0];
+    const session: Session = {
+      token: row.token,
+      user_id: row.userId,
+      created_at: row.createdAt,
+      expires_at: row.expiresAt,
+    };
     
     // Check if session is expired
     if (SessionModel.isExpired(session)) {

@@ -1,5 +1,7 @@
 import { User, UserModel, CreateUserData, UpdateUserData } from '../models/User.js';
 import { Database } from '../db/database.js';
+import { users } from '../db/schema.js';
+import { eq, sql as drizzleSql } from 'drizzle-orm';
 
 export class UserService {
   constructor(private db: Database) {}
@@ -11,19 +13,16 @@ export class UserService {
     const now = new Date().toISOString();
     const userId = crypto.randomUUID();
     
-    const stmt = this.db.prepare(`
-      INSERT INTO users (id, twitter_username, display_name, avatar_url, role, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
+    const drizzle = this.db.getDrizzle();
     
-    await stmt.run([
-      userId,
-      data.twitter_username || null,
-      data.display_name,
-      data.avatar_url || null,
-      'user', // Default role
-      now
-    ]);
+    await drizzle.insert(users).values({
+      id: userId,
+      twitterUsername: data.twitter_username || null,
+      displayName: data.display_name,
+      avatarUrl: data.avatar_url || null,
+      role: 'user',
+      createdAt: now,
+    });
 
     return {
       id: userId,
@@ -39,12 +38,27 @@ export class UserService {
    * Find user by ID
    */
   async findById(id: string): Promise<User | null> {
-    const row = await this.db.queryFirst(
-      'SELECT id, twitter_username, display_name, avatar_url, role, created_at FROM users WHERE id = ?',
-      [id]
-    );
+    const drizzle = this.db.getDrizzle();
     
-    return row ? UserModel.fromRow(row) : null;
+    const result = await drizzle
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+    
+    if (!result || result.length === 0) {
+      return null;
+    }
+    
+    const row = result[0];
+    return {
+      id: row.id,
+      twitter_username: row.twitterUsername || undefined,
+      display_name: row.displayName,
+      avatar_url: row.avatarUrl || undefined,
+      role: row.role as 'user' | 'admin',
+      created_at: row.createdAt,
+    };
   }
 
   /**
@@ -58,44 +72,53 @@ export class UserService {
    * Find user by Twitter username
    */
   async findByTwitterUsername(username: string): Promise<User | null> {
-    const row = await this.db.queryFirst(
-      'SELECT id, twitter_username, display_name, avatar_url, role, created_at FROM users WHERE twitter_username = ?',
-      [username]
-    );
+    const drizzle = this.db.getDrizzle();
     
-    return row ? UserModel.fromRow(row) : null;
+    const result = await drizzle
+      .select()
+      .from(users)
+      .where(eq(users.twitterUsername, username))
+      .limit(1);
+    
+    if (!result || result.length === 0) {
+      return null;
+    }
+    
+    const row = result[0];
+    return {
+      id: row.id,
+      twitter_username: row.twitterUsername || undefined,
+      display_name: row.displayName,
+      avatar_url: row.avatarUrl || undefined,
+      role: row.role as 'user' | 'admin',
+      created_at: row.createdAt,
+    };
   }
 
   /**
    * Update user information
    */
   async updateUser(userId: string, data: UpdateUserData): Promise<User> {
-    const updates: string[] = [];
-    const params: any[] = [];
+    const updates: Partial<typeof users.$inferInsert> = {};
     
     if (data.display_name !== undefined) {
-      updates.push('display_name = ?');
-      params.push(data.display_name);
+      updates.displayName = data.display_name;
     }
     
     if (data.avatar_url !== undefined) {
-      updates.push('avatar_url = ?');
-      params.push(data.avatar_url);
+      updates.avatarUrl = data.avatar_url;
     }
     
-    if (updates.length === 0) {
+    if (Object.keys(updates).length === 0) {
       throw new Error('No fields to update');
     }
     
-    params.push(userId);
+    const drizzle = this.db.getDrizzle();
     
-    const stmt = this.db.prepare(`
-      UPDATE users 
-      SET ${updates.join(', ')}
-      WHERE id = ?
-    `);
-    
-    await stmt.run(params);
+    await drizzle
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, userId));
     
     // Return updated user
     const updatedUser = await this.findById(userId);
@@ -142,27 +165,26 @@ export class UserService {
     totalTags: number;
     recentLogsCount: number;
   }> {
+    const drizzle = this.db.getDrizzle();
+    
     // Get total logs count
-    const logsResult = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM logs WHERE user_id = ?',
-      [userId]
+    const logsResult = await drizzle.get<{ count: number }>(
+      drizzleSql`SELECT COUNT(*) as count FROM logs WHERE user_id = ${userId}`
     );
     
     // Get unique tags count used by user
-    const tagsResult = await this.db.queryFirst<{ count: number }>(
-      `SELECT COUNT(DISTINCT lta.tag_id) as count 
+    const tagsResult = await drizzle.get<{ count: number }>(
+      drizzleSql`SELECT COUNT(DISTINCT lta.tag_id) as count 
        FROM log_tag_associations lta 
        JOIN logs l ON l.id = lta.log_id 
-       WHERE l.user_id = ?`,
-      [userId]
+       WHERE l.user_id = ${userId}`
     );
     
     // Get recent logs count (last 7 days)
     const recentDate = new Date();
     recentDate.setDate(recentDate.getDate() - 7);
-    const recentResult = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND created_at >= ?',
-      [userId, recentDate.toISOString()]
+    const recentResult = await drizzle.get<{ count: number }>(
+      drizzleSql`SELECT COUNT(*) as count FROM logs WHERE user_id = ${userId} AND created_at >= ${recentDate.toISOString()}`
     );
     
     return {
@@ -180,51 +202,50 @@ export class UserService {
     topTags: Array<{ id: string; name: string; description: string | null; count: number }>;
     recentTags: Array<{ id: string; name: string; description: string | null; lastUsed: string }>;
   }> {
+    const drizzle = this.db.getDrizzle();
+    
     // Get total unique tags count
-    const totalTagsResult = await this.db.queryFirst<{ count: number }>(
-      `SELECT COUNT(DISTINCT lta.tag_id) as count 
+    const totalTagsResult = await drizzle.get<{ count: number }>(
+      drizzleSql`SELECT COUNT(DISTINCT lta.tag_id) as count 
        FROM log_tag_associations lta 
        JOIN logs l ON l.id = lta.log_id 
-       WHERE l.user_id = ?`,
-      [userId]
+       WHERE l.user_id = ${userId}`
     );
 
     // Get top used tags
-    const topTagsRows = await this.db.query<{ 
+    const topTagsRows = await drizzle.all<{ 
       id: string; 
       name: string; 
       description: string | null; 
       count: number 
     }>(
-      `SELECT t.id, t.name, t.description, COUNT(*) as count
+      drizzleSql`SELECT t.id, t.name, t.description, COUNT(*) as count
        FROM log_tag_associations lta
        JOIN logs l ON l.id = lta.log_id
        JOIN tags t ON lta.tag_id = t.id
-       WHERE l.user_id = ?
+       WHERE l.user_id = ${userId}
        GROUP BY t.id, t.name, t.description
        ORDER BY count DESC, t.name ASC
-       LIMIT ?`,
-      [userId, topTagsLimit]
+       LIMIT ${topTagsLimit}`
     );
 
     // Get recently used tags (last 7 days)
     const recentDate = new Date();
     recentDate.setDate(recentDate.getDate() - 7);
-    const recentTagsRows = await this.db.query<{
+    const recentTagsRows = await drizzle.all<{
       id: string;
       name: string;
       description: string | null;
       lastUsed: string;
     }>(
-      `SELECT DISTINCT t.id, t.name, t.description, MAX(l.created_at) as lastUsed
+      drizzleSql`SELECT DISTINCT t.id, t.name, t.description, MAX(l.created_at) as lastUsed
        FROM log_tag_associations lta
        JOIN logs l ON l.id = lta.log_id
        JOIN tags t ON lta.tag_id = t.id
-       WHERE l.user_id = ? AND l.created_at >= ?
+       WHERE l.user_id = ${userId} AND l.created_at >= ${recentDate.toISOString()}
        GROUP BY t.id, t.name, t.description
        ORDER BY lastUsed DESC
-       LIMIT ?`,
-      [userId, recentDate.toISOString(), topTagsLimit]
+       LIMIT ${topTagsLimit}`
     );
 
     return {

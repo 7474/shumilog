@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Database } from '../db/database.js';
 import { ImageModel, type Image, type LogImage, type CreateImageData } from '../models/Image.js';
 import { images, logImageAssociations } from '../db/schema.js';
-import { eq, and, desc, sql as drizzleSql } from 'drizzle-orm';
+import { eq, and, sql as drizzleSql } from 'drizzle-orm';
 
 export class ImageService {
   constructor(

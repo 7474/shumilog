@@ -90,7 +90,7 @@ export class SessionService {
   async cleanupExpiredSessions(): Promise<number> {
     const now = new Date().toISOString();
     const drizzle = this.db.getDrizzle();
-    const result = await drizzle.delete(sessions).where(lt(sessions.expiresAt, now));
+    await drizzle.delete(sessions).where(lt(sessions.expiresAt, now));
     // D1 doesn't return changes count, so we return 0
     return 0;
   }

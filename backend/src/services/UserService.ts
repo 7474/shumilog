@@ -1,4 +1,4 @@
-import { User, UserModel, CreateUserData, UpdateUserData } from '../models/User.js';
+import { User, CreateUserData, UpdateUserData } from '../models/User.js';
 import { Database } from '../db/database.js';
 import { users } from '../db/schema.js';
 import { eq, sql as drizzleSql } from 'drizzle-orm';

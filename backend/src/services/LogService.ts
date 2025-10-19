@@ -3,8 +3,8 @@ import { Tag, TagModel } from '../models/Tag.js';
 import { User } from '../models/User.js';
 import { Database } from '../db/database.js';
 import { ImageModel, type LogImage } from '../models/Image.js';
-import { logs, users, tags, logTagAssociations } from '../db/schema.js';
-import { eq, and, desc, sql as drizzleSql } from 'drizzle-orm';
+import { logs, logTagAssociations } from '../db/schema.js';
+import { eq, and, sql as drizzleSql } from 'drizzle-orm';
 
 export interface LogSearchResult {
   logs: Log[];
@@ -495,7 +495,8 @@ export class LogService {
     const values = tagIds.map((tagId, index) => ({
       logId,
       tagId,
-      order: index,
+      associationOrder: index,
+      createdAt: new Date().toISOString(),
     }));
     
     await drizzle.insert(logTagAssociations).values(values).onConflictDoNothing();

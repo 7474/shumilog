@@ -54,7 +54,7 @@ export const tags = sqliteTable('tags', {
 export const tagAssociations = sqliteTable('tag_associations', {
   tagId: text('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
   associatedTagId: text('associated_tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
-  order: integer('order').notNull().default(0),
+  associationOrder: integer('association_order').notNull().default(0),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => ({
   pk: primaryKey({ columns: [table.tagId, table.associatedTagId] }),
@@ -83,7 +83,8 @@ export const logs = sqliteTable('logs', {
 export const logTagAssociations = sqliteTable('log_tag_associations', {
   logId: text('log_id').notNull().references(() => logs.id, { onDelete: 'cascade' }),
   tagId: text('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
-  order: integer('order').notNull().default(0),
+  associationOrder: integer('association_order').notNull().default(0),
+  createdAt: text('created_at').notNull().default('1970-01-01T00:00:00Z'),
 }, (table) => ({
   pk: primaryKey({ columns: [table.logId, table.tagId] }),
   tagIdIdx: index('idx_log_tag_assoc_tag_id').on(table.tagId),

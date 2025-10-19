@@ -2,7 +2,7 @@ import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '..
 import { Database, PaginatedResult } from '../db/database.js';
 import { AiService } from './AiService.js';
 import { tags, tagAssociations, logTagAssociations } from '../db/schema.js';
-import { eq, and, sql as drizzleSql } from 'drizzle-orm';
+import { eq, sql as drizzleSql } from 'drizzle-orm';
 
 export interface TagUsageStats {
   tagId: string;
@@ -41,7 +41,21 @@ export class TagService {
       .where(eq(tags.id, tagId))
       .limit(1);
     
-    return result && result.length > 0 ? result[0] : null;
+    if (!result || result.length === 0) {
+      return null;
+    }
+    
+    // Convert camelCase to snake_case for compatibility with TagModel.fromRow
+    const row = result[0];
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      metadata: row.metadata,
+      created_by: row.createdBy,
+      created_at: row.createdAt,
+      updated_at: row.updatedAt,
+    };
   }
 
   async isTagOwnedBy(tagId: string, userId: string): Promise<boolean> {
@@ -453,7 +467,7 @@ export class TagService {
     await drizzle.insert(tagAssociations).values({
       tagId,
       associatedTagId,
-      order: associationOrder,
+      associationOrder,
       createdAt: new Date().toISOString(),
     }).onConflictDoNothing();
   }

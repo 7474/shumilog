@@ -417,11 +417,6 @@ export function TagDetailPage() {
                   </div>
                 ))}
               </div>
-              
-              {/* モバイル向けヘルプテキスト */}
-              <p className="text-xs text-gray-500 mt-2">
-                💡 タグ名タップで詳細表示、✏️ボタンタップでログ作成
-              </p>
             </div>
           )}
 
@@ -461,11 +456,6 @@ export function TagDetailPage() {
                   </div>
                 ))}
               </div>
-              
-              {/* モバイル向けヘルプテキスト */}
-              <p className="text-xs text-gray-500 mt-2">
-                💡 タグ名タップで詳細表示、✏️ボタンタップでログ作成
-              </p>
             </div>
           )}
         </CardContent>

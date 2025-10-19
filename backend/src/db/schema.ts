@@ -94,18 +94,30 @@ export const logTagAssociations = sqliteTable('log_tag_associations', {
  */
 export const images = sqliteTable('images', {
   id: text('id').primaryKey(),
-  logId: text('log_id').notNull().references(() => logs.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   r2Key: text('r2_key').notNull(),
-  originalFilename: text('original_filename').notNull(),
-  mimeType: text('mime_type').notNull(),
+  fileName: text('file_name').notNull(),
+  contentType: text('content_type').notNull(),
   fileSize: integer('file_size').notNull(),
   width: integer('width'),
   height: integer('height'),
-  order: integer('order').notNull().default(0),
-  uploadedAt: text('uploaded_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => ({
-  logIdIdx: index('idx_images_log_id').on(table.logId),
-  r2KeyIdx: index('idx_images_r2_key').on(table.r2Key),
+  userIdIdx: index('idx_images_user_id').on(table.userId),
+}));
+
+/**
+ * ログ-画像関連付けテーブル
+ */
+export const logImageAssociations = sqliteTable('log_image_associations', {
+  logId: text('log_id').notNull().references(() => logs.id, { onDelete: 'cascade' }),
+  imageId: text('image_id').notNull().references(() => images.id, { onDelete: 'cascade' }),
+  displayOrder: integer('display_order').notNull().default(0),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.logId, table.imageId] }),
+  imageIdIdx: index('idx_log_image_assoc_image_id').on(table.imageId),
+  displayOrderIdx: index('idx_log_image_assoc_display_order').on(table.logId, table.displayOrder),
 }));
 
 /**
@@ -138,6 +150,9 @@ export type NewLogTagAssociation = typeof logTagAssociations.$inferInsert;
 
 export type Image = typeof images.$inferSelect;
 export type NewImage = typeof images.$inferInsert;
+
+export type LogImageAssociation = typeof logImageAssociations.$inferSelect;
+export type NewLogImageAssociation = typeof logImageAssociations.$inferInsert;
 
 export type SchemaMigration = typeof schemaMigrations.$inferSelect;
 export type NewSchemaMigration = typeof schemaMigrations.$inferInsert;

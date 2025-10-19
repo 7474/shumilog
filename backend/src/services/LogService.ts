@@ -3,6 +3,8 @@ import { Tag, TagModel } from '../models/Tag.js';
 import { User } from '../models/User.js';
 import { Database } from '../db/database.js';
 import { ImageModel, type LogImage } from '../models/Image.js';
+import { logs, users, tags, logTagAssociations } from '../db/schema.js';
+import { eq, and, desc, sql as drizzleSql } from 'drizzle-orm';
 
 export interface LogSearchResult {
   logs: Log[];
@@ -20,21 +22,18 @@ export class LogService {
     const now = new Date().toISOString();
     const logId = crypto.randomUUID();
     
-    // Create the log
-    const stmt = this.db.prepare(`
-      INSERT INTO logs (id, user_id, title, content_md, is_public, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+    const drizzle = this.db.getDrizzle();
     
-    await stmt.run([
-      logId,
+    // Create the log
+    await drizzle.insert(logs).values({
+      id: logId,
       userId,
-      data.title || null,
-      data.content_md,
-      data.is_public ? 1 : 0,
-      now,
-      now
-    ]);
+      title: data.title || null,
+      contentMd: data.content_md,
+      isPublic: data.is_public || false,
+      createdAt: now,
+      updatedAt: now,
+    });
 
     // Extract hashtags from content and merge with explicit tag names
     const contentHashtags = this.extractHashtagsFromContent(data.content_md);
@@ -75,36 +74,29 @@ export class LogService {
       throw new Error('Unauthorized: User does not own this log');
     }
     
-    const updates: string[] = [];
-    const params: any[] = [];
+    const updates: Partial<typeof logs.$inferInsert> = {};
     
     if (data.title !== undefined) {
-      updates.push('title = ?');
-      params.push(data.title);
+      updates.title = data.title;
     }
     
     if (data.content_md !== undefined) {
-      updates.push('content_md = ?');
-      params.push(data.content_md);
+      updates.contentMd = data.content_md;
     }
     
     if (data.is_public !== undefined) {
-      updates.push('is_public = ?');
-      params.push(data.is_public ? 1 : 0);
+      updates.isPublic = data.is_public;
     }
     
-    if (updates.length > 0) {
-      updates.push('updated_at = ?');
-      params.push(new Date().toISOString());
-      params.push(logId);
+    const drizzle = this.db.getDrizzle();
+    
+    if (Object.keys(updates).length > 0) {
+      updates.updatedAt = new Date().toISOString();
       
-      const stmt = this.db.prepare(`
-        UPDATE logs 
-        SET ${updates.join(', ')}
-        WHERE id = ?
-      `);
-      
-      await stmt.run(params);
+      await drizzle
+        .update(logs)
+        .set(updates)
+        .where(eq(logs.id, logId));
     }
     
     // Update tag associations if provided or if content was updated
@@ -119,8 +111,7 @@ export class LogService {
     
     if (shouldUpdateTags) {
       // Remove all existing associations
-      const deleteStmt = this.db.prepare('DELETE FROM log_tag_associations WHERE log_id = ?');
-      await deleteStmt.run([logId]);
+      await drizzle.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
       
       if (data.tag_names !== undefined) {
         // Merge explicit tag names with extracted hashtags
@@ -498,15 +489,16 @@ export class LogService {
   async associateTagsWithLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
-    const now = new Date().toISOString();
+    const drizzle = this.db.getDrizzle();
     
-    // Batch insert: Use batch API for better performance
-    const insertStatements = tagIds.map((tagId, index) => ({
-      sql: 'INSERT OR IGNORE INTO log_tag_associations (log_id, tag_id, association_order, created_at) VALUES (?, ?, ?, ?)',
-      params: [logId, tagId, index, now]
+    // Batch insert using Drizzle
+    const values = tagIds.map((tagId, index) => ({
+      logId,
+      tagId,
+      order: index,
     }));
     
-    await this.db.batch(insertStatements);
+    await drizzle.insert(logTagAssociations).values(values).onConflictDoNothing();
   }
 
   /**
@@ -515,12 +507,15 @@ export class LogService {
   async removeTagsFromLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
-    const placeholders = tagIds.map(() => '?').join(',');
-    const stmt = this.db.prepare(
-      `DELETE FROM log_tag_associations WHERE log_id = ? AND tag_id IN (${placeholders})`
-    );
+    const drizzle = this.db.getDrizzle();
     
-    await stmt.run([logId, ...tagIds]);
+    await drizzle.delete(logTagAssociations)
+      .where(
+        and(
+          eq(logTagAssociations.logId, logId),
+          drizzleSql`${logTagAssociations.tagId} IN ${tagIds}`
+        )
+      );
   }
 
   /**
@@ -533,15 +528,13 @@ export class LogService {
       throw new Error('Unauthorized: User does not own this log');
     }
     
-    // Delete tag associations first
-    const deleteAssociationsStmt = this.db.prepare(
-      'DELETE FROM log_tag_associations WHERE log_id = ?'
-    );
-    await deleteAssociationsStmt.run([logId]);
+    const drizzle = this.db.getDrizzle();
+    
+    // Delete tag associations first (cascade should handle this, but being explicit)
+    await drizzle.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
     
     // Delete the log
-    const deleteLogStmt = this.db.prepare('DELETE FROM logs WHERE id = ?');
-    await deleteLogStmt.run([logId]);
+    await drizzle.delete(logs).where(eq(logs.id, logId));
   }
 
   /**
@@ -699,9 +692,10 @@ export class LogService {
    * Validate user owns the log
    */
   async validateLogOwnership(logId: string, userId: string): Promise<boolean> {
-    const result = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM logs WHERE id = ? AND user_id = ?',
-      [logId, userId]
+    const drizzle = this.db.getDrizzle();
+    
+    const result = await drizzle.get<{ count: number }>(
+      drizzleSql`SELECT COUNT(*) as count FROM logs WHERE id = ${logId} AND user_id = ${userId}`
     );
     
     const owns = (result?.count || 0) > 0;

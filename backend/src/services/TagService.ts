@@ -1,6 +1,8 @@
 import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
 import { Database, PaginatedResult } from '../db/database.js';
 import { AiService } from './AiService.js';
+import { tags, tagAssociations, logTagAssociations } from '../db/schema.js';
+import { eq, and, sql as drizzleSql } from 'drizzle-orm';
 
 export interface TagUsageStats {
   tagId: string;
@@ -31,23 +33,31 @@ export class TagService {
   }
 
   private async getTagRow(tagId: string): Promise<any | null> {
-    return await this.db.queryFirst(
-      'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags WHERE id = ?',
-      [tagId]
-    );
+    const drizzle = this.db.getDrizzle();
+    
+    const result = await drizzle
+      .select()
+      .from(tags)
+      .where(eq(tags.id, tagId))
+      .limit(1);
+    
+    return result && result.length > 0 ? result[0] : null;
   }
 
   async isTagOwnedBy(tagId: string, userId: string): Promise<boolean> {
-    const result = await this.db.queryFirst<{ created_by: string }>(
-      'SELECT created_by FROM tags WHERE id = ?',
-      [tagId]
-    );
+    const drizzle = this.db.getDrizzle();
+    
+    const result = await drizzle
+      .select({ createdBy: tags.createdBy })
+      .from(tags)
+      .where(eq(tags.id, tagId))
+      .limit(1);
 
-    if (!result) {
+    if (!result || result.length === 0) {
       return false;
     }
 
-    return result.created_by === userId;
+    return result[0].createdBy === userId;
   }
 
   /**
@@ -57,20 +67,17 @@ export class TagService {
     const now = new Date().toISOString();
     const tagId = this.generateTagId();
     
-    const stmt = this.db.prepare(`
-      INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+    const drizzle = this.db.getDrizzle();
     
-    await stmt.run([
-      tagId,
-      data.name,
-      data.description || null,
-      TagModel.serializeMetadata(data.metadata || {}),
+    await drizzle.insert(tags).values({
+      id: tagId,
+      name: data.name,
+      description: data.description || null,
+      metadata: TagModel.serializeMetadata(data.metadata || {}),
       createdBy,
-      now,
-      now
-    ]);
+      createdAt: now,
+      updatedAt: now,
+    });
 
     const tag = {
       id: tagId,
@@ -100,39 +107,32 @@ export class TagService {
       throw new Error('Tag not found');
     }
 
-    const updates: string[] = [];
-    const params: any[] = [];
+    const updates: Partial<typeof tags.$inferInsert> = {};
     
     if (data.name !== undefined) {
-      updates.push('name = ?');
-      params.push(data.name);
+      updates.name = data.name;
     }
     
     if (data.description !== undefined) {
-      updates.push('description = ?');
-      params.push(data.description);
+      updates.description = data.description;
     }
     
     if (data.metadata !== undefined) {
-      updates.push('metadata = ?');
-      params.push(TagModel.serializeMetadata(data.metadata));
+      updates.metadata = TagModel.serializeMetadata(data.metadata);
     }
     
-    if (updates.length === 0) {
+    if (Object.keys(updates).length === 0) {
       throw new Error('No fields to update');
     }
     
-    updates.push('updated_at = ?');
-    params.push(new Date().toISOString());
-    params.push(tagId);
+    updates.updatedAt = new Date().toISOString();
     
-    const stmt = this.db.prepare(`
-      UPDATE tags 
-      SET ${updates.join(', ')}
-      WHERE id = ?
-    `);
+    const drizzle = this.db.getDrizzle();
     
-    await stmt.run(params);
+    await drizzle
+      .update(tags)
+      .set(updates)
+      .where(eq(tags.id, tagId));
     
     // Return updated tag
     const updatedTag = await this.getTagById(tagId);
@@ -415,16 +415,19 @@ export class TagService {
    * Delete a tag
    */
   async deleteTag(tagId: string): Promise<void> {
+    const drizzle = this.db.getDrizzle();
+    
     // Remove log associations
-    await this.db.prepare('DELETE FROM log_tag_associations WHERE tag_id = ?').run([tagId]);
+    await drizzle.delete(logTagAssociations).where(eq(logTagAssociations.tagId, tagId));
 
     // Remove tag associations in both directions
-    await this.db
-      .prepare('DELETE FROM tag_associations WHERE tag_id = ? OR associated_tag_id = ?')
-      .run([tagId, tagId]);
+    await drizzle.delete(tagAssociations)
+      .where(
+        drizzleSql`${tagAssociations.tagId} = ${tagId} OR ${tagAssociations.associatedTagId} = ${tagId}`
+      );
 
     // Finally remove the tag
-    await this.db.prepare('DELETE FROM tags WHERE id = ?').run([tagId]);
+    await drizzle.delete(tags).where(eq(tags.id, tagId));
   }
 
   /**
@@ -445,12 +448,14 @@ export class TagService {
       throw new Error('Associated tag not found');
     }
 
-    const stmt = this.db.prepare(`
-      INSERT OR IGNORE INTO tag_associations (tag_id, associated_tag_id, created_at, association_order)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    await stmt.run([tagId, associatedTagId, new Date().toISOString(), associationOrder]);
+    const drizzle = this.db.getDrizzle();
+    
+    await drizzle.insert(tagAssociations).values({
+      tagId,
+      associatedTagId,
+      order: associationOrder,
+      createdAt: new Date().toISOString(),
+    }).onConflictDoNothing();
   }
 
   /**

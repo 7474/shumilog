@@ -6,6 +6,8 @@ import type { R2Bucket, R2ObjectBody } from '@cloudflare/workers-types';
 import { v4 as uuidv4 } from 'uuid';
 import type { Database } from '../db/database.js';
 import { ImageModel, type Image, type LogImage, type CreateImageData } from '../models/Image.js';
+import { images, logImageAssociations } from '../db/schema.js';
+import { eq, and, desc, sql as drizzleSql } from 'drizzle-orm';
 
 export class ImageService {
   constructor(
@@ -51,22 +53,19 @@ export class ImageService {
 
     // Save metadata to database
     const now = new Date().toISOString();
-    const stmt = this.db.prepare(
-      `INSERT INTO images (id, user_id, r2_key, file_name, content_type, file_size, width, height, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    );
+    const drizzle = this.db.getDrizzle();
     
-    await stmt.run([
-      imageId,
+    await drizzle.insert(images).values({
+      id: imageId,
       userId,
       r2Key,
-      metadata.file_name,
-      metadata.content_type,
-      metadata.file_size,
-      metadata.width || null,
-      metadata.height || null,
-      now,
-    ]);
+      fileName: metadata.file_name,
+      contentType: metadata.content_type,
+      fileSize: metadata.file_size,
+      width: metadata.width || null,
+      height: metadata.height || null,
+      createdAt: now,
+    });
 
     // If logId is provided, create association
     if (logId) {
@@ -74,16 +73,28 @@ export class ImageService {
     }
 
     // Get the created image
-    const imageRow = await this.db.queryFirst(
-      'SELECT * FROM images WHERE id = ?',
-      [imageId],
-    );
+    const imageResult = await drizzle
+      .select()
+      .from(images)
+      .where(eq(images.id, imageId))
+      .limit(1);
 
-    if (!imageRow) {
+    if (!imageResult || imageResult.length === 0) {
       throw new Error('Failed to create image record');
     }
 
-    return ImageModel.fromRow(imageRow);
+    const row = imageResult[0];
+    return {
+      id: row.id,
+      user_id: row.userId,
+      r2_key: row.r2Key,
+      file_name: row.fileName,
+      content_type: row.contentType,
+      file_size: row.fileSize,
+      width: row.width || undefined,
+      height: row.height || undefined,
+      created_at: row.createdAt,
+    };
   }
 
   /**
@@ -91,22 +102,29 @@ export class ImageService {
    */
   async associateImageWithLog(imageId: string, logId: string, displayOrder: number = 0): Promise<void> {
     const now = new Date().toISOString();
-    const stmt = this.db.prepare(
-      `INSERT INTO log_image_associations (log_id, image_id, display_order, created_at)
-       VALUES (?, ?, ?, ?)`,
-    );
+    const drizzle = this.db.getDrizzle();
     
-    await stmt.run([logId, imageId, displayOrder, now]);
+    await drizzle.insert(logImageAssociations).values({
+      logId,
+      imageId,
+      displayOrder,
+      createdAt: now,
+    });
   }
 
   /**
    * Remove association between an image and a log
    */
   async dissociateImageFromLog(imageId: string, logId: string): Promise<void> {
-    const stmt = this.db.prepare(
-      'DELETE FROM log_image_associations WHERE log_id = ? AND image_id = ?',
-    );
-    await stmt.run([logId, imageId]);
+    const drizzle = this.db.getDrizzle();
+    
+    await drizzle.delete(logImageAssociations)
+      .where(
+        and(
+          eq(logImageAssociations.logId, logId),
+          eq(logImageAssociations.imageId, imageId)
+        )
+      );
   }
 
   /**
@@ -140,16 +158,30 @@ export class ImageService {
    * Get a specific image
    */
   async getImage(imageId: string): Promise<Image | null> {
-    const row = await this.db.queryFirst(
-      'SELECT * FROM images WHERE id = ?',
-      [imageId],
-    );
+    const drizzle = this.db.getDrizzle();
+    
+    const result = await drizzle
+      .select()
+      .from(images)
+      .where(eq(images.id, imageId))
+      .limit(1);
 
-    if (!row) {
+    if (!result || result.length === 0) {
       return null;
     }
 
-    return ImageModel.fromRow(row);
+    const row = result[0];
+    return {
+      id: row.id,
+      user_id: row.userId,
+      r2_key: row.r2Key,
+      file_name: row.fileName,
+      content_type: row.contentType,
+      file_size: row.fileSize,
+      width: row.width || undefined,
+      height: row.height || undefined,
+      created_at: row.createdAt,
+    };
   }
 
   /**
@@ -178,36 +210,44 @@ export class ImageService {
       await this.imagesBucket.delete(image.r2_key);
     }
 
+    const drizzle = this.db.getDrizzle();
+    
     // Delete from database (associations will cascade)
-    const stmt = this.db.prepare('DELETE FROM images WHERE id = ?');
-    await stmt.run([imageId]);
+    await drizzle.delete(images).where(eq(images.id, imageId));
   }
 
   /**
    * Delete all associations for a log
    */
   async deleteLogImageAssociations(logId: string): Promise<void> {
-    const stmt = this.db.prepare('DELETE FROM log_image_associations WHERE log_id = ?');
-    await stmt.run([logId]);
+    const drizzle = this.db.getDrizzle();
+    await drizzle.delete(logImageAssociations).where(eq(logImageAssociations.logId, logId));
   }
 
   /**
    * Update display order of an image in a log
    */
   async updateImageOrder(imageId: string, logId: string, displayOrder: number): Promise<void> {
-    const stmt = this.db.prepare(
-      'UPDATE log_image_associations SET display_order = ? WHERE log_id = ? AND image_id = ?',
-    );
-    await stmt.run([displayOrder, logId, imageId]);
+    const drizzle = this.db.getDrizzle();
+    
+    await drizzle.update(logImageAssociations)
+      .set({ displayOrder })
+      .where(
+        and(
+          eq(logImageAssociations.logId, logId),
+          eq(logImageAssociations.imageId, imageId)
+        )
+      );
   }
 
   /**
    * Verify user owns an image
    */
   async verifyImageOwnership(imageId: string, userId: string): Promise<boolean> {
-    const result = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM images WHERE id = ? AND user_id = ?',
-      [imageId, userId],
+    const drizzle = this.db.getDrizzle();
+    
+    const result = await drizzle.get<{ count: number }>(
+      drizzleSql`SELECT COUNT(*) as count FROM images WHERE id = ${imageId} AND user_id = ${userId}`
     );
     
     return (result?.count || 0) > 0;

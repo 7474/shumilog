@@ -463,7 +463,9 @@ export function TagDetailPage() {
       </Card>
 
       {/* 広告 */}
-      {tag && <Advertisement type="tag" id={tag.name} />}
+      {tag && (tag as any).advertisements && (
+        <Advertisement advertisements={(tag as any).advertisements} />
+      )}
 
       {/* 新着ログ */}
       {tag.recent_logs && tag.recent_logs.length > 0 && (

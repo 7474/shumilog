@@ -877,79 +877,6 @@ paths:
         '404':
           description: 画像が見つかりません
 
-  /advertisements/logs/{logId}:
-    get:
-      summary: ログに関連する広告を取得
-      description: |
-        ログの内容とタグに基づいて、関連する広告を取得します。
-        DMMアフィリエイトAPIを使用して、ログのタイトルとタグ名をキーワードとして広告を検索します。
-      parameters:
-        - name: logId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 3
-            maximum: 10
-      responses:
-        '200':
-          description: 広告の一覧
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Advertisement'
-        '404':
-          description: ログが見つかりません
-
-  /advertisements/tags/{tagId}:
-    get:
-      summary: タグに関連する広告を取得
-      description: |
-        タグの名前と説明に基づいて、関連する広告を取得します。
-        DMMアフィリエイトAPIを使用して、タグ名をキーワードとして広告を検索します。
-        `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
-      parameters:
-        - name: tagId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: タグ名（推奨）またはタグID
-          example: "Anime"
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 3
-            maximum: 10
-      responses:
-        '200':
-          description: 広告の一覧
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Advertisement'
-        '404':
-          description: タグが見つかりません
-
 components:
   securitySchemes:
     sessionAuth:
@@ -1074,6 +1001,7 @@ components:
             - recent_logs
             - associated_tags
             - recent_referring_tags
+            - advertisements
           properties:
             log_count:
               type: integer
@@ -1091,6 +1019,11 @@ components:
               items:
                 $ref: '#/components/schemas/Tag'
               description: このタグを参照している他のタグ（被参照タグ）
+            advertisements:
+              type: array
+              items:
+                $ref: '#/components/schemas/Advertisement'
+              description: このタグに関連する広告（DMMアフィリエイト）
 
     Log:
       type: object
@@ -1197,7 +1130,14 @@ components:
       allOf:
         - $ref: '#/components/schemas/Log'
         - type: object
-          description: 詳細なログ情報（Logスキーマと同じ）
+          required:
+            - advertisements
+          properties:
+            advertisements:
+              type: array
+              items:
+                $ref: '#/components/schemas/Advertisement'
+              description: このログに関連する広告（DMMアフィリエイト）
 
     LogImage:
       type: object

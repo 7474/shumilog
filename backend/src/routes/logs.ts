@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { LogService } from '../services/LogService.js';
 import { SessionService } from '../services/SessionService.js';
 import { UserService } from '../services/UserService.js';
+import { DmmAffiliateService } from '../services/DmmAffiliateService.js';
 import { Log } from '../models/Log.js';
 import { getAuthUser, getOptionalAuthUser, optionalAuthMiddleware } from '../middleware/auth.js';
 import { invalidateCache } from '../middleware/cache.js';
@@ -323,7 +324,37 @@ logs.get('/:logId', async (c) => {
       c.set('hasPrivateData', true);
     }
 
-    return c.json(toLogResponse(log));
+    // Get advertisements for public logs
+    let advertisements: any[] = [];
+    if (isPublic) {
+      const dmmApiId = (c.env as any)?.DMM_API_ID;
+      const dmmAffiliateId = (c.env as any)?.DMM_AFFILIATE_ID;
+
+      if (dmmApiId && dmmAffiliateId) {
+        try {
+          const dmmService = new DmmAffiliateService({
+            apiId: dmmApiId,
+            affiliateId: dmmAffiliateId
+          });
+
+          // Build keywords from log title and tags
+          const keywords: string[] = [];
+          if (log.title) {
+            keywords.push(log.title);
+          }
+          if (log.associated_tags && log.associated_tags.length > 0) {
+            keywords.push(...log.associated_tags.slice(0, 5).map((tag: any) => tag.name));
+          }
+
+          advertisements = await dmmService.searchAdvertisements(keywords, 3);
+        } catch (error) {
+          console.warn('[Logs] Error fetching advertisements:', error);
+          // Continue without advertisements
+        }
+      }
+    }
+
+    return c.json({ ...toLogResponse(log), advertisements });
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;

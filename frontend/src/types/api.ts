@@ -1333,119 +1333,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/advertisements/logs/{logId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * ログに関連する広告を取得
-         * @description ログの内容とタグに基づいて、関連する広告を取得します。
-         *     DMMアフィリエイトAPIを使用して、ログのタイトルとタグ名をキーワードとして広告を検索します。
-         *
-         */
-        get: {
-            parameters: {
-                query?: {
-                    limit?: number;
-                };
-                header?: never;
-                path: {
-                    logId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 広告の一覧 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: components["schemas"]["Advertisement"][];
-                        };
-                    };
-                };
-                /** @description ログが見つかりません */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/advertisements/tags/{tagId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * タグに関連する広告を取得
-         * @description タグの名前と説明に基づいて、関連する広告を取得します。
-         *     DMMアフィリエイトAPIを使用して、タグ名をキーワードとして広告を検索します。
-         *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
-         *
-         */
-        get: {
-            parameters: {
-                query?: {
-                    limit?: number;
-                };
-                header?: never;
-                path: {
-                    /**
-                     * @description タグ名（推奨）またはタグID
-                     * @example Anime
-                     */
-                    tagId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 広告の一覧 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            items: components["schemas"]["Advertisement"][];
-                        };
-                    };
-                };
-                /** @description タグが見つかりません */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1516,6 +1403,8 @@ export interface components {
             associated_tags: components["schemas"]["Tag"][];
             /** @description このタグを参照している他のタグ（被参照タグ） */
             recent_referring_tags: components["schemas"]["Tag"][];
+            /** @description このタグに関連する広告（DMMアフィリエイト） */
+            advertisements: components["schemas"]["Advertisement"][];
         };
         Log: {
             id: string;
@@ -1565,7 +1454,10 @@ export interface components {
             content_md?: string;
             is_public?: boolean;
         };
-        LogDetail: components["schemas"]["Log"] & Record<string, never>;
+        LogDetail: components["schemas"]["Log"] & {
+            /** @description このログに関連する広告（DMMアフィリエイト） */
+            advertisements: components["schemas"]["Advertisement"][];
+        };
         LogImage: {
             /** @description ユニークな画像識別子 */
             id: string;

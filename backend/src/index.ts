@@ -22,7 +22,6 @@ import tagRoutes from './routes/tags.js';
 import logRoutes from './routes/logs.js';
 import imageRoutes from './routes/images.js';
 import supportRoutes from './routes/support.js';
-import advertisementRoutes from './routes/advertisements.js';
 
 export interface RuntimeEnv {
   DB?: D1Database;
@@ -150,9 +149,6 @@ function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionServic
   // Support routes require authentication for all methods
   app.use('/support/*', requireAuth);
   app.route('/support', supportRoutes);
-
-  // Advertisement routes are public (no authentication required)
-  app.route('/advertisements', advertisementRoutes);
 }
 
 export function createApp(env: RuntimeEnv = {}) {

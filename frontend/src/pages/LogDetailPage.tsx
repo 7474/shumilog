@@ -340,7 +340,9 @@ export function LogDetailPage() {
           </Card>
 
           {/* 広告 */}
-          {log && log.is_public && <Advertisement type="log" id={log.id} />}
+          {log && log.is_public && (log as any).advertisements && (
+            <Advertisement advertisements={(log as any).advertisements} />
+          )}
 
           {/* 関連するログ */}
           {log && <RelatedLogs logId={log.id} />}

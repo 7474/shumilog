@@ -1,6 +1,3 @@
-import { useEffect, useState } from 'react';
-import { api } from '@/services/api';
-
 interface AdvertisementItem {
   productId: string;
   title: string;
@@ -11,56 +8,15 @@ interface AdvertisementItem {
 }
 
 interface AdvertisementProps {
-  type: 'log' | 'tag';
-  id: string;
-  limit?: number;
+  advertisements: AdvertisementItem[];
 }
 
 /**
  * 広告表示コンポーネント
  * ログまたはタグに関連する広告を表示します
  */
-export function Advertisement({ type, id, limit = 3 }: AdvertisementProps) {
-  const [advertisements, setAdvertisements] = useState<AdvertisementItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAdvertisements = async () => {
-      try {
-        setLoading(true);
-
-        if (type === 'log') {
-          const { data, error } = await api.GET('/advertisements/logs/{logId}', {
-            params: { path: { logId: id }, query: { limit } }
-          });
-
-          if (data && !error) {
-            setAdvertisements(data.items || []);
-          }
-        } else if (type === 'tag') {
-          const { data, error } = await api.GET('/advertisements/tags/{tagId}', {
-            params: { path: { tagId: id }, query: { limit } }
-          });
-
-          if (data && !error) {
-            setAdvertisements(data.items || []);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch advertisements:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAdvertisements();
-  }, [type, id, limit]);
-
-  if (loading) {
-    return null; // 読み込み中は何も表示しない
-  }
-
-  if (advertisements.length === 0) {
+export function Advertisement({ advertisements }: AdvertisementProps) {
+  if (!advertisements || advertisements.length === 0) {
     return null; // 広告がない場合は何も表示しない
   }
 

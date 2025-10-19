@@ -23,6 +23,7 @@ Shumilogは、趣味コンテンツのログを記録・共有するためのWeb
 - **フロントエンド**: React 19 + Vite 7 + Tailwind CSS 4.1 + shadcn/ui
 - **バックエンド**: Cloudflare Workers + Hono
 - **データベース**: Cloudflare D1 (SQLite)
+- **セッションストア**: Cloudflare KV
 - **ストレージ**: Cloudflare R2
 - **SSR**: Cloudflare Pages Functions
 - **言語**: TypeScript 5.9+
@@ -53,6 +54,10 @@ graph TB
             Database[(D1 Database<br/>SQLite)]
         end
         
+        subgraph "Cloudflare KV"
+            SessionStore[(KV Namespace<br/>セッションストア)]
+        end
+        
         subgraph "Cloudflare R2"
             Storage[R2 Storage<br/>画像ファイル]
         end
@@ -68,6 +73,7 @@ graph TB
     PagesFunctions -->|ボット検出時| API
     Browser -->|API呼び出し| API
     API --> Database
+    API --> SessionStore
     API --> Storage
     API -->|OAuth| Twitter
     
@@ -76,6 +82,7 @@ graph TB
     style PagesFunctions fill:#c8e6c9
     style API fill:#b39ddb
     style Database fill:#ffccbc
+    style SessionStore fill:#f8bbd0
     style Storage fill:#ffccbc
     style Twitter fill:#bbdefb
 ```
@@ -219,7 +226,6 @@ graph TB
 
 ```mermaid
 erDiagram
-    users ||--o{ sessions : "has"
     users ||--o{ logs : "creates"
     users ||--o{ tags : "creates"
     logs ||--o{ log_tag_associations : "has"
@@ -235,13 +241,6 @@ erDiagram
         TEXT display_name
         TEXT avatar_url
         TEXT created_at
-    }
-    
-    sessions {
-        TEXT token PK
-        TEXT user_id FK
-        TEXT created_at
-        TEXT expires_at
     }
     
     logs {
@@ -299,7 +298,29 @@ erDiagram
 - **コンテンツ**: Markdown形式のログエントリ（最大10,000文字）
 - **タグシステム**: 柔軟なタグ付けと関連付け
 - **画像管理**: R2ストレージとの連携によるメタデータ管理
-- **セッション管理**: トークンベースの認証セッション
+
+### セッション管理（Cloudflare KV）
+
+セッション情報はCloudflare KVに保存され、D1データベースからは分離されています：
+
+**保存形式:**
+- キー: `session:{token}` - セッショントークンからセッション情報を取得
+- キー: `user_sessions:{user_id}` - ユーザーIDから複数セッションを管理
+
+**セッションデータ構造:**
+```json
+{
+  "token": "セッショントークン",
+  "user_id": "ユーザーID",
+  "created_at": "作成日時（ISO 8601）",
+  "expires_at": "有効期限（ISO 8601）"
+}
+```
+
+**特徴:**
+- **自動期限切れ**: KVのTTL機能により、期限切れセッションは自動削除
+- **高速アクセス**: エッジキャッシュされ、D1よりも低レイテンシ
+- **グローバル分散**: Cloudflareのエッジネットワーク全体で利用可能
 
 ---
 

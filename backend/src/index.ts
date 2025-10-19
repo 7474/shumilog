@@ -101,6 +101,52 @@ function resolveDatabase(env: RuntimeEnv, nodeEnv: string): Database {
   });
 }
 
+// モックKVを作成（テスト環境で使用）
+function createMockKV(): KVNamespace {
+  const store = new Map<string, { value: string; expiration?: number }>();
+  
+  const mockKV = {
+    get: async (key: string) => {
+      const item = store.get(key);
+      if (!item) return null;
+      
+      // 期限切れチェック
+      if (item.expiration && Date.now() > item.expiration) {
+        store.delete(key);
+        return null;
+      }
+      
+      return item.value;
+    },
+    getWithMetadata: async (key: string) => {
+      const value = await mockKV.get(key);
+      return { value, metadata: null };
+    },
+    put: async (key: string, value: string, options?: { expirationTtl?: number }) => {
+      const expiration = options?.expirationTtl 
+        ? Date.now() + options.expirationTtl * 1000 
+        : undefined;
+      store.set(key, { value, expiration });
+    },
+    delete: async (key: string) => {
+      store.delete(key);
+    },
+    list: async (options?: { cursor?: string; prefix?: string }) => {
+      const keys = Array.from(store.keys())
+        .filter(key => !options?.prefix || key.startsWith(options.prefix))
+        .map(name => ({ name }));
+      
+      return {
+        keys,
+        list_complete: true,
+        cursor: undefined as any
+      };
+    }
+  };
+  
+  return mockKV as KVNamespace;
+}
+
 function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionService, userService: UserService) {
   const requireAuth = authMiddleware(sessionService, userService);
   const optionalAuth = optionalAuthMiddleware(sessionService, userService);
@@ -155,7 +201,18 @@ export function createApp(env: RuntimeEnv = {}) {
   process.env.NODE_ENV = nodeEnv;
 
   const database = resolveDatabase(env, nodeEnv);
-  const sessionService = new SessionService(database);
+  
+  // SessionServiceはKVを使用
+  let sessionService: SessionService;
+  if (env.SESSIONS) {
+    sessionService = new SessionService(env.SESSIONS);
+  } else {
+    // SESSIONSがない場合はモックKVを使用（本番環境以外）
+    console.warn(`Warning: SESSIONS KV not provided in ${nodeEnv} environment, using mock KV`);
+    const mockKV = createMockKV();
+    sessionService = new SessionService(mockKV);
+  }
+  
   const userService = new UserService(database);
   const tagService = new TagService(database);
   const logService = new LogService(database);

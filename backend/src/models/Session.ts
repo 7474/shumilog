@@ -1,5 +1,5 @@
 /**
- * Session model for Worker cookie-based authentication
+ * Session model for KV-based authentication
  */
 
 export interface Session {
@@ -13,20 +13,6 @@ export interface CreateSessionData {
   user_id: string;
   expires_at: string;
 }
-
-export const SESSION_TABLE_SCHEMA = `
-  CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TEXT NOT NULL,
-    
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  
-  CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-  CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
-`;
 
 export class SessionModel {
   static isExpired(session: Session): boolean {
@@ -49,14 +35,5 @@ export class SessionModel {
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + daysFromNow);
     return expiry.toISOString();
-  }
-
-  static fromRow(row: any): Session {
-    return {
-      token: row.token,
-      user_id: row.user_id,
-      created_at: row.created_at,
-      expires_at: row.expires_at
-    };
   }
 }

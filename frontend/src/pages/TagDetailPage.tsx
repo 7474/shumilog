@@ -27,6 +27,7 @@ import { TagForm } from '@/components/TagForm';
 import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
 import { useOgp, extractPlainText } from '@/hooks/useOgp';
+import { AdBanner } from '@/components/AdBanner';
 
 interface TagDetail extends Tag {
   log_count: number;
@@ -460,6 +461,13 @@ export function TagDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 広告バナー（タグ詳細情報下） */}
+      <AdBanner 
+        format="horizontal" 
+        slotId="tag-detail-middle" 
+        className="my-4"
+      />
 
       {/* 新着ログ */}
       {tag.recent_logs && tag.recent_logs.length > 0 && (

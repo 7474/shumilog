@@ -27,6 +27,7 @@ import { LogImages } from '@/components/LogImages';
 import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
 import { useOgp, extractPlainText } from '@/hooks/useOgp';
+import { AdBanner } from '@/components/AdBanner';
 
 export function LogDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -337,6 +338,13 @@ export function LogDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* 広告バナー（ログコンテンツ下） */}
+          <AdBanner 
+            format="horizontal" 
+            slotId="log-detail-bottom" 
+            className="my-4"
+          />
 
           {/* 関連するログ */}
           {log && <RelatedLogs logId={log.id} />}

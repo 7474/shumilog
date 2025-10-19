@@ -10,7 +10,7 @@ info:
     機能開発に伴い、この仕様書を継続的に保守してください。
   version: 0.1.0
 servers:
-  - url: https://shumilog.com/api
+  - url: https://api.shumilog.com/api
     description: 本番サーバー
   - url: http://localhost:8787/api
     description: 開発サーバー

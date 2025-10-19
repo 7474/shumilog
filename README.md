@@ -1,41 +1,41 @@
 # Shumilog - 趣味コンテンツログサービス
 
-趣味コンテンツのログ記録のための最小構成のCloudflare Workerバックエンドと、Tailwind CSS + React 19ベースのレスポンシブフロントエンドです。
+趣味コンテンツのログ記録のためのCloudflare Workerバックエンドと、Tailwind CSS + React 19ベースのレスポンシブフロントエンドです。
 
 ## 運用環境
 
-本番環境: **https://shumilog.dev/**
+https://shumilog.dev/
 
 ## ドキュメント
 
-- **[システムアーキテクチャ](./docs/architecture.md)** - システム全体構成の概観（Mermaid図解付き）
+- [システムアーキテクチャ](./docs/architecture.md) - システム全体構成の概観
 
 ## 技術スタック
 
 ### バックエンド
-- **Cloudflare Workers + Hono** - サーバーレスAPI
-- **Cloudflare D1** - SQLiteベースマネージドデータベース
-- **Cloudflare R2** - オブジェクトストレージ（画像アップロード用）
-- **TypeScript 5.9+** - 型安全な開発
+- Cloudflare Workers + Hono - サーバーレスAPI
+- Cloudflare D1 - SQLiteベースマネージドデータベース
+- Cloudflare R2 - オブジェクトストレージ（画像アップロード用）
+- TypeScript 5.9+ - 型安全な開発
 
 ### フロントエンド
-- **React 19** - UIライブラリ
-- **Vite 7+** - 高速ビルドツール
-- **Tailwind CSS 4.1+** - ユーティリティファーストCSSフレームワーク
-- **shadcn/ui** - アクセシブルなUIコンポーネントライブラリ
-- **PostCSS + Autoprefixer** - CSS処理
-- **スマートフォンファーストのレスポンシブデザイン**
+- React 19 - UIライブラリ
+- Vite 7+ - 高速ビルドツール
+- Tailwind CSS 4.1+ - ユーティリティファーストCSSフレームワーク
+- shadcn/ui - アクセシブルなUIコンポーネントライブラリ
+- PostCSS + Autoprefixer - CSS処理
+- スマートフォンファーストのレスポンシブデザイン
 
 ### 開発・テスト
-- **Vitest** - 高速テストフレームワーク
-- **ESLint + Prettier** - コード品質とフォーマット
-- **TypeScript** - 型チェック
+- Vitest - 高速テストフレームワーク
+- ESLint + Prettier - コード品質とフォーマット
+- TypeScript - 型チェック
 
 ## 必要な環境
 
-- **Node.js 22 LTS** – [`.nvmrc`](./.nvmrc)で定義されたバージョンを`nvm use`で使用
-- **npm 10+** (Node 22にバンドル済み)
-- **Wrangler CLI 3+** ローカルWorkerとD1開発用 (`npm install -g wrangler`)
+- Node.js 22 LTS – [`.nvmrc`](./.nvmrc)で定義されたバージョンを`nvm use`で使用
+- npm 10+ (Node 22にバンドル済み)
+- Wrangler CLI 3+ ローカルWorkerとD1開発用 (`npm install -g wrangler`)
 - *(オプション)* 共有エンドポイントを使用する場合はTwitter API認証情報
 
 ## クイックスタート
@@ -60,21 +60,21 @@ npm run db:seed
 ```
 
 シードデータには以下が含まれます:
-- **4人のユーザー**: Alice (アニメ好き), Bob (ゲーマー), Carol (音楽愛好家), Dave (マンガ読者)
-- **8個のタグ**: Anime, Manga, Gaming, Music, Attack on Titan, RPG, J-POP, Shonen
-- **10個のログエントリ**: 公開ログ8個、非公開ログ2個（各種趣味のコンテンツ）
-- **5個の画像メタデータ**: ログに添付された画像のサンプルメタデータ（実際のファイルはR2バケットが必要）
+- 4人のユーザー: Alice (アニメ好き), Bob (ゲーマー), Carol (音楽愛好家), Dave (マンガ読者)
+- 8個のタグ: Anime, Manga, Gaming, Music, Attack on Titan, RPG, J-POP, Shonen
+- 10個のログエントリ: 公開ログ8個、非公開ログ2個（各種趣味のコンテンツ）
+- 5個の画像メタデータ: ログに添付された画像のサンプルメタデータ（実際のファイルはR2バケットが必要）
 
 ### 3. ローカル環境でのスタック実行
 
-- **ターミナル A – Worker API**
+- ターミナル A – Worker API
 
   ```bash
   cd backend
   npm run dev
   ```
 
-- **ターミナル B – フロントエンド UI**
+- ターミナル B – フロントエンド UI
 
   ```bash
   cd frontend
@@ -172,19 +172,17 @@ npm run lint
 
 バックエンドはOpenAPI仕様に対する自動検証を実装しており、フロントエンドはOpenAPI仕様からTypeScript型定義を自動生成することで、API実装とクライアントコードが常に仕様と一致していることを保証します。
 
-**CI/CD統合:**
+CI/CD統合:
 - バックエンドCI: コントラクトテスト（OpenAPI検証）を明示的に実行
 - フロントエンドCI: 型定義を再生成し、差分がある場合はビルドを失敗させる
 
-詳細は [`docs/api-validation-guide.md`](docs/api-validation-guide.md) を参照してください。
-
 ## API開発
 
-正規のAPI仕様書は`/api/v1/openapi.yaml`にあります。このファイルはすべてのAPI開発の**信頼できる情報源**であり、継続的に保守する必要があります。
+正規のAPI仕様書は`/api/v1/openapi.yaml`にあります。このファイルはすべてのAPI開発の信頼できる情報源であり、継続的に保守する必要があります。
 
 ### OpenAPI仕様の自動検証
 
-バックエンドには**OpenAPI仕様の自動検証機能**が組み込まれており、API実装が定義された仕様と一致することを保証します。
+バックエンドにはOpenAPI仕様の自動検証機能が組み込まれており、API実装が定義された仕様と一致することを保証します。
 
 コントラクトテストは以下を自動的に検証します：
 - ✅ レスポンスステータスコードが仕様と一致
@@ -195,10 +193,10 @@ npm run lint
 
 ### API開発ワークフロー
 
-1. **最初に仕様書を更新** - 計画した変更を反映するため`/api/v1/openapi.yaml`を修正
-2. **コントラクトテストを更新** - `backend/tests/contract/`のテストが仕様書と一致することを確認
-3. **変更を実装** - 仕様書に合わせてバックエンド実装を更新
-4. **適合性を検証** - `npm run test:contract`を実行して実装が仕様書と一致することを確認
+1. 最初に仕様書を更新 - 計画した変更を反映するため`/api/v1/openapi.yaml`を修正
+2. コントラクトテストを更新 - `backend/tests/contract/`のテストが仕様書と一致することを確認
+3. 変更を実装 - 仕様書に合わせてバックエンド実装を更新
+4. 適合性を検証 - `npm run test:contract`を実行して実装が仕様書と一致することを確認
 
 仕様書は常に実際のAPI実装と最新の状態に保つ必要があります。OpenAPI検証により、仕様と実装の乖離を早期に発見できます。
 
@@ -226,8 +224,6 @@ shumilog/
 │   │   └── models.ts        # アプリケーション固有の型定義
 │   ├── vite.config.ts       # Vite設定（Tailwind CSS 4.1+含む）
 │   └── components.json      # shadcn/ui設定
-├── specs/                   # 製品計画、リサーチ、タスク管理
-├── tests/                   # リポジトリレベルの統合スモークテスト
 └── README.md                # このファイル
 ```
 
@@ -240,17 +236,16 @@ shumilog/
 - タグによる分類
 
 ### 画像添付
-- ログに画像を添付可能（最大10MB）
+- ログに画像を添付可能
 - 対応形式: JPEG, PNG, GIF, WebP
 - Cloudflare R2ストレージを使用
 - 画像のプレビューとグリッド表示
 - 画像の並び順カスタマイズ
 
 ### SSR対応（Cloudflare Pages Functions）
-- **SSRフレームワーク**: Cloudflare Pages Functionsを採用（軽量・シンプル・オープン）
+- SSRフレームワーク: Cloudflare Pages Functionsを採用（軽量・シンプル・オープン）
 - Twitter、Facebook、Slackなどのリンクプレビュー対応
 - ログ詳細ページとタグ詳細ページのOGPメタタグ自動生成
-- ボット検出による自動SSR切り替え
 
 ### タグシステム
 - ハッシュタグ形式でのタグ付け
@@ -268,25 +263,17 @@ shumilog/
 
 Cloudflare Pagesを使用してフロントエンドをデプロイします。GitHubリポジトリと連携することで、プッシュ時に自動的にビルドとデプロイが行われます。
 
-**ビルド設定:**
+ビルド設定:
 - ビルドコマンド: `npm run build`
 - ビルド出力ディレクトリ: `frontend/dist`
 - ルートディレクトリ: `frontend`
 
-**環境変数:**
+環境変数:
 - `VITE_API_BASE_URL`: バックエンドAPIのエンドポイントURL
 
 ### バックエンド (Cloudflare Workers)
 
 バックエンドのデプロイはGitHub Actionsで自動化されています。`master`ブランチへのマージ時に自動的にデプロイされます。
-
-## コントリビュート
-
-1. リポジトリをフォーク
-2. ブランチを作成: `git checkout -b feature/my-update`
-3. 依存関係をインストールしてWorkerをローカルで実行
-4. 変更を行い、`npm run test:contract`が通ることを確認
-5. 説明的なメッセージでコミットし、プルリクエストを開く
 
 ## ライセンス
 

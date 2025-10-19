@@ -1,6 +1,6 @@
 # Shumilog フロントエンド
 
-趣味コンテンツログサービスのReact + Tailwind CSSフロントエンドです。
+ShumilogのReact + Tailwind CSSフロントエンドです。
 
 ## 技術スタック
 

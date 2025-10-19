@@ -24,6 +24,7 @@ import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { RelatedLogs } from '@/components/RelatedLogs';
 import { LogImages } from '@/components/LogImages';
+import { Advertisement } from '@/components/Advertisement';
 import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
 import { useOgp, extractPlainText } from '@/hooks/useOgp';
@@ -337,6 +338,9 @@ export function LogDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* 広告 */}
+          {log && log.is_public && <Advertisement type="log" id={log.id} />}
 
           {/* 関連するログ */}
           {log && <RelatedLogs logId={log.id} />}

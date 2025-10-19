@@ -1,152 +1,185 @@
-# Backend Testing Status
+# Shumilog Backend
 
-## AI-Enhanced Tag Support
+ShumilogのバックエンドAPIサーバーです。Cloudflare Workers上で動作するサーバーレスAPIを提供します。
 
-### Overview
-This backend now includes **AI-powered tag support** using Cloudflare Workers AI to automatically generate tag editing support content based on Wikipedia information.
+## 概要
 
-### Features
-- **AI Model**: Uses `@cf/openai/gpt-oss-120b` (GPT OSS 120B)
-- **Content Generation**:
-  - One-line tag summary (targeting ~50 characters)
-  - Related tags extracted as hashtags
-  - Subsections for series/episode information
-- **AI Content Identification**: Wrapped with HTML comments `<!-- AI生成コンテンツ開始/終了 -->`
-- **Attribution**: Includes Wikipedia source link for all generated content
+このバックエンドは、趣味コンテンツのログ記録と共有のためのRESTful APIを提供します。Twitter認証、ログ管理、タグ管理、画像アップロードなどの機能を備えています。
 
-### API Usage
-```bash
-# Request AI-enhanced tag support
-POST /api/support/tags
-Content-Type: application/json
-Cookie: session=<your-session-token>
+## 技術スタック
 
-{
-  "tag_name": "進撃の巨人",
-  "support_type": "ai_enhanced"
-}
-```
+- **ランタイム**: Cloudflare Workers (Node.js互換)
+- **フレームワーク**: Hono v4
+- **データベース**: Cloudflare D1 (SQLite)
+- **ストレージ**: Cloudflare R2 (画像ファイル)
+- **AI**: Cloudflare Workers AI (タグ支援機能)
+- **言語**: TypeScript 5.9+
+- **テスト**: Vitest
+- **コード品質**: ESLint + Prettier
 
-### Testing
-- **Unit Tests**: `tests/unit/AiService.test.ts` - Tests AI service logic with mocks
-- **Integration Tests**: `tests/integration/tag-support-ai.test.ts` - Tests API endpoint behavior
+## 主な機能
 
-### Implementation Details
-- **AiService**: Wrapper class for Cloudflare Workers AI (`src/services/AiService.ts`)
-- **TagService Integration**: AI support integrated into existing TagService
-- **Wrangler Configuration**: AI bindings configured for all environments in `wrangler.toml`
+### 認証・認可
+- Twitter OAuth 2.0認証
+- セッションベースの認可
+- ユーザー管理
 
-### Limitations
-- **Local Development**: AI features require Cloudflare environment (not available in `wrangler dev --local`)
-- **Rate Limits**: Subject to Cloudflare Workers AI usage limits
-- **Model Constraints**: Limited by GPT OSS 120B model capabilities
+### ログ管理
+- ログの作成・編集・削除
+- 公開/非公開設定
+- Markdownコンテンツ対応
+- タグ付け機能
+- 関連ログ検索
 
-## Current Test Suite Status
+### タグ管理
+- タグの作成・編集・削除
+- AI支援によるタグ説明生成 (Wikipedia連携)
+- タグ関連付け管理
+- タグ統計
 
-### ✅ All Tests (CI Enabled)
-- **Command**: `npm test`
-- **Status**: All tests passing - 282 passed, 0 skipped
-- **Coverage**: Contract tests, unit tests, and integration tests
-- **CI**: Enabled in GitHub Actions running full test suite
+### 画像管理
+- 画像アップロード・管理
+- Cloudflare R2ストレージ連携
+- ログへの画像添付
 
-### ✅ Contract Tests with OpenAPI Validation
-- **Command**: `npm run test:contract`
-- **Status**: All passing
-- **Coverage**: API endpoint contracts, authentication flows, validation
-- **OpenAPI Validation**: Automated validation against `/api/v1/openapi.yaml` specification
+### 開発支援機能
+- 開発環境設定確認API
+- Dockerコンテナ再起動API
+- ログ取得API
 
-### ✅ Integration Tests
-- **Status**: All passing
-- **Approach**: Use `createTestSession()` helper for authenticated test scenarios
+## 開発環境セットアップ
 
-## OpenAPI Specification Validation
+### 前提条件
 
-The backend now includes **automated OpenAPI specification validation** to ensure that API implementations match the defined specification in `/api/v1/openapi.yaml`.
+- Node.js 22 LTS以上
+- npm 10以上
+- Wrangler CLI (`npm install -g wrangler`)
 
-### How It Works
-
-Contract tests automatically validate:
-- ✅ Response status codes match the specification
-- ✅ Response body structure matches defined schemas
-- ✅ Required fields are present
-- ✅ Field types are correct
-- ✅ Enum values are valid
-
-### Using OpenAPI Validation in Tests
-
-To add OpenAPI validation to a contract test:
-
-```typescript
-import { toOpenApiResponse } from '../helpers/openapi-setup';
-
-it('validates response against OpenAPI spec', async () => {
-  const response = await app.request('/users/me', {
-    method: 'GET',
-    headers: { Cookie: `session=${sessionToken}` }
-  });
-
-  // Convert Hono response to OpenAPI-compatible format and validate
-  const openApiResponse = await toOpenApiResponse(response, '/users/me', 'GET');
-  expect(openApiResponse).toSatisfyApiSpec();
-  
-  // Continue with additional assertions...
-});
-```
-
-### Maintaining the API Specification
-
-**Important**: The OpenAPI specification (`/api/v1/openapi.yaml`) is the **source of truth** for the API.
-
-When making API changes:
-1. **Update the specification first** - Modify `/api/v1/openapi.yaml`
-2. **Update contract tests** - Ensure tests match the new specification
-3. **Implement the changes** - Update the actual API implementation
-4. **Verify** - Run `npm run test:contract` to ensure implementation matches spec
-
-This workflow ensures:
-- ✅ API specification is always up-to-date
-- ✅ Implementation matches specification
-- ✅ Breaking changes are caught early
-- ✅ Documentation is automatically accurate
-
-
-## Test Coverage
-
-### Working
-- Contract tests with authentication ✅
-- Log endpoint authentication ✅  
-- Basic session management ✅
-- Unit tests ✅
-- Integration tests with test session helpers ✅
-
-All tests use the `createTestSession()` helper for authenticated scenarios, avoiding the need for complex OAuth flow simulation in tests.
-
-## Running Tests
+### インストール
 
 ```bash
-# Run all tests (recommended - includes proper skipping)
+cd backend
+npm install
+```
+
+### データベース準備
+
+```bash
+# マイグレーション実行
+npm run db:migrate
+
+# シードデータ投入
+npm run db:seed
+```
+
+### 開発サーバー起動
+
+```bash
+npm run dev
+```
+
+サーバーが `http://localhost:8787` で起動します。
+
+## テスト実行
+
+### 全テスト実行
+
+```bash
 npm test
+```
 
-# Run only contract tests
+### 契約テスト実行
+
+```bash
 npm run test:contract
+```
 
-# Run specific test file  
-npx vitest run tests/contract/logs.contract.test.ts
+### ウォッチモード
 
-# Watch mode for development
+```bash
 npm run test:watch
 ```
 
-## CI Strategy
+## API仕様
 
-The CI runs the full test suite (`npm test`) with all tests passing:
+API仕様は `/api/v1/openapi.yaml` で定義されています。
 
-1. **Contract Tests**: Validate API contracts against OpenAPI specification
-2. **Unit Tests**: Test individual service logic with mocks
-3. **Integration Tests**: Test complete workflows with test database
+### 主なエンドポイント
 
-This approach ensures:
-- ✅ CI remains stable and reliable
-- ✅ Core functionality is thoroughly tested
-- ✅ All tests provide value without redundancy
-- ✅ Full test coverage visibility maintained
+- `GET /auth/twitter` - Twitter認証開始
+- `GET /auth/callback` - OAuthコールバック処理
+- `GET /users/me` - ユーザー情報取得
+- `GET /logs` - ログ一覧取得
+- `POST /logs` - ログ作成
+- `GET /logs/{id}` - ログ詳細取得
+- `GET /tags` - タグ一覧取得
+- `POST /tags` - タグ作成
+- `POST /support/tags` - AI支援タグ生成
+
+詳細なAPI仕様は [OpenAPIドキュメント](../../api/v1/openapi.yaml) を参照してください。
+
+## 環境設定
+
+### 環境変数
+
+開発環境では `wrangler.toml` で設定されます：
+
+```toml
+[vars]
+ENVIRONMENT = "development"
+APP_BASE_URL = "http://localhost:5173"
+APP_LOGIN_URL = "http://localhost:5173/login"
+TWITTER_REDIRECT_URI = "http://localhost:8787/api/auth/callback"
+```
+
+### バインディング
+
+- **DB**: Cloudflare D1データベース
+- **AI**: Cloudflare Workers AI
+- **IMAGES**: Cloudflare R2バケット
+
+## 開発ワークフロー
+
+### 機能開発の流れ
+
+1. **仕様更新**: `/api/v1/openapi.yaml` を更新
+2. **実装**: APIエンドポイントを実装
+3. **テスト**: 契約テストを追加/更新
+4. **検証**: `npm run test:contract` で仕様準拠を確認
+5. **デプロイ**: 本番環境にデプロイ
+
+### コード品質
+
+```bash
+# 型チェック
+npm run typecheck
+
+# リント
+npm run lint
+
+# フォーマット
+npm run format
+```
+
+## テストカバレッジ
+
+- **契約テスト**: OpenAPI仕様との準拠検証
+- **ユニットテスト**: 個別機能のテスト
+- **統合テスト**: エンドポイント間の連携テスト
+
+## トラブルシューティング
+
+### よくある問題
+
+#### データベース接続エラー
+```bash
+# D1データベースのリセット
+npm run db:migrate
+npm run db:seed
+```
+
+#### AI機能が動作しない
+AI機能はCloudflare環境でのみ動作します。ローカル開発ではモックレスポンスが返されます。
+
+#### 画像アップロードが失敗する
+R2バケットが設定されているか確認してください。

@@ -24,7 +24,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Redirect to Twitter OAuth */
+                /** @description Twitter OAuthへリダイレクト */
                 302: {
                     headers: {
                         Location?: string;
@@ -32,7 +32,7 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description Invalid request parameters */
+                /** @description 無効なリクエストパラメータ */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -72,7 +72,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Redirect to application with session */
+                /** @description セッション付きでアプリケーションへリダイレクト */
                 302: {
                     headers: {
                         "Set-Cookie"?: string;
@@ -80,7 +80,7 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description Authentication failed */
+                /** @description 認証に失敗しました */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -119,14 +119,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Successfully logged out */
+                /** @description 正常にログアウトしました */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -207,7 +207,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of user's logs */
+                /** @description ユーザーのログ一覧 */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -222,7 +222,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -299,7 +299,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description Not authenticated */
+                /** @description 認証されていません */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -1283,7 +1283,7 @@ export interface paths {
                         "image/webp": string;
                     };
                 };
-                /** @description Image not found */
+                /** @description 画像が見つかりません */
                 404: {
                     headers: {
                         [name: string]: unknown;

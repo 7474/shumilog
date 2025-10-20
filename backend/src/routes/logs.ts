@@ -326,6 +326,7 @@ logs.get('/:logId', async (c) => {
 
     // Get advertisements for public logs
     let advertisements: any[] = [];
+    let advertisementCredit: string | null = null;
     if (isPublic) {
       const dmmApiId = (c.env as any)?.DMM_API_ID;
       const dmmAffiliateId = (c.env as any)?.DMM_AFFILIATE_ID;
@@ -347,6 +348,11 @@ logs.get('/:logId', async (c) => {
           }
 
           advertisements = await dmmService.searchAdvertisements(keywords, 3);
+          
+          // Add credit text if advertisements are available
+          if (advertisements.length > 0) {
+            advertisementCredit = dmmService.getCreditText();
+          }
         } catch (error) {
           console.warn('[Logs] Error fetching advertisements:', error);
           // Continue without advertisements
@@ -354,7 +360,11 @@ logs.get('/:logId', async (c) => {
       }
     }
 
-    return c.json({ ...toLogResponse(log), advertisements });
+    return c.json({ 
+      ...toLogResponse(log), 
+      advertisements,
+      advertisement_credit: advertisementCredit
+    });
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;

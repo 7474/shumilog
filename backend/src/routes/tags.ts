@@ -135,6 +135,7 @@ tags.get('/:tagId', async (c) => {
 
   // Get advertisements for the tag
   let advertisements: any[] = [];
+  let advertisementCredit: string | null = null;
   const dmmApiId = (c.env as any)?.DMM_API_ID;
   const dmmAffiliateId = (c.env as any)?.DMM_AFFILIATE_ID;
 
@@ -147,6 +148,11 @@ tags.get('/:tagId', async (c) => {
 
       const keywords = [tag.name];
       advertisements = await dmmService.searchAdvertisements(keywords, 3);
+      
+      // Add credit text if advertisements are available
+      if (advertisements.length > 0) {
+        advertisementCredit = dmmService.getCreditText();
+      }
     } catch (error) {
       console.warn('[Tags] Error fetching advertisements:', error);
       // Continue without advertisements
@@ -157,7 +163,8 @@ tags.get('/:tagId', async (c) => {
     ...detail,
     associated_tags: detail.associations,
     recent_referring_tags: detail.recent_referring_tags,
-    advertisements
+    advertisements,
+    advertisement_credit: advertisementCredit
   });
 });
 

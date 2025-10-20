@@ -1024,6 +1024,12 @@ components:
               items:
                 $ref: '#/components/schemas/Advertisement'
               description: このタグに関連する広告（DMMアフィリエイト）
+            advertisement_credit:
+              type: string
+              nullable: true
+              description: |
+                広告クレジット表記のHTML文字列。
+                広告が存在する場合のみ返されます（例: "Powered by <a ...>DMM アフィリエイト</a>"）
 
     Log:
       type: object
@@ -1138,6 +1144,12 @@ components:
               items:
                 $ref: '#/components/schemas/Advertisement'
               description: このログに関連する広告（DMMアフィリエイト）
+            advertisement_credit:
+              type: string
+              nullable: true
+              description: |
+                広告クレジット表記のHTML文字列。
+                広告が存在する場合のみ返されます（例: "Powered by <a ...>DMM アフィリエイト</a>"）
 
     LogImage:
       type: object

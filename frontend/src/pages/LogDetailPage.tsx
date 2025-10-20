@@ -341,7 +341,10 @@ export function LogDetailPage() {
 
           {/* 広告 */}
           {log && log.is_public && (log as any).advertisements && (
-            <Advertisement advertisements={(log as any).advertisements} />
+            <Advertisement 
+              advertisements={(log as any).advertisements}
+              creditText={(log as any).advertisement_credit}
+            />
           )}
 
           {/* 関連するログ */}

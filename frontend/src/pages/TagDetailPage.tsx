@@ -464,7 +464,10 @@ export function TagDetailPage() {
 
       {/* 広告 */}
       {tag && (tag as any).advertisements && (
-        <Advertisement advertisements={(tag as any).advertisements} />
+        <Advertisement 
+          advertisements={(tag as any).advertisements}
+          creditText={(tag as any).advertisement_credit}
+        />
       )}
 
       {/* 新着ログ */}

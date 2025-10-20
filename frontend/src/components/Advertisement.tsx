@@ -9,13 +9,14 @@ interface AdvertisementItem {
 
 interface AdvertisementProps {
   advertisements: AdvertisementItem[];
+  creditText?: string | null;
 }
 
 /**
  * 広告表示コンポーネント
  * ログまたはタグに関連する広告を表示します
  */
-export function Advertisement({ advertisements }: AdvertisementProps) {
+export function Advertisement({ advertisements, creditText }: AdvertisementProps) {
   if (!advertisements || advertisements.length === 0) {
     return null; // 広告がない場合は何も表示しない
   }
@@ -52,7 +53,15 @@ export function Advertisement({ advertisements }: AdvertisementProps) {
           </a>
         ))}
       </div>
-      <p className="text-xs text-gray-400 mt-4 text-center">広告</p>
+      <div className="mt-4 text-center">
+        <p className="text-xs text-gray-400">広告</p>
+        {creditText && (
+          <p
+            className="text-xs text-gray-400 mt-1"
+            dangerouslySetInnerHTML={{ __html: creditText }}
+          />
+        )}
+      </div>
     </div>
   );
 }

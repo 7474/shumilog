@@ -146,4 +146,19 @@ describe('DmmAffiliateService', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('getCreditText', () => {
+    it('should return DMM affiliate credit text', () => {
+      const service = new DmmAffiliateService({
+        apiId: 'test-api-id',
+        affiliateId: 'test-affiliate-id'
+      });
+
+      const creditText = service.getCreditText();
+
+      expect(creditText).toContain('Powered by');
+      expect(creditText).toContain('DMM アフィリエイト');
+      expect(creditText).toContain('href');
+    });
+  });
 });

@@ -361,6 +361,7 @@ export interface paths {
          *
          *     **ハッシュタグ処理**: 説明にハッシュタグパターン（`#{tagName}` または `#tagName`）が含まれている場合、
          *     システムは自動的に既存のタグとの関連付けを作成するか、存在しない場合は新しいタグを作成します。
+         *
          */
         post: {
             parameters: {
@@ -420,6 +421,7 @@ export interface paths {
          *     - タグID（後方互換性のため）
          *
          *     まずタグ名がチェックされ、見つからない場合はタグIDがチェックされます。
+         *
          */
         get: {
             parameters: {
@@ -461,6 +463,7 @@ export interface paths {
          *
          *     **ハッシュタグ処理**: 説明にハッシュタグパターン（`#{tagName}` または `#tagName`）が含まれている場合、
          *     システムは自動的に既存のタグとの関連付けを作成するか、存在しない場合は新しいタグを作成します。
+         *
          */
         put: {
             parameters: {
@@ -519,6 +522,7 @@ export interface paths {
          * @description タグを削除します。`tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
          *
          *     **管理者権限が必要です**: 'admin' ロールを持つユーザーのみがタグを削除できます。
+         *
          */
         delete: {
             parameters: {
@@ -581,6 +585,7 @@ export interface paths {
          * このタグに関連付けられたタグを取得
          * @description 指定されたタグに関連付けられたすべてのタグを取得します。
          *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
+         *
          */
         get: {
             parameters: {
@@ -620,6 +625,7 @@ export interface paths {
          * タグ間の関連付けを作成
          * @description 2つのタグ間の関連付けを作成します。
          *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
+         *
          */
         post: {
             parameters: {
@@ -677,6 +683,7 @@ export interface paths {
          * タグ間の関連付けを削除
          * @description 2つのタグ間の関連付けを削除します。
          *     `tagId` パラメータはタグ名（推奨）とタグIDの両方を受け付けます。
+         *
          */
         delete: {
             parameters: {
@@ -745,6 +752,7 @@ export interface paths {
          *     - `wikipedia_summary`: Wikipediaから直接概要を取得
          *
          *     レスポンスには、関連する用語がハッシュタグに変換されたMarkdown形式のコンテンツが含まれます。
+         *
          */
         post: {
             parameters: {
@@ -765,6 +773,7 @@ export interface paths {
                          * @description 取得するサポートコンテンツのタイプ:
                          *     - `ai_enhanced`: AI生成コンテンツ
                          *     - `wikipedia_summary`: Wikipediaの直接概要
+                         *
                          * @example ai_enhanced
                          * @enum {string}
                          */
@@ -877,6 +886,7 @@ export interface paths {
          * @description 新しいログエントリを作成します。コンテンツ内のハッシュタグ（#{tagName} または #tagName 形式）
          *     は自動的に抽出され、ログにタグとして関連付けられます。
          *     明示的なタグ指定と自動ハッシュタグ抽出の両方をサポートします。
+         *
          */
         post: {
             parameters: {
@@ -963,6 +973,7 @@ export interface paths {
          * ログを更新
          * @description 既存のログエントリを更新します。content_mdが更新される場合、コンテンツ内のハッシュタグ
          *     （#{tagName} または #tagName 形式）は自動的に抽出され、ログにタグとして関連付けられます。
+         *
          */
         put: {
             parameters: {
@@ -1071,6 +1082,7 @@ export interface paths {
          * @description 指定されたログに関連するログを取得します。
          *     関連性は共有タグによって決定されます - 共通のタグが多いログほど上位にランク付けされます。
          *     指定されたログ自体を除く公開ログのみが返されます。
+         *
          */
         get: {
             parameters: {
@@ -1368,8 +1380,7 @@ export interface components {
         };
         TagCreate: {
             name: string;
-            /**
-             * @description タグのオプションの説明。2つの形式のハッシュタグパターンをサポート:
+            /** @description タグのオプションの説明。2つの形式のハッシュタグパターンをサポート:
              *     - #{tagName} - 拡張形式（スペースと特殊文字をサポート）
              *     - #tagName - シンプル形式（英数字、日本語文字、アンダースコア、ハイフン）
              *
@@ -1377,14 +1388,13 @@ export interface components {
              *     1. 一致する名前を持つ既存のタグを検索
              *     2. 存在しない場合は新しいタグを作成（空の説明とメタデータ付き）
              *     3. このタグと参照されたタグ間の関連付けを作成
-             */
+             *      */
             description?: string;
             metadata?: Record<string, never>;
         };
         TagUpdate: {
             name?: string;
-            /**
-             * @description タグのオプションの説明。2つの形式のハッシュタグパターンをサポート:
+            /** @description タグのオプションの説明。2つの形式のハッシュタグパターンをサポート:
              *     - #{tagName} - 拡張形式（スペースと特殊文字をサポート）
              *     - #tagName - シンプル形式（英数字、日本語文字、アンダースコア、ハイフン）
              *
@@ -1392,7 +1402,7 @@ export interface components {
              *     1. 一致する名前を持つ既存のタグを検索
              *     2. 存在しない場合は新しいタグを作成（空の説明とメタデータ付き）
              *     3. このタグと参照されたタグ間の関連付けを作成
-             */
+             *      */
             description?: string;
             metadata?: Record<string, never>;
         };
@@ -1405,6 +1415,10 @@ export interface components {
             recent_referring_tags: components["schemas"]["Tag"][];
             /** @description このタグに関連する広告（DMMアフィリエイト） */
             advertisements: components["schemas"]["Advertisement"][];
+            /** @description 広告クレジット表記のHTML文字列。
+             *     広告が存在する場合のみ返されます（例: "Powered by <a ...>DMM アフィリエイト</a>"）
+             *      */
+            advertisement_credit?: string | null;
         };
         Log: {
             id: string;
@@ -1430,10 +1444,9 @@ export interface components {
             /** @description このログに関連付けるタグの名前（存在しない場合は新しいタグを作成します） */
             tag_names?: string[];
             title?: string;
-            /**
-             * @description ログのMarkdownコンテンツ。#{tagName} または #tagName 形式のハッシュタグは
+            /** @description ログのMarkdownコンテンツ。#{tagName} または #tagName 形式のハッシュタグは
              *     自動的に抽出され、ログにタグとして関連付けられます。
-             */
+             *      */
             content_md: string;
             /**
              * @description ログが公開されているかどうか。指定されていない場合はデフォルトでtrue（公開）になります。
@@ -1447,16 +1460,19 @@ export interface components {
             /** @description タグ名を使用してこのログに関連付けられたタグを更新します（存在しない場合は新しいタグを作成します） */
             tag_names?: string[];
             title?: string;
-            /**
-             * @description ログのMarkdownコンテンツ。コンテンツが更新される場合、#{tagName} または #tagName 形式のハッシュタグは
+            /** @description ログのMarkdownコンテンツ。コンテンツが更新される場合、#{tagName} または #tagName 形式のハッシュタグは
              *     自動的に抽出され、ログにタグとして関連付けられます。
-             */
+             *      */
             content_md?: string;
             is_public?: boolean;
         };
         LogDetail: components["schemas"]["Log"] & {
             /** @description このログに関連する広告（DMMアフィリエイト） */
             advertisements: components["schemas"]["Advertisement"][];
+            /** @description 広告クレジット表記のHTML文字列。
+             *     広告が存在する場合のみ返されます（例: "Powered by <a ...>DMM アフィリエイト</a>"）
+             *      */
+            advertisement_credit?: string | null;
         };
         LogImage: {
             /** @description ユニークな画像識別子 */

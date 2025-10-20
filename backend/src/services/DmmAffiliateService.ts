@@ -53,6 +53,15 @@ export class DmmAffiliateService {
   constructor(private config: DmmAffiliateConfig) {}
 
   /**
+   * DMMアフィリエイトのクレジット表記を取得
+   * API仕様: https://affiliate.dmm.com/api/credit.html
+   * @returns クレジット表記のHTML文字列
+   */
+  getCreditText(): string {
+    return 'Powered by <a href="https://www.dmm.com/netgame_s/affiliate/-/ai_subscribe/" target="_blank" rel="nofollow noopener">DMM アフィリエイト</a>';
+  }
+
+  /**
    * キーワードに基づいて広告を検索
    * @param keywords 検索キーワードのリスト
    * @param limit 取得する広告の最大数 (デフォルト: 3)

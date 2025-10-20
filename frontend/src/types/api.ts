@@ -1403,6 +1403,8 @@ export interface components {
             associated_tags: components["schemas"]["Tag"][];
             /** @description このタグを参照している他のタグ（被参照タグ） */
             recent_referring_tags: components["schemas"]["Tag"][];
+            /** @description このタグに関連する広告（DMMアフィリエイト） */
+            advertisements: components["schemas"]["Advertisement"][];
         };
         Log: {
             id: string;
@@ -1452,7 +1454,10 @@ export interface components {
             content_md?: string;
             is_public?: boolean;
         };
-        LogDetail: components["schemas"]["Log"] & Record<string, never>;
+        LogDetail: components["schemas"]["Log"] & {
+            /** @description このログに関連する広告（DMMアフィリエイト） */
+            advertisements: components["schemas"]["Advertisement"][];
+        };
         LogImage: {
             /** @description ユニークな画像識別子 */
             id: string;
@@ -1480,6 +1485,20 @@ export interface components {
              * @description 画像がアップロードされた日時
              */
             created_at: string;
+        };
+        Advertisement: {
+            /** @description 商品ID */
+            productId: string;
+            /** @description 商品タイトル */
+            title: string;
+            /** @description 商品画像のURL */
+            imageUrl: string;
+            /** @description アフィリエイトリンクURL */
+            affiliateUrl: string;
+            /** @description 商品価格（存在する場合） */
+            price?: string | null;
+            /** @description サービス名（存在する場合） */
+            serviceName?: string | null;
         };
     };
     responses: never;

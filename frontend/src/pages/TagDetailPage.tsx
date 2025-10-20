@@ -24,6 +24,7 @@ import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { LogForm } from '@/components/LogForm';
 import { LogCard } from '@/components/LogCard';
 import { TagForm } from '@/components/TagForm';
+import { Advertisement } from '@/components/Advertisement';
 import { useAuth } from '@/hooks/useAuth';
 import { ShareToXButton } from '@/components/ShareToXButton';
 import { useOgp, extractPlainText } from '@/hooks/useOgp';
@@ -460,6 +461,11 @@ export function TagDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 広告 */}
+      {tag && (tag as any).advertisements && (
+        <Advertisement advertisements={(tag as any).advertisements} />
+      )}
 
       {/* 新着ログ */}
       {tag.recent_logs && tag.recent_logs.length > 0 && (

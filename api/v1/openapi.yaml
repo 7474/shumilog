@@ -1001,6 +1001,7 @@ components:
             - recent_logs
             - associated_tags
             - recent_referring_tags
+            - advertisements
           properties:
             log_count:
               type: integer
@@ -1018,6 +1019,11 @@ components:
               items:
                 $ref: '#/components/schemas/Tag'
               description: このタグを参照している他のタグ（被参照タグ）
+            advertisements:
+              type: array
+              items:
+                $ref: '#/components/schemas/Advertisement'
+              description: このタグに関連する広告（DMMアフィリエイト）
 
     Log:
       type: object
@@ -1124,7 +1130,14 @@ components:
       allOf:
         - $ref: '#/components/schemas/Log'
         - type: object
-          description: 詳細なログ情報（Logスキーマと同じ）
+          required:
+            - advertisements
+          properties:
+            advertisements:
+              type: array
+              items:
+                $ref: '#/components/schemas/Advertisement'
+              description: このログに関連する広告（DMMアフィリエイト）
 
     LogImage:
       type: object
@@ -1175,3 +1188,33 @@ components:
           type: string
           format: date-time
           description: 画像がアップロードされた日時
+
+    Advertisement:
+      type: object
+      additionalProperties: false
+      required:
+        - productId
+        - title
+        - imageUrl
+        - affiliateUrl
+      properties:
+        productId:
+          type: string
+          description: 商品ID
+        title:
+          type: string
+          description: 商品タイトル
+        imageUrl:
+          type: string
+          description: 商品画像のURL
+        affiliateUrl:
+          type: string
+          description: アフィリエイトリンクURL
+        price:
+          type: string
+          nullable: true
+          description: 商品価格（存在する場合）
+        serviceName:
+          type: string
+          nullable: true
+          description: サービス名（存在する場合）

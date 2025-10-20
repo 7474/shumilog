@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { getAuthUser } from '../middleware/auth.js';
 import { TagService } from '../services/TagService.js';
 import { UserService } from '../services/UserService.js';
+import { DmmAffiliateService } from '../services/DmmAffiliateService.js';
 import { invalidateCache } from '../middleware/cache.js';
 
 const tags = new Hono();
@@ -132,10 +133,31 @@ tags.get('/:tagId', async (c) => {
     throw new HTTPException(404, { message: 'Tag not found' });
   }
 
+  // Get advertisements for the tag
+  let advertisements: any[] = [];
+  const dmmApiId = (c.env as any)?.DMM_API_ID;
+  const dmmAffiliateId = (c.env as any)?.DMM_AFFILIATE_ID;
+
+  if (dmmApiId && dmmAffiliateId) {
+    try {
+      const dmmService = new DmmAffiliateService({
+        apiId: dmmApiId,
+        affiliateId: dmmAffiliateId
+      });
+
+      const keywords = [tag.name];
+      advertisements = await dmmService.searchAdvertisements(keywords, 3);
+    } catch (error) {
+      console.warn('[Tags] Error fetching advertisements:', error);
+      // Continue without advertisements
+    }
+  }
+
   return c.json({
     ...detail,
     associated_tags: detail.associations,
-    recent_referring_tags: detail.recent_referring_tags
+    recent_referring_tags: detail.recent_referring_tags,
+    advertisements
   });
 });
 

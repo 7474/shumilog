@@ -37,6 +37,8 @@ export interface RuntimeEnv {
   TWITTER_REDIRECT_URI?: string;
   APP_BASE_URL?: string;
   APP_LOGIN_URL?: string;
+  DMM_API_ID?: string;
+  DMM_AFFILIATE_ID?: string;
   database?: Database;
 }
 

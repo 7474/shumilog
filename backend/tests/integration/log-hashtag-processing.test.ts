@@ -286,4 +286,27 @@ describe('Log Hashtag Processing Integration', () => {
     const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
     expect(tagNames).toEqual(['anime series', 'gaming', 'reading']);
   });
+  
+  it('should extract hashtags with periods (dots) correctly', async () => {
+    const response = await app.request('/api/logs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': `session=${sessionToken}`
+      },
+      body: JSON.stringify({
+        title: 'Anime with dots in title',
+        content_md: '#SSSS.GRIDMAN 何らかのテキスト。#{SSSS.DYNAZENON}も面白い。',
+        is_public: true
+      })
+    });
+    
+    expect(response.status).toBe(201);
+    const createdLog = await response.json();
+    
+    // Should extract hashtags with periods correctly
+    expect(createdLog.associated_tags).toHaveLength(2);
+    const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
+    expect(tagNames).toEqual(['SSSS.DYNAZENON', 'SSSS.GRIDMAN']);
+  });
 });

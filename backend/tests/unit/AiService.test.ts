@@ -172,5 +172,46 @@ describe('AiService', () => {
       expect(userPrompt).toContain('必ずすべて列挙');
       expect(userPrompt).toContain('省略せず、記事に記載されているものをすべて列挙');
     });
+
+    it('should verify prompt includes Wikipedia search instructions', async () => {
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `テスト作品。
+
+**関連タグ**: #テストタグ
+
+出典: [Wikipedia](https://ja.wikipedia.org/wiki/Test)`
+                }
+              ]
+            }
+          ]
+        })
+      };
+
+      const aiService = new AiService(mockAi);
+      await aiService.generateTagContentFromName('きみの色');
+
+      // Verify the system prompt includes Wikipedia search best practices
+      const systemPrompt = (mockAi.run as any).mock.calls[0][1].input[0].content;
+      expect(systemPrompt).toContain('Wikipedia検索のベストプラクティス');
+      expect(systemPrompt).toContain('直接URLアクセスを試す');
+      expect(systemPrompt).toContain('OpenSearch API');
+      expect(systemPrompt).toContain('リダイレクトは自動的に追跡');
+      expect(systemPrompt).toContain('曖昧さ回避ページ');
+      
+      // Verify the user prompt includes detailed search steps
+      const userPrompt = (mockAi.run as any).mock.calls[0][1].input[1].content;
+      expect(userPrompt).toContain('検索手順（以下の順番で試してください）');
+      expect(userPrompt).toContain('直接アクセス');
+      expect(userPrompt).toContain('Wikipedia検索API');
+      expect(userPrompt).toContain('類似記事の検索');
+      expect(userPrompt).toContain('リダイレクトの追跡');
+      expect(userPrompt).toContain('ひらがな・カタカナ・漢字の変換');
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LogService } from '../../src/services/LogService.js';
-import { Database } from '../../src/db/database.js';
+import { createDrizzleDB, type DrizzleDB } from '../../src/db/drizzle.js';
 import { clearTestData, getTestD1Database, createTestUser, seedTestTags ,
   TEST_TAG_IDS,
 } from '../helpers/app.js';
@@ -8,12 +8,12 @@ import { CreateLogData, UpdateLogData } from '../../src/models/Log.js';
 
 describe('LogService', () => {
   let logService: LogService;
-  let mockDatabase: Database;
+  let drizzleDB: DrizzleDB;
 
   beforeEach(async () => {
     await clearTestData();
-    mockDatabase = new Database({ d1Database: getTestD1Database() });
-    logService = new LogService(mockDatabase);
+    drizzleDB = createDrizzleDB(getTestD1Database());
+    logService = new LogService(drizzleDB);
 
     await Promise.all([
       createTestUser('user-123', 'testuser'),

@@ -1,20 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Database } from '../../src/db/database.js';
+import { createDrizzleDB, type DrizzleDB } from '../../src/db/drizzle.js';
 import { TagService } from '../../src/services/TagService.js';
 import { LogService } from '../../src/services/LogService.js';
 import { clearTestData, getTestD1Database, createTestUser } from '../helpers/app.js';
 
 describe('Association Ordering', () => {
-  let db: Database;
+  let drizzleDB: DrizzleDB;
   let tagService: TagService;
   let logService: LogService;
   let testUserId: string;
 
   beforeEach(async () => {
     await clearTestData();
-    db = new Database({ d1Database: getTestD1Database() });
-    tagService = new TagService(db);
-    logService = new LogService(db);
+    drizzleDB = createDrizzleDB(getTestD1Database());
+    tagService = new TagService(drizzleDB);
+    logService = new LogService(drizzleDB);
 
     // Create a test user
     testUserId = 'user_test_ordering';

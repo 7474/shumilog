@@ -528,8 +528,8 @@ export class TagService {
     }
     
     // Pattern 2: #tagName - simple format (no whitespace)
-    // Match hashtags but don't include trailing periods or hyphens
-    const simplePattern = /#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_.-]*[a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF_])/g;
+    // Match all non-whitespace characters except braces (to avoid matching extended format)
+    const simplePattern = /#([^\s{}]+)/g;
     
     while ((match = simplePattern.exec(content)) !== null) {
       const tagName = match[1].trim();

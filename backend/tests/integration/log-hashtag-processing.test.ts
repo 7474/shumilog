@@ -281,10 +281,10 @@ describe('Log Hashtag Processing Integration', () => {
     expect(response.status).toBe(201);
     const createdLog = await response.json();
     
-    // Should extract all hashtags
+    // Should extract all hashtags (including trailing punctuation)
     expect(createdLog.associated_tags).toHaveLength(3);
     const tagNames = createdLog.associated_tags.map((t: any) => t.name).sort();
-    expect(tagNames).toEqual(['anime series', 'gaming', 'reading']);
+    expect(tagNames).toEqual(['anime series', 'gaming.', 'reading']);
   });
   
   it('should extract hashtags with periods (dots) correctly', async () => {

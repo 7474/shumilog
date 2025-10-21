@@ -45,6 +45,32 @@ users.get('/me', async (c) => {
   return c.json(user);
 });
 
+// PUT /users/me - Update current user profile
+users.put('/me', async (c) => {
+  const user = getAuthUser(c);
+  const userService = resolveUserService(c);
+
+  // Parse request body
+  const body = await c.req.json();
+  
+  // Validate display_name if provided
+  if (body.display_name !== undefined) {
+    if (typeof body.display_name !== 'string') {
+      throw new HTTPException(400, { message: 'display_name must be a string' });
+    }
+    if (body.display_name.length === 0 || body.display_name.length > 100) {
+      throw new HTTPException(400, { message: 'display_name must be between 1 and 100 characters' });
+    }
+  }
+
+  // Update user
+  const updatedUser = await userService.updateUser(user.id, {
+    display_name: body.display_name
+  });
+
+  return c.json(updatedUser);
+});
+
 // GET /users/me/logs - Get current user's logs (both public and private)
 users.get('/me/logs', async (c) => {
   const user = getAuthUser(c);

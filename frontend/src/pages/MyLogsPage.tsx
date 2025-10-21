@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PenLine, X, FileText, LogOut, MoreVertical, Tag as TagIcon } from 'lucide-react';
+import { PenLine, X, FileText, LogOut, MoreVertical, Tag as TagIcon, User } from 'lucide-react';
 import { api } from '@/services/api';
 import { Log } from '@/api-types';
 import { LogForm } from '@/components/LogForm';
@@ -225,6 +225,13 @@ export function MyLogsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => navigate('/my/profile')}
+                className="cursor-pointer"
+              >
+                <User size={16} className="mr-2" />
+                <span>プロフィール編集</span>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleLogout}
                 className="cursor-pointer"

@@ -22,6 +22,45 @@ export async function queryFirst<T = any>(db: DrizzleDB, query: SQL): Promise<T 
 }
 
 /**
+ * Execute a raw SQL string with params (for complex dynamic queries)
+ * Note: This is a transitional helper. Prefer using sql`` template or query builder when possible.
+ */
+export async function queryRawAll<T = any>(db: DrizzleDB, sqlString: string, params: any[]): Promise<T[]> {
+  // Build SQL query with parameters using sql.raw and sql.join
+  const chunks: SQL[] = [];
+  const parts = sqlString.split('?');
+  
+  for (let i = 0; i < parts.length; i++) {
+    chunks.push(sql.raw(parts[i]));
+    if (i < params.length) {
+      chunks.push(sql`${params[i]}`);
+    }
+  }
+  
+  const query = sql.join(chunks, sql.raw(''));
+  return await db.all<T>(query);
+}
+
+/**
+ * Execute a raw SQL string with params and return first result
+ * Note: This is a transitional helper. Prefer using sql`` template or query builder when possible.
+ */
+export async function queryRawFirst<T = any>(db: DrizzleDB, sqlString: string, params: any[]): Promise<T | null> {
+  const chunks: SQL[] = [];
+  const parts = sqlString.split('?');
+  
+  for (let i = 0; i < parts.length; i++) {
+    chunks.push(sql.raw(parts[i]));
+    if (i < params.length) {
+      chunks.push(sql`${params[i]}`);
+    }
+  }
+  
+  const query = sql.join(chunks, sql.raw(''));
+  return await db.get<T>(query);
+}
+
+/**
  * Execute a query with pagination
  */
 export async function queryWithPagination<T = any>(

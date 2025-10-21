@@ -28,7 +28,7 @@
     "dompurify": "^3.2.7",
     "lucide-react": "^0.546.0",
     "marked": "^16.4.0",
-    "openapi-fetch": "^0.14.1",
+    "openapi-fetch": "^0.15.0",
     "react": "^19.1.1",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.64.0",

@@ -21,6 +21,7 @@ describe('OpenAPI Specification Compliance', () => {
     { path: '/auth/callback', method: 'GET' },
     { path: '/auth/logout', method: 'POST' },
     { path: '/users/me', method: 'GET' },
+    { path: '/users/me', method: 'PUT' },
     { path: '/users/me/logs', method: 'GET' },
     { path: '/users/me/stats', method: 'GET' },
     { path: '/tags', method: 'GET' },

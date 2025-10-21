@@ -84,6 +84,29 @@ paths:
         '401':
           description: 認証されていません
 
+    put:
+      summary: 現在のユーザー情報を更新
+      description: 認証されたユーザーの表示名を更新します
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: ユーザー情報が更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: 無効なリクエストデータ
+        '401':
+          description: 認証されていません
+
   /users/me/logs:
     get:
       summary: 現在のユーザーのログを取得（公開・非公開両方）
@@ -914,6 +937,16 @@ components:
         created_at:
           type: string
           format: date-time
+
+    UserUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: ユーザーの表示名
 
     Tag:
       type: object

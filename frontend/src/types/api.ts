@@ -176,7 +176,48 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        /**
+         * 現在のユーザー情報を更新
+         * @description 認証されたユーザーの表示名を更新します
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UserUpdate"];
+                };
+            };
+            responses: {
+                /** @description ユーザー情報が更新されました */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["User"];
+                    };
+                };
+                /** @description 無効なリクエストデータ */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description 認証されていません */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -1351,6 +1392,10 @@ export interface components {
             role: "user" | "admin";
             /** Format: date-time */
             created_at: string;
+        };
+        UserUpdate: {
+            /** @description ユーザーの表示名 */
+            display_name?: string;
         };
         Tag: {
             id: string;

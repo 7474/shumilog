@@ -466,17 +466,17 @@ export class TagService {
    */
   async getTagAssociations(tagId: string, sortBy: 'order' | 'recent' = 'order'): Promise<Tag[]> {
     const orderClause = sortBy === 'recent' 
-      ? 'ORDER BY ta.created_at DESC, t.name ASC'
-      : 'ORDER BY ta.association_order ASC, t.name ASC';
+      ? drizzleSql.raw('ORDER BY ta.created_at DESC, t.name ASC')
+      : drizzleSql.raw('ORDER BY ta.association_order ASC, t.name ASC');
 
     const rows = await queryAll(
       this.db,
-      drizzleSql.raw(`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+      drizzleSql`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
               ta.association_order, ta.created_at as association_created_at
        FROM tags t
        JOIN tag_associations ta ON t.id = ta.associated_tag_id
        WHERE ta.tag_id = ${tagId}
-       ${orderClause}`)
+       ${orderClause}`
     );
 
     return rows.map(row => TagModel.fromRow(row));

@@ -141,4 +141,70 @@ describe('MarkdownRenderer', () => {
     const links = container.querySelectorAll('a.hashtag-link');
     expect(links).toHaveLength(0);
   });
+
+  it('should extract hashtags with periods (dots) correctly', () => {
+    const { container } = render(
+      <MarkdownRenderer content="#SSSS.GRIDMAN 何らかのテキスト" tags={mockTags} />
+    );
+
+    const links = container.querySelectorAll('a.hashtag-link');
+    expect(links).toHaveLength(1);
+
+    const gridmanLink = links[0];
+    expect(gridmanLink.textContent).toBe('#SSSS.GRIDMAN');
+    expect(gridmanLink.getAttribute('href')).toBe('/tags/SSSS.GRIDMAN');
+  });
+
+  it('should handle both simple and extended hashtags with periods', () => {
+    const { container } = render(
+      <MarkdownRenderer
+        content="#SSSS.GRIDMAN 何らかのテキスト。#{SSSS.DYNAZENON}も面白い。"
+        tags={mockTags}
+      />
+    );
+
+    const links = container.querySelectorAll('a.hashtag-link');
+    expect(links).toHaveLength(2);
+
+    const gridmanLink = Array.from(links).find((link) => link.textContent === '#SSSS.GRIDMAN');
+    expect(gridmanLink?.getAttribute('href')).toBe('/tags/SSSS.GRIDMAN');
+
+    const dynanenonLink = Array.from(links).find(
+      (link) => link.textContent === '#{SSSS.DYNAZENON}'
+    );
+    expect(dynanenonLink?.getAttribute('href')).toBe('/tags/SSSS.DYNAZENON');
+  });
+
+  it('should extract hashtags with various symbols correctly', () => {
+    const { container } = render(
+      <MarkdownRenderer content="Tags: #test@symbol #foo:bar and more" tags={mockTags} />
+    );
+
+    const links = container.querySelectorAll('a.hashtag-link');
+    expect(links.length).toBeGreaterThanOrEqual(2);
+
+    const symbolLink = Array.from(links).find((link) => link.textContent === '#test@symbol');
+    expect(symbolLink).toBeDefined();
+    expect(symbolLink?.getAttribute('href')).toBe('/tags/test%40symbol');
+
+    const colonLink = Array.from(links).find((link) => link.textContent === '#foo:bar');
+    expect(colonLink).toBeDefined();
+    expect(colonLink?.getAttribute('href')).toBe('/tags/foo%3Abar');
+  });
+
+  it('should handle trailing punctuation as part of hashtag', () => {
+    const { container } = render(
+      <MarkdownRenderer content="I love #gaming. Also #reading" tags={mockTags} />
+    );
+
+    const links = container.querySelectorAll('a.hashtag-link');
+    expect(links).toHaveLength(2);
+
+    // Note: With the new pattern, "gaming." includes the period
+    const gamingLink = Array.from(links).find((link) => link.textContent === '#gaming.');
+    expect(gamingLink?.getAttribute('href')).toBe('/tags/gaming.');
+
+    const readingLink = Array.from(links).find((link) => link.textContent === '#reading');
+    expect(readingLink?.getAttribute('href')).toBe('/tags/reading');
+  });
 });

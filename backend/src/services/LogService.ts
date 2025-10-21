@@ -498,8 +498,6 @@ export class LogService {
   async associateTagsWithLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
-    const drizzle = this.db.getDrizzle();
-    
     // Batch insert using Drizzle
     const values = tagIds.map((tagId, index) => ({
       logId,
@@ -508,7 +506,7 @@ export class LogService {
       createdAt: new Date().toISOString(),
     }));
     
-    await drizzle.insert(logTagAssociations).values(values).onConflictDoNothing();
+    await this.db.insert(logTagAssociations).values(values).onConflictDoNothing();
   }
 
   /**
@@ -517,9 +515,7 @@ export class LogService {
   async removeTagsFromLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle.delete(logTagAssociations)
+    await this.db.delete(logTagAssociations)
       .where(
         and(
           eq(logTagAssociations.logId, logId),
@@ -538,13 +534,11 @@ export class LogService {
       throw new Error('Unauthorized: User does not own this log');
     }
     
-    const drizzle = this.db.getDrizzle();
-    
     // Delete tag associations first (cascade should handle this, but being explicit)
-    await drizzle.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
+    await this.db.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
     
     // Delete the log
-    await drizzle.delete(logs).where(eq(logs.id, logId));
+    await this.db.delete(logs).where(eq(logs.id, logId));
   }
 
   /**

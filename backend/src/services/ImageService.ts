@@ -4,8 +4,8 @@
 
 import type { R2Bucket, R2ObjectBody } from '@cloudflare/workers-types';
 import { v4 as uuidv4 } from 'uuid';
-import type { DrizzleDB } from '../db/this.db.js';
-import { queryAll, queryRawAll } from '../db/query-helpers.js';
+import type { DrizzleDB } from '../db/drizzle.js';
+import { queryRawAll } from '../db/query-helpers.js';
 import { ImageModel, type Image, type LogImage, type CreateImageData } from '../models/Image.js';
 import { images, logImageAssociations } from '../db/schema.js';
 import { eq, and, sql as drizzleSql } from 'drizzle-orm';

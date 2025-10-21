@@ -1,7 +1,8 @@
 import { Log, LogDetail, LogModel, CreateLogData, UpdateLogData, LogSearchParams } from '../models/Log.js';
 import { Tag, TagModel } from '../models/Tag.js';
 import { User } from '../models/User.js';
-import { Database } from '../db/database.js';
+import type { DrizzleDB } from '../db/drizzle.js';
+import { queryAll, queryFirst, queryRawAll, queryRawFirst } from '../db/query-helpers.js';
 import { ImageModel, type LogImage } from '../models/Image.js';
 import { logs, logTagAssociations } from '../db/schema.js';
 import { eq, and, sql as drizzleSql } from 'drizzle-orm';
@@ -13,7 +14,7 @@ export interface LogSearchResult {
 }
 
 export class LogService {
-  constructor(private db: Database) {}
+  constructor(private db: DrizzleDB) {}
 
   /**
    * Create a new log entry
@@ -22,10 +23,8 @@ export class LogService {
     const now = new Date().toISOString();
     const logId = crypto.randomUUID();
     
-    const drizzle = this.db.getDrizzle();
-    
     // Create the log
-    await drizzle.insert(logs).values({
+    await this.db.insert(logs).values({
       id: logId,
       userId,
       title: data.title || null,
@@ -88,12 +87,10 @@ export class LogService {
       updates.isPublic = data.is_public;
     }
     
-    const drizzle = this.db.getDrizzle();
-    
     if (Object.keys(updates).length > 0) {
       updates.updatedAt = new Date().toISOString();
       
-      await drizzle
+      await this.db
         .update(logs)
         .set(updates)
         .where(eq(logs.id, logId));
@@ -111,7 +108,7 @@ export class LogService {
     
     if (shouldUpdateTags) {
       // Remove all existing associations
-      await drizzle.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
+      await this.db.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
       
       if (data.tag_names !== undefined) {
         // Merge explicit tag names with extracted hashtags
@@ -150,12 +147,13 @@ export class LogService {
    */
   async getLogById(id: string, _userId?: string): Promise<LogDetail | null> {
     // Get log with user info
-    const logRow = await this.db.queryFirst(`
-      SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
+    const logRow = await queryFirst(
+      this.db,
+      drizzleSql`SELECT l.*, u.twitter_username, u.display_name, u.avatar_url, u.role, u.created_at as user_created_at
       FROM logs l
       JOIN users u ON l.user_id = u.id
-      WHERE l.id = ?
-    `, [id]);
+      WHERE l.id = ${id}`
+    );
     
     if (!logRow) {
       return null;
@@ -164,22 +162,24 @@ export class LogService {
     // 並列実行: タグとイメージを同時に取得
     const [tagRows, imageRows] = await Promise.all([
       // Get associated tags
-      this.db.query(`
-        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+      queryAll(
+        this.db,
+        drizzleSql`SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
                lta.association_order
         FROM tags t
         JOIN log_tag_associations lta ON t.id = lta.tag_id
-        WHERE lta.log_id = ?
-        ORDER BY lta.association_order ASC, t.name ASC
-      `, [id]),
+        WHERE lta.log_id = ${id}
+        ORDER BY lta.association_order ASC, t.name ASC`
+      ),
       // Get images for the log
-      this.db.query(`
-        SELECT i.*, lia.display_order
+      queryAll(
+        this.db,
+        drizzleSql`SELECT i.*, lia.display_order
         FROM images i
         JOIN log_image_associations lia ON i.id = lia.image_id
-        WHERE lia.log_id = ?
-        ORDER BY lia.display_order ASC, i.created_at ASC
-      `, [id])
+        WHERE lia.log_id = ${id}
+        ORDER BY lia.display_order ASC, i.created_at ASC`
+      )
     ]);
     
     const user: User = {
@@ -340,8 +340,8 @@ export class LogService {
     
     // 並列実行: ログ取得とカウントクエリを同時に実行
     const [logRows, totalResult] = await Promise.all([
-      this.db.query(sql, params),
-      this.db.queryFirst<{ total: number }>(countSql, countParams)
+      queryRawAll(this.db, sql, params),
+      queryRawFirst<{ total: number }>(this.db, countSql, countParams)
     ]);
     
     const logs = await this.enrichLogsWithTags(logRows);
@@ -376,9 +376,11 @@ export class LogService {
     
     // 並列実行: ログ取得とカウントクエリを同時に実行
     const [logRows, totalResult] = await Promise.all([
-      this.db.query(sql, [limit, offset]),
-      this.db.queryFirst<{ total: number }>(
-        'SELECT COUNT(*) as total FROM logs WHERE is_public = 1'
+      queryRawAll(this.db, sql, [limit, offset]),
+      queryRawFirst<{ total: number }>(
+        this.db,
+        'SELECT COUNT(*) as total FROM logs WHERE is_public = 1',
+        []
       )
     ]);
     
@@ -430,7 +432,7 @@ export class LogService {
     `;
 
     const params = [...tagIds, logId, limit];
-    const logRows = await this.db.query(sql, params);
+    const logRows = await queryRawAll(this.db, sql, params);
     const logs = await this.enrichLogsWithTags(logRows);
 
     return logs;
@@ -444,7 +446,8 @@ export class LogService {
     
     // Batch query: Get all existing tags in one query
     const placeholders = tagNames.map(() => '?').join(',');
-    const existingTags = await this.db.query<{ id: string; name: string }>(
+    const existingTags = await queryRawAll<{ id: string; name: string }>(
+      this.db,
       `SELECT id, name FROM tags WHERE name IN (${placeholders})`,
       tagNames
     );
@@ -462,18 +465,24 @@ export class LogService {
     if (tagsToCreate.length > 0) {
       const now = new Date().toISOString();
       
-      // Use batch insert for better performance
-      const insertStatements = tagsToCreate.map(tagName => {
+      // Create all missing tags using Drizzle bulk insert
+      const tagsToInsert = tagsToCreate.map(tagName => {
         const tagId = crypto.randomUUID();
         existingTagMap.set(tagName, tagId);
         return {
-          sql: `INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          params: [tagId, tagName, '', '{}', userId, now, now]
+          id: tagId,
+          name: tagName,
+          description: '',
+          metadata: '{}',
+          createdBy: userId,
+          createdAt: now,
+          updatedAt: now
         };
       });
       
-      await this.db.batch(insertStatements);
+      // Use Drizzle's bulk insert
+      const { tags } = await import('../db/schema.js');
+      await this.db.insert(tags).values(tagsToInsert);
     }
     
     // Collect all tag IDs in the order of tagNames
@@ -489,8 +498,6 @@ export class LogService {
   async associateTagsWithLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
-    const drizzle = this.db.getDrizzle();
-    
     // Batch insert using Drizzle
     const values = tagIds.map((tagId, index) => ({
       logId,
@@ -499,7 +506,7 @@ export class LogService {
       createdAt: new Date().toISOString(),
     }));
     
-    await drizzle.insert(logTagAssociations).values(values).onConflictDoNothing();
+    await this.db.insert(logTagAssociations).values(values).onConflictDoNothing();
   }
 
   /**
@@ -508,9 +515,7 @@ export class LogService {
   async removeTagsFromLog(logId: string, tagIds: string[]): Promise<void> {
     if (tagIds.length === 0) return;
     
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle.delete(logTagAssociations)
+    await this.db.delete(logTagAssociations)
       .where(
         and(
           eq(logTagAssociations.logId, logId),
@@ -529,13 +534,11 @@ export class LogService {
       throw new Error('Unauthorized: User does not own this log');
     }
     
-    const drizzle = this.db.getDrizzle();
-    
     // Delete tag associations first (cascade should handle this, but being explicit)
-    await drizzle.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
+    await this.db.delete(logTagAssociations).where(eq(logTagAssociations.logId, logId));
     
     // Delete the log
-    await drizzle.delete(logs).where(eq(logs.id, logId));
+    await this.db.delete(logs).where(eq(logs.id, logId));
   }
 
   /**
@@ -599,7 +602,7 @@ export class LogService {
       LIMIT ?
     `;
     
-    const logRows = await this.db.query(sql, [limit]);
+    const logRows = await queryRawAll(this.db, sql, [limit]);
     return this.enrichLogsWithTags(logRows);
   }
 
@@ -668,15 +671,18 @@ export class LogService {
     
     // 並列実行: 3つのカウントクエリを同時に実行
     const [totalResult, publicResult, recentResult] = await Promise.all([
-      this.db.queryFirst<{ count: number }>(
+      queryRawFirst<{ count: number }>(
+        this.db,
         'SELECT COUNT(*) as count FROM logs WHERE user_id = ?',
         [userId]
       ),
-      this.db.queryFirst<{ count: number }>(
+      queryRawFirst<{ count: number }>(
+        this.db,
         'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND is_public = 1',
         [userId]
       ),
-      this.db.queryFirst<{ count: number }>(
+      queryRawFirst<{ count: number }>(
+        this.db,
         'SELECT COUNT(*) as count FROM logs WHERE user_id = ? AND created_at >= ?',
         [userId, recentDate.toISOString()]
       )
@@ -693,9 +699,7 @@ export class LogService {
    * Validate user owns the log
    */
   async validateLogOwnership(logId: string, userId: string): Promise<boolean> {
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle.get<{ count: number }>(
+    const result = await this.db.get<{ count: number }>(
       drizzleSql`SELECT COUNT(*) as count FROM logs WHERE id = ${logId} AND user_id = ${userId}`
     );
     
@@ -718,21 +722,25 @@ export class LogService {
     // 並列実行: タグとイメージを同時に取得
     const [tagAssociations, imageRows] = await Promise.all([
       // Get all tags for these logs in one query
-      this.db.query(`
-        SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
+      queryRawAll(
+        this.db,
+        `SELECT lta.log_id, t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at
         FROM log_tag_associations lta
         JOIN tags t ON lta.tag_id = t.id
         WHERE lta.log_id IN (${placeholders})
-        ORDER BY lta.log_id, lta.association_order ASC
-      `, logIds),
+        ORDER BY lta.log_id, lta.association_order ASC`,
+        logIds
+      ),
       // Get all images for these logs in one query
-      this.db.query(`
-        SELECT i.*, lia.log_id, lia.display_order
+      queryRawAll(
+        this.db,
+        `SELECT i.*, lia.log_id, lia.display_order
         FROM images i
         JOIN log_image_associations lia ON i.id = lia.image_id
         WHERE lia.log_id IN (${placeholders})
-        ORDER BY lia.log_id, lia.display_order ASC, i.created_at ASC
-      `, logIds)
+        ORDER BY lia.log_id, lia.display_order ASC, i.created_at ASC`,
+        logIds
+      )
     ]);
     
     // Group tags by log_id

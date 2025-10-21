@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 
-import { Database } from './db/database.js';
+import { createDrizzleDB, type DrizzleDB } from './db/drizzle.js';
 import { UserService } from './services/UserService.js';
 import { TagService } from './services/TagService.js';
 import { LogService } from './services/LogService.js';
@@ -39,7 +39,7 @@ export interface RuntimeEnv {
   APP_LOGIN_URL?: string;
   DMM_API_ID?: string;
   DMM_AFFILIATE_ID?: string;
-  database?: Database;
+  drizzleDB?: DrizzleDB;
 }
 
 interface RuntimeConfig {
@@ -54,7 +54,7 @@ interface RuntimeConfig {
 export type AppBindings = {
   Bindings: RuntimeEnv;
   Variables: {
-    database: Database;
+    drizzleDB: DrizzleDB;
     sessionService: SessionService;
     userService: UserService;
     tagService: TagService;
@@ -81,25 +81,16 @@ export type AppBindings = {
 const MAX_RATE_REQUESTS = 100;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 
-function resolveDatabase(env: RuntimeEnv, nodeEnv: string): Database {
-  if (env.database) {
-    return env.database;
+function resolveDrizzleDB(env: RuntimeEnv): DrizzleDB {
+  if (env.drizzleDB) {
+    return env.drizzleDB;
   }
 
-  const databasePath = env.DB
-    ? undefined
-    : env.DB_PATH
-      ?? (env.DATABASE_URL ? env.DATABASE_URL.replace(/^file:/, '') : undefined)
-      ?? (nodeEnv === 'test' ? ':memory:' : undefined)
-      ?? ':memory:';
+  if (!env.DB) {
+    throw new Error('D1 database binding (DB) is required');
+  }
 
-  return new Database({
-    d1Database: env.DB,
-    databasePath,
-    options: {
-      enableForeignKeys: true,
-    },
-  });
+  return createDrizzleDB(env.DB);
 }
 
 function registerApiRoutes(app: Hono<AppBindings>, sessionService: SessionService, userService: UserService) {
@@ -155,12 +146,12 @@ export function createApp(env: RuntimeEnv = {}) {
   const nodeEnv = env.NODE_ENV ?? env.ENVIRONMENT ?? 'development';
   process.env.NODE_ENV = nodeEnv;
 
-  const database = resolveDatabase(env, nodeEnv);
-  const sessionService = new SessionService(database);
-  const userService = new UserService(database);
-  const tagService = new TagService(database);
-  const logService = new LogService(database);
-  const imageService = new ImageService(database, env.IMAGES || null);
+  const drizzleDB = resolveDrizzleDB(env);
+  const sessionService = new SessionService(drizzleDB);
+  const userService = new UserService(drizzleDB);
+  const tagService = new TagService(drizzleDB);
+  const logService = new LogService(drizzleDB);
+  const imageService = new ImageService(drizzleDB, env.IMAGES || null);
 
   // AiServiceを初期化（AIバインディングがある場合のみ）
   const aiService = env.AI ? new AiService(env.AI) : undefined;
@@ -216,7 +207,7 @@ export function createApp(env: RuntimeEnv = {}) {
   app.use('*', cacheControl());
 
   app.use('*', async (c, next) => {
-    c.set('database', database);
+    c.set('drizzleDB', drizzleDB);
     c.set('sessionService', sessionService);
     c.set('userService', userService);
     c.set('tagService', tagService);

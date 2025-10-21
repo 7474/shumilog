@@ -4,14 +4,15 @@
 
 import type { R2Bucket, R2ObjectBody } from '@cloudflare/workers-types';
 import { v4 as uuidv4 } from 'uuid';
-import type { Database } from '../db/database.js';
+import type { DrizzleDB } from '../db/drizzle.js';
+import { queryRawAll } from '../db/query-helpers.js';
 import { ImageModel, type Image, type LogImage, type CreateImageData } from '../models/Image.js';
 import { images, logImageAssociations } from '../db/schema.js';
 import { eq, and, sql as drizzleSql } from 'drizzle-orm';
 
 export class ImageService {
   constructor(
-    private db: Database,
+    private db: DrizzleDB,
     private imagesBucket: R2Bucket | null,
   ) {}
 
@@ -53,9 +54,8 @@ export class ImageService {
 
     // Save metadata to database
     const now = new Date().toISOString();
-    const drizzle = this.db.getDrizzle();
     
-    await drizzle.insert(images).values({
+    await this.db.insert(images).values({
       id: imageId,
       userId,
       r2Key,
@@ -73,7 +73,7 @@ export class ImageService {
     }
 
     // Get the created image
-    const imageResult = await drizzle
+    const imageResult = await this.db
       .select()
       .from(images)
       .where(eq(images.id, imageId))
@@ -102,9 +102,9 @@ export class ImageService {
    */
   async associateImageWithLog(imageId: string, logId: string, displayOrder: number = 0): Promise<void> {
     const now = new Date().toISOString();
-    const drizzle = this.db.getDrizzle();
     
-    await drizzle.insert(logImageAssociations).values({
+    
+    await this.db.insert(logImageAssociations).values({
       logId,
       imageId,
       displayOrder,
@@ -116,9 +116,9 @@ export class ImageService {
    * Remove association between an image and a log
    */
   async dissociateImageFromLog(imageId: string, logId: string): Promise<void> {
-    const drizzle = this.db.getDrizzle();
     
-    await drizzle.delete(logImageAssociations)
+    
+    await this.db.delete(logImageAssociations)
       .where(
         and(
           eq(logImageAssociations.logId, logId),
@@ -131,13 +131,15 @@ export class ImageService {
    * Get all images for a log
    */
   async getLogImages(logId: string): Promise<LogImage[]> {
-    const rows = await this.db.query(`
-      SELECT i.*, lia.display_order
+    const rows = await queryRawAll(
+      this.db,
+      `SELECT i.*, lia.display_order
       FROM images i
       JOIN log_image_associations lia ON i.id = lia.image_id
       WHERE lia.log_id = ?
-      ORDER BY lia.display_order ASC, i.created_at ASC
-    `, [logId]);
+      ORDER BY lia.display_order ASC, i.created_at ASC`,
+      [logId]
+    );
 
     return rows.map((row) => ImageModel.fromRowWithDisplayOrder(row));
   }
@@ -146,7 +148,8 @@ export class ImageService {
    * Get all images owned by a user
    */
   async getUserImages(userId: string): Promise<Image[]> {
-    const rows = await this.db.query(
+    const rows = await queryRawAll(
+      this.db,
       'SELECT * FROM images WHERE user_id = ? ORDER BY created_at DESC',
       [userId],
     );
@@ -158,9 +161,7 @@ export class ImageService {
    * Get a specific image
    */
   async getImage(imageId: string): Promise<Image | null> {
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle
+    const result = await this.db
       .select()
       .from(images)
       .where(eq(images.id, imageId))
@@ -210,27 +211,27 @@ export class ImageService {
       await this.imagesBucket.delete(image.r2_key);
     }
 
-    const drizzle = this.db.getDrizzle();
+    
     
     // Delete from database (associations will cascade)
-    await drizzle.delete(images).where(eq(images.id, imageId));
+    await this.db.delete(images).where(eq(images.id, imageId));
   }
 
   /**
    * Delete all associations for a log
    */
   async deleteLogImageAssociations(logId: string): Promise<void> {
-    const drizzle = this.db.getDrizzle();
-    await drizzle.delete(logImageAssociations).where(eq(logImageAssociations.logId, logId));
+    
+    await this.db.delete(logImageAssociations).where(eq(logImageAssociations.logId, logId));
   }
 
   /**
    * Update display order of an image in a log
    */
   async updateImageOrder(imageId: string, logId: string, displayOrder: number): Promise<void> {
-    const drizzle = this.db.getDrizzle();
     
-    await drizzle.update(logImageAssociations)
+    
+    await this.db.update(logImageAssociations)
       .set({ displayOrder })
       .where(
         and(
@@ -244,9 +245,9 @@ export class ImageService {
    * Verify user owns an image
    */
   async verifyImageOwnership(imageId: string, userId: string): Promise<boolean> {
-    const drizzle = this.db.getDrizzle();
     
-    const result = await drizzle.get<{ count: number }>(
+    
+    const result = await this.db.get<{ count: number }>(
       drizzleSql`SELECT COUNT(*) as count FROM images WHERE id = ${imageId} AND user_id = ${userId}`
     );
     

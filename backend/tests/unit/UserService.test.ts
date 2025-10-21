@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { UserService } from '../../src/services/UserService.js';
-import { Database } from '../../src/db/database.js';
+import { createDrizzleDB, type DrizzleDB } from '../../src/db/drizzle.js';
 import { clearTestData, getTestD1Database } from '../helpers/app.js';
 
 describe('UserService', () => {
   let userService: UserService;
-  let mockDatabase: Database;
+  let drizzleDB: DrizzleDB;
 
   beforeEach(async () => {
     await clearTestData();
-    mockDatabase = new Database({ d1Database: getTestD1Database() });
-    userService = new UserService(mockDatabase);
+    drizzleDB = createDrizzleDB(getTestD1Database());
+    userService = new UserService(drizzleDB);
   });
 
   describe('createUser', () => {

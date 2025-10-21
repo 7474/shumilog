@@ -27,7 +27,9 @@ describe('Contract: Auth callback (production mode)', () => {
   });
 
   it('should reject callback without state cookie in production', async () => {
+    const { getTestD1Database } = await import('../helpers/app.js');
     const app = createApp({
+      DB: getTestD1Database(),
       NODE_ENV: 'production',
       TWITTER_CLIENT_ID: 'test-twitter-client-id',
       TWITTER_CLIENT_SECRET: 'test-twitter-client-secret',
@@ -46,7 +48,9 @@ describe('Contract: Auth callback (production mode)', () => {
   });
 
   it('should reject callback with mismatched state cookie in production', async () => {
+    const { getTestD1Database } = await import('../helpers/app.js');
     const app = createApp({
+      DB: getTestD1Database(),
       NODE_ENV: 'production',
       TWITTER_CLIENT_ID: 'test-twitter-client-id',
       TWITTER_CLIENT_SECRET: 'test-twitter-client-secret',
@@ -67,7 +71,9 @@ describe('Contract: Auth callback (production mode)', () => {
   });
 
   it('should pass state validation with matching cookie in production', async () => {
+    const { getTestD1Database } = await import('../helpers/app.js');
     const app = createApp({
+      DB: getTestD1Database(),
       NODE_ENV: 'production',
       TWITTER_CLIENT_ID: 'test-twitter-client-id',
       TWITTER_CLIENT_SECRET: 'test-twitter-client-secret',

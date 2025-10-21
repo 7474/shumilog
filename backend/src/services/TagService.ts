@@ -1,5 +1,7 @@
 import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
-import { Database, PaginatedResult } from '../db/database.js';
+import type { PaginatedResult } from '../types/pagination.js';
+import type { DrizzleDB } from '../db/drizzle.js';
+import { queryAll, queryFirst, queryWithPagination } from '../db/query-helpers.js';
 import { AiService } from './AiService.js';
 import { tags, tagAssociations, logTagAssociations } from '../db/schema.js';
 import { eq, sql as drizzleSql } from 'drizzle-orm';
@@ -13,7 +15,7 @@ export interface TagUsageStats {
 export class TagService {
   private aiService?: AiService;
 
-  constructor(private db: Database) {}
+  constructor(private db: DrizzleDB) {}
 
   /**
    * AiServiceを設定（オプション）
@@ -33,9 +35,7 @@ export class TagService {
   }
 
   private async getTagRow(tagId: string): Promise<any | null> {
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle
+    const result = await this.db
       .select()
       .from(tags)
       .where(eq(tags.id, tagId))
@@ -59,9 +59,7 @@ export class TagService {
   }
 
   async isTagOwnedBy(tagId: string, userId: string): Promise<boolean> {
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle
+    const result = await this.db
       .select({ createdBy: tags.createdBy })
       .from(tags)
       .where(eq(tags.id, tagId))
@@ -81,9 +79,7 @@ export class TagService {
     const now = new Date().toISOString();
     const tagId = this.generateTagId();
     
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle.insert(tags).values({
+    await this.db.insert(tags).values({
       id: tagId,
       name: data.name,
       description: data.description || null,
@@ -141,9 +137,7 @@ export class TagService {
     
     updates.updatedAt = new Date().toISOString();
     
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle
+    await this.db
       .update(tags)
       .set(updates)
       .where(eq(tags.id, tagId));
@@ -174,9 +168,9 @@ export class TagService {
    * Get tag by name
    */
   async getTagByName(name: string): Promise<Tag | null> {
-    const row = await this.db.queryFirst(
-      'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags WHERE name = ?',
-      [name]
+    const row = await queryFirst(
+      this.db,
+      drizzleSql`SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags WHERE name = ${name}`
     );
     return row ? TagModel.fromRow(row) : null;
   }
@@ -187,9 +181,8 @@ export class TagService {
   async searchTags(options: TagSearchParams = {}): Promise<PaginatedResult<Tag>> {
     const { search, limit = 20, offset = 0 } = options;
 
-    let selectSql: string;
-    let countSql: string;
-    const params: any[] = [];
+    let selectQuery: ReturnType<typeof drizzleSql>;
+    let countQuery: ReturnType<typeof drizzleSql>;
 
     if (search) {
       // Trigram tokenizer requires at least 3 characters
@@ -199,43 +192,41 @@ export class TagService {
       if (useFTS) {
         // Use FTS5 for search - wrap in quotes to treat as phrase
         const searchQuery = `"${search.replace(/"/g, '""')}"`;
-        selectSql = `
+        selectQuery = drizzleSql`
           SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at 
           FROM tags t
           JOIN tags_fts fts ON t.id = fts.tag_id
-          WHERE tags_fts MATCH ?
+          WHERE tags_fts MATCH ${searchQuery}
           ORDER BY t.updated_at DESC
         `;
-        countSql = `
+        countQuery = drizzleSql`
           SELECT COUNT(*) as total 
           FROM tags t
           JOIN tags_fts fts ON t.id = fts.tag_id
-          WHERE tags_fts MATCH ?
+          WHERE tags_fts MATCH ${searchQuery}
         `;
-        params.push(searchQuery);
       } else {
         // LIKE-based search for short queries (1-2 characters)
         const likePattern = `%${search}%`;
-        selectSql = `
+        selectQuery = drizzleSql`
           SELECT id, name, description, metadata, created_by, created_at, updated_at 
           FROM tags 
-          WHERE name LIKE ? OR description LIKE ?
+          WHERE name LIKE ${likePattern} OR description LIKE ${likePattern}
           ORDER BY updated_at DESC
         `;
-        countSql = `
+        countQuery = drizzleSql`
           SELECT COUNT(*) as total 
           FROM tags 
-          WHERE name LIKE ? OR description LIKE ?
+          WHERE name LIKE ${likePattern} OR description LIKE ${likePattern}
         `;
-        params.push(likePattern, likePattern);
       }
     } else {
       // No search, return all tags
-      selectSql = 'SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags ORDER BY updated_at DESC';
-      countSql = 'SELECT COUNT(*) as total FROM tags';
+      selectQuery = drizzleSql`SELECT id, name, description, metadata, created_by, created_at, updated_at FROM tags ORDER BY updated_at DESC`;
+      countQuery = drizzleSql`SELECT COUNT(*) as total FROM tags`;
     }
 
-    const result = await this.db.queryWithPagination(selectSql, countSql, params, limit, offset);
+    const result = await queryWithPagination(this.db, selectQuery, countQuery, limit, offset);
 
     return {
       ...result,
@@ -268,19 +259,19 @@ export class TagService {
    * Get tag usage statistics
    */
   async getTagUsageStats(tagId: string): Promise<TagUsageStats> {
-    const usageResult = await this.db.queryFirst<{ count: number }>(
-      'SELECT COUNT(*) as count FROM log_tag_associations WHERE tag_id = ?',
-      [tagId]
+    const usageResult = await queryFirst<{ count: number }>(
+      this.db,
+      drizzleSql`SELECT COUNT(*) as count FROM log_tag_associations WHERE tag_id = ${tagId}`
     );
     
-    const lastUsedResult = await this.db.queryFirst<{ last_used: string }>(
-      `SELECT l.created_at as last_used 
+    const lastUsedResult = await queryFirst<{ last_used: string }>(
+      this.db,
+      drizzleSql`SELECT l.created_at as last_used 
        FROM log_tag_associations lta 
        JOIN logs l ON l.id = lta.log_id 
-       WHERE lta.tag_id = ? 
+       WHERE lta.tag_id = ${tagId}
        ORDER BY l.created_at DESC 
-       LIMIT 1`,
-      [tagId]
+       LIMIT 1`
     );
     
     return {
@@ -294,15 +285,15 @@ export class TagService {
    * Get most popular tags
    */
   async getPopularTags(limit = 20): Promise<Tag[]> {
-    const rows = await this.db.query(
-      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+    const rows = await queryAll(
+      this.db,
+      drizzleSql`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
               COUNT(lta.tag_id) as usage_count
        FROM tags t
        LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
        GROUP BY t.id
        ORDER BY usage_count DESC, t.name ASC
-       LIMIT ?`,
-      [limit]
+       LIMIT ${limit}`
     );
     
     return rows.map(row => TagModel.fromRow(row));
@@ -312,17 +303,17 @@ export class TagService {
    * Get recently used tags for a user
    */
   async getRecentTagsForUser(userId: string, limit = 10): Promise<Tag[]> {
-    const rows = await this.db.query(
-      `SELECT DISTINCT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+    const rows = await queryAll(
+      this.db,
+      drizzleSql`SELECT DISTINCT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
               MAX(l.created_at) as last_used
        FROM tags t
        JOIN log_tag_associations lta ON t.id = lta.tag_id
        JOIN logs l ON l.id = lta.log_id
-       WHERE l.user_id = ?
+       WHERE l.user_id = ${userId}
        GROUP BY t.id
        ORDER BY last_used DESC
-       LIMIT ?`,
-      [userId, limit]
+       LIMIT ${limit}`
     );
     
     return rows.map(row => TagModel.fromRow(row));
@@ -338,31 +329,31 @@ export class TagService {
     // For shorter queries, use LIKE fallback
     if (query.length >= 3) {
       const searchQuery = `"${query.replace(/"/g, '""')}"`;
-      rows = await this.db.query(
-        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+      rows = await queryAll(
+        this.db,
+        drizzleSql`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
                 COUNT(lta.tag_id) as usage_count
          FROM tags t
          JOIN tags_fts fts ON t.id = fts.tag_id
          LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
-         WHERE tags_fts MATCH ?
+         WHERE tags_fts MATCH ${searchQuery}
          GROUP BY t.id
          ORDER BY usage_count DESC, t.name ASC
-         LIMIT ?`,
-        [searchQuery, limit]
+         LIMIT ${limit}`
       );
     } else {
       // LIKE-based search for short queries (1-2 characters)
       const likePattern = `%${query}%`;
-      rows = await this.db.query(
-        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+      rows = await queryAll(
+        this.db,
+        drizzleSql`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
                 COUNT(lta.tag_id) as usage_count
          FROM tags t
          LEFT JOIN log_tag_associations lta ON t.id = lta.tag_id
-         WHERE t.name LIKE ? OR t.description LIKE ?
+         WHERE t.name LIKE ${likePattern} OR t.description LIKE ${likePattern}
          GROUP BY t.id
          ORDER BY usage_count DESC, t.name ASC
-         LIMIT ?`,
-        [likePattern, likePattern, limit]
+         LIMIT ${limit}`
       );
     }
     
@@ -373,29 +364,29 @@ export class TagService {
    * Get recent public logs for a tag
    */
   async getRecentLogsForTag(tagId: string, limit = 10): Promise<any[]> {
-    const rows = await this.db.query(
-      `SELECT l.id, l.user_id, l.title, l.content_md, l.is_public, l.created_at, l.updated_at,
+    const rows = await queryAll(
+      this.db,
+      drizzleSql`SELECT l.id, l.user_id, l.title, l.content_md, l.is_public, l.created_at, l.updated_at,
               u.twitter_username, u.display_name, u.avatar_url, u.created_at as user_created_at
        FROM logs l
        JOIN users u ON l.user_id = u.id
        JOIN log_tag_associations lta ON l.id = lta.log_id
-       WHERE lta.tag_id = ? AND l.is_public = 1
+       WHERE lta.tag_id = ${tagId} AND l.is_public = 1
        ORDER BY l.created_at DESC
-       LIMIT ?`,
-      [tagId, limit]
+       LIMIT ${limit}`
     );
     
     // Enrich with tags for each log
     const enrichedLogs = [];
     for (const row of rows) {
-      const tagRows = await this.db.query(
-        `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+      const tagRows = await queryAll(
+        this.db,
+        drizzleSql`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
                 lta.association_order
          FROM tags t
          JOIN log_tag_associations lta ON t.id = lta.tag_id
-         WHERE lta.log_id = ?
-         ORDER BY lta.association_order ASC, t.name ASC`,
-        [row.id]
+         WHERE lta.log_id = ${row.id}
+         ORDER BY lta.association_order ASC, t.name ASC`
       );
       
       const tags = tagRows.map((tagRow: any) => TagModel.fromRow(tagRow));
@@ -429,19 +420,17 @@ export class TagService {
    * Delete a tag
    */
   async deleteTag(tagId: string): Promise<void> {
-    const drizzle = this.db.getDrizzle();
-    
     // Remove log associations
-    await drizzle.delete(logTagAssociations).where(eq(logTagAssociations.tagId, tagId));
+    await this.db.delete(logTagAssociations).where(eq(logTagAssociations.tagId, tagId));
 
     // Remove tag associations in both directions
-    await drizzle.delete(tagAssociations)
+    await this.db.delete(tagAssociations)
       .where(
         drizzleSql`${tagAssociations.tagId} = ${tagId} OR ${tagAssociations.associatedTagId} = ${tagId}`
       );
 
     // Finally remove the tag
-    await drizzle.delete(tags).where(eq(tags.id, tagId));
+    await this.db.delete(tags).where(eq(tags.id, tagId));
   }
 
   /**
@@ -462,9 +451,7 @@ export class TagService {
       throw new Error('Associated tag not found');
     }
 
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle.insert(tagAssociations).values({
+    await this.db.insert(tagAssociations).values({
       tagId,
       associatedTagId,
       associationOrder,
@@ -479,17 +466,17 @@ export class TagService {
    */
   async getTagAssociations(tagId: string, sortBy: 'order' | 'recent' = 'order'): Promise<Tag[]> {
     const orderClause = sortBy === 'recent' 
-      ? 'ORDER BY ta.created_at DESC, t.name ASC'
-      : 'ORDER BY ta.association_order ASC, t.name ASC';
+      ? drizzleSql.raw('ORDER BY ta.created_at DESC, t.name ASC')
+      : drizzleSql.raw('ORDER BY ta.association_order ASC, t.name ASC');
 
-    const rows = await this.db.query(
-      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+    const rows = await queryAll(
+      this.db,
+      drizzleSql`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
               ta.association_order, ta.created_at as association_created_at
        FROM tags t
        JOIN tag_associations ta ON t.id = ta.associated_tag_id
-       WHERE ta.tag_id = ?
-       ${orderClause}`,
-      [tagId]
+       WHERE ta.tag_id = ${tagId}
+       ${orderClause}`
     );
 
     return rows.map(row => TagModel.fromRow(row));
@@ -500,15 +487,15 @@ export class TagService {
    * Sorted by when the association was created (newest first)
    */
   async getRecentReferringTags(tagId: string, limit = 10): Promise<Tag[]> {
-    const rows = await this.db.query(
-      `SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
+    const rows = await queryAll(
+      this.db,
+      drizzleSql`SELECT t.id, t.name, t.description, t.metadata, t.created_by, t.created_at, t.updated_at,
               ta.created_at as association_created_at
        FROM tags t
        JOIN tag_associations ta ON t.id = ta.tag_id
-       WHERE ta.associated_tag_id = ?
+       WHERE ta.associated_tag_id = ${tagId}
        ORDER BY ta.created_at DESC
-       LIMIT ?`,
-      [tagId, limit]
+       LIMIT ${limit}`
     );
 
     return rows.map(row => TagModel.fromRow(row));
@@ -518,11 +505,9 @@ export class TagService {
    * Remove tag association
    */
   async removeTagAssociation(tagId: string, associatedTagId: string): Promise<void> {
-    const stmt = this.db.prepare(
-      'DELETE FROM tag_associations WHERE tag_id = ? AND associated_tag_id = ?'
+    await this.db.run(
+      drizzleSql`DELETE FROM tag_associations WHERE tag_id = ${tagId} AND associated_tag_id = ${associatedTagId}`
     );
-
-    await stmt.run([tagId, associatedTagId]);
   }
 
   /**
@@ -575,14 +560,14 @@ export class TagService {
     if (hashtagNames.length === 0) return;
 
     // Delete existing associations for this tag before recreating them with new order
-    await this.db.prepare('DELETE FROM tag_associations WHERE tag_id = ?').run([tagId]);
+    await this.db.run(drizzleSql`DELETE FROM tag_associations WHERE tag_id = ${tagId}`);
 
     for (let i = 0; i < hashtagNames.length; i++) {
       const tagName = hashtagNames[i];
       // Try to find existing tag by name
-      const existingTag = await this.db.queryFirst(
-        'SELECT id FROM tags WHERE name = ?',
-        [tagName]
+      const existingTag = await queryFirst<{ id: string }>(
+        this.db,
+        drizzleSql`SELECT id FROM tags WHERE name = ${tagName}`
       );
 
       let associatedTagId: string;
@@ -595,20 +580,10 @@ export class TagService {
         const now = new Date().toISOString();
         associatedTagId = crypto.randomUUID();
         
-        const createTagStmt = this.db.prepare(`
-          INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-        
-        await createTagStmt.run([
-          associatedTagId,
-          tagName,
-          '', // empty description as specified
-          '{}', // empty metadata as specified
-          userId,
-          now,
-          now
-        ]);
+        await this.db.run(
+          drizzleSql`INSERT INTO tags (id, name, description, metadata, created_by, created_at, updated_at)
+          VALUES (${associatedTagId}, ${tagName}, ${''}, ${'{}'}, ${userId}, ${now}, ${now})`
+        );
       }
 
       // Create association if it doesn't already exist and avoid self-association

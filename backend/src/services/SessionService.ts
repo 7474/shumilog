@@ -1,10 +1,10 @@
 import { Session, SessionModel } from '../models/Session.js';
-import { Database } from '../db/database.js';
+import type { DrizzleDB } from '../db/drizzle.js';
 import { sessions } from '../db/schema.js';
 import { eq, lt, desc } from 'drizzle-orm';
 
 export class SessionService {
-  constructor(private db: Database) {}
+  constructor(private db: DrizzleDB) {}
 
   /**
    * Issue a new session token for a user
@@ -14,9 +14,7 @@ export class SessionService {
     const expiresAt = SessionModel.createExpiryDate(daysToExpire);
     const now = new Date().toISOString();
 
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle.insert(sessions).values({
+    await this.db.insert(sessions).values({
       token,
       userId,
       createdAt: now,
@@ -34,9 +32,7 @@ export class SessionService {
       return null;
     }
 
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle
+    const result = await this.db
       .select()
       .from(sessions)
       .where(eq(sessions.token, token))
@@ -72,16 +68,14 @@ export class SessionService {
       return;
     }
 
-    const drizzle = this.db.getDrizzle();
-    await drizzle.delete(sessions).where(eq(sessions.token, token));
+    await this.db.delete(sessions).where(eq(sessions.token, token));
   }
 
   /**
    * Revoke all sessions for a user
    */
   async revokeUserSessions(userId: string): Promise<void> {
-    const drizzle = this.db.getDrizzle();
-    await drizzle.delete(sessions).where(eq(sessions.userId, userId));
+    await this.db.delete(sessions).where(eq(sessions.userId, userId));
   }
 
   /**
@@ -89,8 +83,7 @@ export class SessionService {
    */
   async cleanupExpiredSessions(): Promise<number> {
     const now = new Date().toISOString();
-    const drizzle = this.db.getDrizzle();
-    await drizzle.delete(sessions).where(lt(sessions.expiresAt, now));
+    await this.db.delete(sessions).where(lt(sessions.expiresAt, now));
     // D1 doesn't return changes count, so we return 0
     return 0;
   }
@@ -99,9 +92,7 @@ export class SessionService {
    * Get session by user ID (most recent if multiple)
    */
   async getSessionByUserId(userId: string): Promise<Session | null> {
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle
+    const result = await this.db
       .select()
       .from(sessions)
       .where(eq(sessions.userId, userId))

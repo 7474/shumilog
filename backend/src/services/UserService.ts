@@ -1,10 +1,10 @@
 import { User, CreateUserData, UpdateUserData } from '../models/User.js';
-import { Database } from '../db/database.js';
+import type { DrizzleDB } from '../db/drizzle.js';
 import { users } from '../db/schema.js';
 import { eq, sql as drizzleSql } from 'drizzle-orm';
 
 export class UserService {
-  constructor(private db: Database) {}
+  constructor(private db: DrizzleDB) {}
 
   /**
    * Create a new user
@@ -13,9 +13,7 @@ export class UserService {
     const now = new Date().toISOString();
     const userId = crypto.randomUUID();
     
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle.insert(users).values({
+    await this.db.insert(users).values({
       id: userId,
       twitterUsername: data.twitter_username || null,
       displayName: data.display_name,
@@ -38,9 +36,7 @@ export class UserService {
    * Find user by ID
    */
   async findById(id: string): Promise<User | null> {
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle
+    const result = await this.db
       .select()
       .from(users)
       .where(eq(users.id, id))
@@ -72,9 +68,7 @@ export class UserService {
    * Find user by Twitter username
    */
   async findByTwitterUsername(username: string): Promise<User | null> {
-    const drizzle = this.db.getDrizzle();
-    
-    const result = await drizzle
+    const result = await this.db
       .select()
       .from(users)
       .where(eq(users.twitterUsername, username))
@@ -113,9 +107,7 @@ export class UserService {
       throw new Error('No fields to update');
     }
     
-    const drizzle = this.db.getDrizzle();
-    
-    await drizzle
+    await this.db
       .update(users)
       .set(updates)
       .where(eq(users.id, userId));
@@ -165,15 +157,13 @@ export class UserService {
     totalTags: number;
     recentLogsCount: number;
   }> {
-    const drizzle = this.db.getDrizzle();
-    
     // Get total logs count
-    const logsResult = await drizzle.get<{ count: number }>(
+    const logsResult = await this.db.get<{ count: number }>(
       drizzleSql`SELECT COUNT(*) as count FROM logs WHERE user_id = ${userId}`
     );
     
     // Get unique tags count used by user
-    const tagsResult = await drizzle.get<{ count: number }>(
+    const tagsResult = await this.db.get<{ count: number }>(
       drizzleSql`SELECT COUNT(DISTINCT lta.tag_id) as count 
        FROM log_tag_associations lta 
        JOIN logs l ON l.id = lta.log_id 
@@ -183,7 +173,7 @@ export class UserService {
     // Get recent logs count (last 7 days)
     const recentDate = new Date();
     recentDate.setDate(recentDate.getDate() - 7);
-    const recentResult = await drizzle.get<{ count: number }>(
+    const recentResult = await this.db.get<{ count: number }>(
       drizzleSql`SELECT COUNT(*) as count FROM logs WHERE user_id = ${userId} AND created_at >= ${recentDate.toISOString()}`
     );
     
@@ -202,10 +192,8 @@ export class UserService {
     topTags: Array<{ id: string; name: string; description: string | null; count: number }>;
     recentTags: Array<{ id: string; name: string; description: string | null; lastUsed: string }>;
   }> {
-    const drizzle = this.db.getDrizzle();
-    
     // Get total unique tags count
-    const totalTagsResult = await drizzle.get<{ count: number }>(
+    const totalTagsResult = await this.db.get<{ count: number }>(
       drizzleSql`SELECT COUNT(DISTINCT lta.tag_id) as count 
        FROM log_tag_associations lta 
        JOIN logs l ON l.id = lta.log_id 
@@ -213,7 +201,7 @@ export class UserService {
     );
 
     // Get top used tags
-    const topTagsRows = await drizzle.all<{ 
+    const topTagsRows = await this.db.all<{ 
       id: string; 
       name: string; 
       description: string | null; 
@@ -232,7 +220,7 @@ export class UserService {
     // Get recently used tags (last 7 days)
     const recentDate = new Date();
     recentDate.setDate(recentDate.getDate() - 7);
-    const recentTagsRows = await drizzle.all<{
+    const recentTagsRows = await this.db.all<{
       id: string;
       name: string;
       description: string | null;

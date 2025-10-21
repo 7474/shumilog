@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LogService } from '../../src/services/LogService.js';
-import { Database } from '../../src/db/database.js';
+import { createDrizzleDB, type DrizzleDB } from '../../src/db/drizzle.js';
 import { clearTestData, getTestD1Database, createTestUser, seedTestTags } from '../helpers/app.js';
 
 describe('Log Search Functionality', () => {
   let logService: LogService;
-  let mockDatabase: Database;
+  let drizzleDB: DrizzleDB;
 
   beforeEach(async () => {
     await clearTestData();
-    mockDatabase = new Database({ d1Database: getTestD1Database() });
-    logService = new LogService(mockDatabase);
+    drizzleDB = createDrizzleDB(getTestD1Database());
+    logService = new LogService(drizzleDB);
 
     await Promise.all([
       createTestUser('user-1', 'testuser1'),

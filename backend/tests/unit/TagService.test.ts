@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TagService } from '../../src/services/TagService.js';
-import { Database } from '../../src/db/database.js';
+import { createDrizzleDB, type DrizzleDB } from '../../src/db/drizzle.js';
 import { clearTestData, getTestD1Database, createTestUser } from '../helpers/app.js';
 import { CreateTagData, UpdateTagData } from '../../src/models/Tag.js';
 
@@ -50,12 +50,12 @@ describe('TagService', () => {
     });
   });
   let tagService: TagService;
-  let mockDatabase: Database;
+  let drizzleDB: DrizzleDB;
 
   beforeEach(async () => {
     await clearTestData();
-    mockDatabase = new Database({ d1Database: getTestD1Database() });
-    tagService = new TagService(mockDatabase);
+    drizzleDB = createDrizzleDB(getTestD1Database());
+    tagService = new TagService(drizzleDB);
 
     await Promise.all([
       createTestUser('user-123', 'tag-user-123'),

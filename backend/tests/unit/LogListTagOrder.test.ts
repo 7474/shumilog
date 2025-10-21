@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Database } from '../../src/db/database.js';
+import { createDrizzleDB, type DrizzleDB } from '../../src/db/drizzle.js';
 import { LogService } from '../../src/services/LogService.js';
 import { clearTestData, getTestD1Database, createTestUser } from '../helpers/app.js';
 
 describe('Tag Order in Log List', () => {
-  let db: Database;
+  let drizzleDB: DrizzleDB;
   let logService: LogService;
   let testUserId: string;
 
   beforeEach(async () => {
     await clearTestData();
-    db = new Database({ d1Database: getTestD1Database() });
-    logService = new LogService(db);
+    drizzleDB = createDrizzleDB(getTestD1Database());
+    logService = new LogService(drizzleDB);
 
     testUserId = 'user_test_list_order';
     await createTestUser(testUserId, 'Test User');

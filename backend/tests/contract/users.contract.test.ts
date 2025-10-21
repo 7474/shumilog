@@ -69,6 +69,97 @@ describe('Contract: Users routes', () => {
     });
   });
 
+  describe('PUT /users/me', () => {
+    it('updates the authenticated user display name', async () => {
+      const userId = 'user_update_123';
+      const twitterHandle = 'update_user';
+
+      await createTestUser(userId, twitterHandle);
+      const sessionToken = await createTestSession(userId);
+
+      const response = await app.request('/users/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({
+          display_name: 'Updated Display Name'
+        })
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toContain('application/json');
+
+      // Validate response against OpenAPI specification
+      const openApiResponse = await toOpenApiResponse(response, '/users/me', 'PUT');
+      expect(openApiResponse).toSatisfyApiSpec();
+
+      const user = await response.json();
+      expect(user).toMatchObject({
+        id: userId,
+        twitter_username: twitterHandle,
+        display_name: 'Updated Display Name'
+      });
+    });
+
+    it('returns 401 when request is unauthenticated', async () => {
+      const response = await app.request('/users/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          display_name: 'New Name'
+        })
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 400 when display_name is empty', async () => {
+      const userId = 'user_empty_name';
+      const twitterHandle = 'empty_user';
+
+      await createTestUser(userId, twitterHandle);
+      const sessionToken = await createTestSession(userId);
+
+      const response = await app.request('/users/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({
+          display_name: ''
+        })
+      });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('returns 400 when display_name is too long', async () => {
+      const userId = 'user_long_name';
+      const twitterHandle = 'long_user';
+
+      await createTestUser(userId, twitterHandle);
+      const sessionToken = await createTestSession(userId);
+
+      const response = await app.request('/users/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${sessionToken}`
+        },
+        body: JSON.stringify({
+          display_name: 'a'.repeat(101)
+        })
+      });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
   describe('GET /users/me/logs', () => {
     it('returns all logs (public and private) for the authenticated user', async () => {
       const userId = 'user_with_logs';

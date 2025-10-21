@@ -24,6 +24,7 @@ const TABLES_IN_DEPENDENCY_ORDER = [
   'log_image_associations',
   'log_tag_associations',
   'tag_associations',
+  'tag_revisions',
   'images',
   'logs',
   'sessions',

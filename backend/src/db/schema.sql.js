@@ -57,6 +57,25 @@ export const DATABASE_SCHEMAS = [
 
   CREATE INDEX idx_tag_assoc_associated_tag_id ON tag_associations(associated_tag_id);`,
 
+  `-- Tag revisions table (tag edit history)
+  CREATE TABLE IF NOT EXISTS tag_revisions (
+    id TEXT PRIMARY KEY,
+    tag_id TEXT NOT NULL,
+    revision_number INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    metadata TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by TEXT NOT NULL,
+    
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (tag_id, revision_number)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_tag_revisions_tag_id ON tag_revisions(tag_id);
+  CREATE INDEX IF NOT EXISTS idx_tag_revisions_created_at ON tag_revisions(created_at);`,
+
   `-- Logs table (minimal with markdown limits)
   CREATE TABLE IF NOT EXISTS logs (
     id TEXT PRIMARY KEY,

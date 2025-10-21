@@ -1,9 +1,10 @@
 import { Tag, TagModel, CreateTagData, UpdateTagData, TagSearchParams } from '../models/Tag.js';
+import { TagRevisionModel } from '../models/TagRevision.js';
 import type { PaginatedResult } from '../types/pagination.js';
 import type { DrizzleDB } from '../db/drizzle.js';
 import { queryAll, queryFirst, queryWithPagination } from '../db/query-helpers.js';
 import { AiService } from './AiService.js';
-import { tags, tagAssociations, logTagAssociations } from '../db/schema.js';
+import { tags, tagAssociations, logTagAssociations, tagRevisions } from '../db/schema.js';
 import { eq, sql as drizzleSql } from 'drizzle-orm';
 
 export interface TagUsageStats {
@@ -99,6 +100,9 @@ export class TagService {
       updated_at: now
     };
 
+    // Create initial revision (revision 0)
+    await this.createRevision(tagId, tag, createdBy, 0);
+
     // Process hashtag associations in description
     if (data.description) {
       await this.processTagAssociations(tagId, data.description, createdBy);
@@ -147,6 +151,10 @@ export class TagService {
     if (!updatedTag) {
       throw new Error('Tag not found after update');
     }
+    
+    // Create revision after update
+    const nextRevisionNumber = await this.getNextRevisionNumber(tagId);
+    await this.createRevision(tagId, updatedTag, updatedTag.created_by, nextRevisionNumber);
     
     // Process hashtag associations if description was updated
     if (data.description !== undefined) {
@@ -736,5 +744,65 @@ export class TagService {
       }
       throw new Error('Failed to generate AI-enhanced summary');
     }
+  }
+
+  /**
+   * Create a revision record for a tag
+   */
+  private async createRevision(tagId: string, tag: Tag, createdBy: string, revisionNumber: number): Promise<void> {
+    const revisionId = this.generateTagId();
+    const now = new Date().toISOString();
+    
+    await this.db.insert(tagRevisions).values({
+      id: revisionId,
+      tagId,
+      revisionNumber,
+      name: tag.name,
+      description: tag.description || null,
+      metadata: TagModel.serializeMetadata(tag.metadata),
+      createdAt: now,
+      createdBy,
+    });
+  }
+
+  /**
+   * Get the next revision number for a tag
+   */
+  private async getNextRevisionNumber(tagId: string): Promise<number> {
+    const result = await queryFirst<{ max_revision: number | null }>(
+      this.db,
+      drizzleSql`SELECT MAX(revision_number) as max_revision FROM tag_revisions WHERE tag_id = ${tagId}`
+    );
+    
+    return (result?.max_revision ?? -1) + 1;
+  }
+
+  /**
+   * Get all revisions for a tag (internal helper, not exposed via API yet)
+   */
+  private async getTagRevisions(tagId: string): Promise<any[]> {
+    const rows = await queryAll(
+      this.db,
+      drizzleSql`SELECT id, tag_id, revision_number, name, description, metadata, created_at, created_by
+       FROM tag_revisions
+       WHERE tag_id = ${tagId}
+       ORDER BY revision_number ASC`
+    );
+    
+    return rows.map(row => TagRevisionModel.fromRow(row));
+  }
+
+  /**
+   * Get a specific revision for a tag (internal helper, not exposed via API yet)
+   */
+  private async getTagRevision(tagId: string, revisionNumber: number): Promise<any | null> {
+    const row = await queryFirst(
+      this.db,
+      drizzleSql`SELECT id, tag_id, revision_number, name, description, metadata, created_at, created_by
+       FROM tag_revisions
+       WHERE tag_id = ${tagId} AND revision_number = ${revisionNumber}`
+    );
+    
+    return row ? TagRevisionModel.fromRow(row) : null;
   }
 }

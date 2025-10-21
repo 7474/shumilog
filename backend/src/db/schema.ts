@@ -49,6 +49,23 @@ export const tags = sqliteTable('tags', {
 }));
 
 /**
+ * タグリビジョンテーブル（編集履歴）
+ */
+export const tagRevisions = sqliteTable('tag_revisions', {
+  id: text('id').primaryKey(),
+  tagId: text('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
+  revisionNumber: integer('revision_number').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  metadata: text('metadata').notNull().default('{}'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+}, (table) => ({
+  tagIdIdx: index('idx_tag_revisions_tag_id').on(table.tagId),
+  createdAtIdx: index('idx_tag_revisions_created_at').on(table.createdAt),
+}));
+
+/**
  * タグ関連付けテーブル
  */
 export const tagAssociations = sqliteTable('tag_associations', {
@@ -139,6 +156,9 @@ export type NewSession = typeof sessions.$inferInsert;
 
 export type Tag = typeof tags.$inferSelect;
 export type NewTag = typeof tags.$inferInsert;
+
+export type TagRevision = typeof tagRevisions.$inferSelect;
+export type NewTagRevision = typeof tagRevisions.$inferInsert;
 
 export type TagAssociation = typeof tagAssociations.$inferSelect;
 export type NewTagAssociation = typeof tagAssociations.$inferInsert;

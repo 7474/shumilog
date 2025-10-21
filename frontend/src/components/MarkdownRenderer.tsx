@@ -26,9 +26,9 @@ function createHashtagRenderer() {
     // Pattern 2: #tagName - シンプル形式（空白なし）
     // 空白文字以外のすべての文字を抽出（ピリオド、記号、句読点など全て含む）
     // 空白文字（スペース、タブ、改行など）でハッシュタグが終端
-    // `{` と `}` のみ除外（拡張フォーマット `#{...}` との競合を回避）
+    // `{`, `}`, `#` を除外（拡張フォーマット `#{...}` およびMarkdown見出しとの競合を回避）
     text = text.replace(
-      /#([^\s{}]+)/g,
+      /#([^\s{}#]+)/g,
       (match, tagName) => {
         const trimmedName = tagName.trim();
         return `<a href="/tags/${encodeURIComponent(trimmedName)}" class="hashtag-link">${match}</a>`;

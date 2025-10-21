@@ -207,4 +207,33 @@ describe('MarkdownRenderer', () => {
     const readingLink = Array.from(links).find((link) => link.textContent === '#reading');
     expect(readingLink?.getAttribute('href')).toBe('/tags/reading');
   });
+
+  it('should not convert Markdown heading markers to hashtags', () => {
+    const { container } = render(
+      <MarkdownRenderer content="## Heading\n\nText with #tag" tags={mockTags} />
+    );
+
+    const links = container.querySelectorAll('a.hashtag-link');
+    expect(links).toHaveLength(1);
+
+    // Should only have a link for #tag, not for ##
+    const tagLink = links[0];
+    expect(tagLink.textContent).toBe('#tag');
+    expect(tagLink.getAttribute('href')).toBe('/tags/tag');
+  });
+
+  it('should handle multiple # symbols correctly', () => {
+    const { container } = render(
+      <MarkdownRenderer content="##tag should be #tag not ##tag" tags={mockTags} />
+    );
+
+    const links = container.querySelectorAll('a.hashtag-link');
+    // Should match: ##tag -> #tag, #tag -> #tag, ##tag -> #tag (3 total, but 2 unique after dedup by href)
+    expect(links.length).toBeGreaterThanOrEqual(2);
+
+    // All should link to 'tag' not '#tag' or '##tag'
+    Array.from(links).forEach((link) => {
+      expect(link.getAttribute('href')).toBe('/tags/tag');
+    });
+  });
 });

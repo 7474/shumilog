@@ -48,6 +48,96 @@ describe('TagService', () => {
     it('should throw error for invalid support_type', async () => {
       await expect(tagService.getTagSupportByName('タグ', 'invalid_type')).rejects.toThrow('Unsupported support type');
     });
+
+    it('should fall back to search when direct Wikipedia lookup fails', async () => {
+      // Wikipedia APIをモック: 最初は404、検索で記事を見つける
+      let callCount = 0;
+      global.fetch = async (url: any) => {
+        if (typeof url === 'string' && url.includes('wikipedia.org')) {
+          callCount++;
+          
+          // 最初の直接検索（REST API）は404を返す
+          if (callCount === 1 && url.includes('/page/summary/')) {
+            return {
+              ok: false,
+              status: 404,
+              json: async () => ({ error: 'Not found' })
+            } as any;
+          }
+          
+          // OpenSearch APIで検索結果を返す
+          if (url.includes('action=opensearch')) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => [
+                'きみの色',           // 検索クエリ
+                ['きみの色 (映画)'],  // 見つかった記事タイトル
+                ['映画の説明'],       // 説明
+                ['https://ja.wikipedia.org/wiki/%E3%81%8D%E3%81%BF%E3%81%AE%E8%89%B2_(%E6%98%A0%E7%94%BB)']
+              ]
+            } as any;
+          }
+          
+          // 見つかったタイトルでの再検索
+          if (url.includes('/page/summary/') && url.includes('%E3%81%8D%E3%81%BF%E3%81%AE%E8%89%B2')) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => ({
+                extract: '映画「きみの色」は...',
+                content_urls: { 
+                  desktop: { 
+                    page: 'https://ja.wikipedia.org/wiki/%E3%81%8D%E3%81%BF%E3%81%AE%E8%89%B2_(%E6%98%A0%E7%94%BB)' 
+                  } 
+                }
+              })
+            } as any;
+          }
+        }
+        throw new Error('Unexpected fetch call: ' + url);
+      };
+      
+      const result = await tagService.getTagSupportByName('きみの色', 'wikipedia_summary');
+      expect(result.content).toContain('映画「きみの色」は...');
+      expect(result.content).toContain('Wikipedia');
+      expect(result.support_type).toBe('wikipedia_summary');
+      expect(callCount).toBeGreaterThanOrEqual(3); // 直接検索 + OpenSearch + 再検索
+    });
+
+    it('should throw error when search also fails to find article', async () => {
+      // Wikipedia APIをモック: 直接検索も、OpenSearchも失敗
+      global.fetch = async (url: any) => {
+        if (typeof url === 'string' && url.includes('wikipedia.org')) {
+          // 直接検索は404
+          if (url.includes('/page/summary/')) {
+            return {
+              ok: false,
+              status: 404,
+              json: async () => ({ error: 'Not found' })
+            } as any;
+          }
+          
+          // OpenSearch APIも結果なし
+          if (url.includes('action=opensearch')) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => [
+                'xyzabc123notexist999',  // 検索クエリ
+                [],                       // 結果なし
+                [],
+                []
+              ]
+            } as any;
+          }
+        }
+        throw new Error('Unexpected fetch call: ' + url);
+      };
+      
+      await expect(tagService.getTagSupportByName('xyzabc123notexist999', 'wikipedia_summary'))
+        .rejects.toThrow('Wikipedia page not found');
+    });
   });
   let tagService: TagService;
   let drizzleDB: DrizzleDB;

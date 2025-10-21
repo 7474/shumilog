@@ -629,14 +629,15 @@ export class TagService {
   }
 
   /**
-   * Fetch Wikipedia summary for a tag and convert to markdown with hashtags
+   * Search for a Wikipedia article using OpenSearch API
+   * Returns the best matching article title, or null if not found
    */
-  private async getWikipediaSummary(tagName: string): Promise<{ content: string; support_type: string }> {
+  private async searchWikipediaArticle(searchTerm: string): Promise<string | null> {
     try {
-      // Wikipedia API endpoint - using Japanese Wikipedia
-      const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tagName)}`;
+      // Use Wikipedia's OpenSearch API to find matching articles
+      const searchUrl = `https://ja.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(searchTerm)}&limit=1&namespace=0&format=json`;
       
-      const response = await fetch(apiUrl, {
+      const response = await fetch(searchUrl, {
         headers: {
           'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
           'Accept': 'application/json'
@@ -644,9 +645,59 @@ export class TagService {
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
+        return null;
+      }
+
+      const data = await response.json() as any;
+      
+      // OpenSearch returns [query, [titles], [descriptions], [urls]]
+      // We want the first title from the results
+      if (Array.isArray(data) && data.length >= 2 && Array.isArray(data[1]) && data[1].length > 0) {
+        return data[1][0];
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Wikipedia search failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch Wikipedia summary for a tag and convert to markdown with hashtags
+   * If direct lookup fails, tries to search for the article
+   */
+  private async getWikipediaSummary(tagName: string): Promise<{ content: string; support_type: string }> {
+    try {
+      // Try direct REST API page summary first
+      let apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tagName)}`;
+      
+      let response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
+          'Accept': 'application/json'
+        }
+      });
+
+      // If direct lookup fails with 404, try searching for the article
+      if (!response.ok && response.status === 404) {
+        const foundTitle = await this.searchWikipediaArticle(tagName);
+        
+        if (!foundTitle) {
           throw new Error('Wikipedia page not found');
         }
+        
+        // Try again with the found title
+        apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(foundTitle)}`;
+        response = await fetch(apiUrl, {
+          headers: {
+            'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog-wigh-spec-kit)',
+            'Accept': 'application/json'
+          }
+        });
+      }
+
+      if (!response.ok) {
         throw new Error(`Wikipedia API error: ${response.status}`);
       }
 

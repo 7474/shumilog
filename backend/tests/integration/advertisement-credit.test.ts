@@ -77,7 +77,7 @@ describe('Integration: Advertisement Credit Text', () => {
       if (data.advertisements.length > 0) {
         expect(data.advertisement_credit).toBeDefined();
         expect(data.advertisement_credit).toContain('Powered by');
-        expect(data.advertisement_credit).toContain('DMM アフィリエイト');
+        expect(data.advertisement_credit).toContain('DMM.com Webサービス');
         expect(data.advertisement_credit).toContain('href');
       }
     });
@@ -239,7 +239,7 @@ describe('Integration: Advertisement Credit Text', () => {
       if (data.advertisements.length > 0) {
         expect(data.advertisement_credit).toBeDefined();
         expect(data.advertisement_credit).toContain('Powered by');
-        expect(data.advertisement_credit).toContain('DMM アフィリエイト');
+        expect(data.advertisement_credit).toContain('DMM.com Webサービス');
         expect(data.advertisement_credit).toContain('href');
       }
     });

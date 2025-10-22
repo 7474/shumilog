@@ -344,7 +344,7 @@ logs.get('/:logId', async (c) => {
             keywords.push(...log.associated_tags.slice(0, 3).map((tag: any) => tag.name));
           }
 
-          advertisements = await dmmService.searchAdvertisements(keywords, 3);
+          advertisements = await dmmService.searchAdvertisements(keywords, 8);
           
           // Add credit text if advertisements are available
           if (advertisements.length > 0) {

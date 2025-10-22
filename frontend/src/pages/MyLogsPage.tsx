@@ -11,6 +11,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useNavigate, Link } from 'react-router-dom';
@@ -232,6 +233,7 @@ export function MyLogsPage() {
                 <User size={16} className="mr-2" />
                 <span>プロフィール編集</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
                 className="cursor-pointer"

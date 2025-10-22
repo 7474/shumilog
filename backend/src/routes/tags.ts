@@ -147,7 +147,7 @@ tags.get('/:tagId', async (c) => {
       });
 
       const keywords = [tag.name];
-      advertisements = await dmmService.searchAdvertisements(keywords, 3);
+      advertisements = await dmmService.searchAdvertisements(keywords, 8);
       
       // Add credit text if advertisements are available
       if (advertisements.length > 0) {

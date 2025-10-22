@@ -340,14 +340,11 @@ logs.get('/:logId', async (c) => {
 
           // Build keywords from log title and tags
           const keywords: string[] = [];
-          if (log.title) {
-            keywords.push(log.title);
-          }
           if (log.associated_tags && log.associated_tags.length > 0) {
-            keywords.push(...log.associated_tags.slice(0, 5).map((tag: any) => tag.name));
+            keywords.push(...log.associated_tags.slice(0, 3).map((tag: any) => tag.name));
           }
 
-          advertisements = await dmmService.searchAdvertisements(keywords, 3);
+          advertisements = await dmmService.searchAdvertisements(keywords, 8);
           
           // Add credit text if advertisements are available
           if (advertisements.length > 0) {

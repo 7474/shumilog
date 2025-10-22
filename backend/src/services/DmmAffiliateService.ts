@@ -58,7 +58,7 @@ export class DmmAffiliateService {
    * @returns クレジット表記のHTML文字列
    */
   getCreditText(): string {
-    return 'Powered by <a href="https://www.dmm.com/netgame_s/affiliate/-/ai_subscribe/" target="_blank" rel="nofollow noopener">DMM アフィリエイト</a>';
+    return 'Powered by <a href="https://affiliate.dmm.com/api/">DMM.com Webサービス</a>';
   }
 
   /**
@@ -76,16 +76,17 @@ export class DmmAffiliateService {
 
     // キーワードを結合して検索クエリを作成
     const keyword = keywords.join(' ');
+    // TODO R18判定ならFANZAにする
+    const site = 'DMM.com';
 
     const params = new URLSearchParams({
       api_id: this.config.apiId,
       affiliate_id: this.config.affiliateId,
-      site: 'FANZA', // FANZAサイトを使用
-      service: 'digital', // デジタルコンテンツ
-      floor: 'videoa', // アダルトビデオフロア以外の指定も可能
+      site: site,
       hits: limit.toString(),
       keyword: keyword,
-      sort: 'rank', // ランキング順
+      sort: 'match',
+      // sort: 'rank',
       output: 'json'
     });
 

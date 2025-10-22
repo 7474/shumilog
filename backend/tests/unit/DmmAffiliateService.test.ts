@@ -157,7 +157,7 @@ describe('DmmAffiliateService', () => {
       const creditText = service.getCreditText();
 
       expect(creditText).toContain('Powered by');
-      expect(creditText).toContain('DMM アフィリエイト');
+      expect(creditText).toContain('DMM.com Webサービス');
       expect(creditText).toContain('href');
     });
   });

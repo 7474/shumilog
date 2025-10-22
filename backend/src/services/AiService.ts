@@ -35,6 +35,16 @@ interface ExtractedMetadata {
  */
 const AI_MODEL = '@cf/openai/gpt-oss-120b';
 
+/**
+ * Wikipedia記事の検索結果
+ */
+interface WikipediaArticle {
+  title: string;
+  extract: string;
+  url: string;
+  fullContent?: string;
+}
+
 export class AiService {
   private turndownService: TurndownService;
 
@@ -119,6 +129,151 @@ export class AiService {
     
     return markdown;
   }
+
+  /**
+   * Wikipedia記事を検索（複数の戦略を試行）
+   * 
+   * @param tagName タグ名
+   * @returns Wikipedia記事情報（見つからない場合はnull）
+   */
+  private async searchWikipediaArticle(tagName: string): Promise<WikipediaArticle | null> {
+    console.log('[AiService] searchWikipediaArticle called with tagName:', tagName);
+
+    // 戦略1: 直接REST API summaryエンドポイントにアクセス
+    try {
+      const article = await this.fetchWikipediaSummary(tagName);
+      if (article) {
+        console.log('[AiService] Found article via direct access:', article.title);
+        return article;
+      }
+    } catch (error) {
+      console.log('[AiService] Direct access failed:', error);
+    }
+
+    // 戦略2: OpenSearch APIで検索
+    try {
+      const searchResults = await this.searchWikipediaOpenSearch(tagName);
+      if (searchResults.length > 0) {
+        // 最初の候補を取得
+        const firstResult = searchResults[0];
+        const article = await this.fetchWikipediaSummary(firstResult);
+        if (article) {
+          console.log('[AiService] Found article via OpenSearch:', article.title);
+          return article;
+        }
+      }
+    } catch (error) {
+      console.log('[AiService] OpenSearch failed:', error);
+    }
+
+    // 戦略3: 文字種変換バリエーションを試す
+    const variations = this.generateSearchVariations(tagName);
+    for (const variation of variations) {
+      try {
+        const article = await this.fetchWikipediaSummary(variation);
+        if (article) {
+          console.log('[AiService] Found article via variation:', article.title, 'using:', variation);
+          return article;
+        }
+      } catch (_error) {
+        // 次のバリエーションを試す
+      }
+    }
+
+    console.log('[AiService] No Wikipedia article found for:', tagName);
+    return null;
+  }
+
+  /**
+   * Wikipedia REST API summaryエンドポイントから記事を取得
+   * 
+   * @param title 記事タイトル
+   * @returns Wikipedia記事情報（見つからない場合はnull）
+   */
+  private async fetchWikipediaSummary(title: string): Promise<WikipediaArticle | null> {
+    const apiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog)',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json() as any;
+    
+    if (!data.extract) {
+      return null;
+    }
+
+    return {
+      title: data.title || title,
+      extract: data.extract,
+      url: data.content_urls?.desktop?.page || `https://ja.wikipedia.org/wiki/${encodeURIComponent(title)}`
+    };
+  }
+
+  /**
+   * Wikipedia OpenSearch APIで記事を検索
+   * 
+   * @param query 検索クエリ
+   * @returns 記事タイトルのリスト
+   */
+  private async searchWikipediaOpenSearch(query: string): Promise<string[]> {
+    const apiUrl = `https://ja.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=5&namespace=0&format=json`;
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog)',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json() as any;
+    
+    // OpenSearch APIは [query, [titles], [descriptions], [urls]] の形式で返す
+    if (Array.isArray(data) && data.length >= 2 && Array.isArray(data[1])) {
+      return data[1];
+    }
+
+    return [];
+  }
+
+  /**
+   * 検索クエリのバリエーションを生成
+   * ひらがな・カタカナ・漢字の変換は複雑なので、簡単なバリエーションのみ
+   * 
+   * @param tagName 元のタグ名
+   * @returns バリエーションのリスト
+   */
+  private generateSearchVariations(tagName: string): string[] {
+    const variations: string[] = [];
+    
+    // スペースの追加・削除
+    if (tagName.includes(' ')) {
+      variations.push(tagName.replace(/\s+/g, ''));
+    } else {
+      // 簡単なケース: カタカナや漢字の区切りを検出して空白を挿入することは難しいので省略
+    }
+
+    // カッコ付きバリエーション（曖昧さ回避ページ対策）
+    variations.push(`${tagName} (曖昧さ回避)`);
+    variations.push(`${tagName} (映画)`);
+    variations.push(`${tagName} (アニメ)`);
+    variations.push(`${tagName} (漫画)`);
+    variations.push(`${tagName} (ゲーム)`);
+    variations.push(`${tagName} (小説)`);
+    
+    return variations;
+  }
   
   /**
    * タグ名からAI拡張コンテンツを生成（Wikipedia取得とメタデータ抽出を含む）
@@ -130,15 +285,26 @@ export class AiService {
     console.log('[AiService] generateTagContentFromName called with tagName:', tagName);
 
     try {
-      // AI指示プロンプトを構築
-      const instructionPrompt = this.buildInstructionPrompt(tagName);
+      // まずWikipedia記事を検索
+      const article = await this.searchWikipediaArticle(tagName);
+      
+      if (!article) {
+        // Wikipedia記事が見つからない場合
+        return {
+          content: `「${tagName}」に関するWikipedia記事が見つかりませんでした。`
+        };
+      }
+
+      // Wikipedia記事が見つかった場合、AI指示プロンプトを構築
+      // 実際のWikipedia内容を含める
+      const instructionPrompt = this.buildInstructionPromptWithContent(tagName, article);
 
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
       const aiResponse = await this.ai.run(AI_MODEL, {
         input: [
           {
             role: 'system',
-            content: 'あなたはWikipedia記事を参照して正確な情報を抽出する専門アシスタントです。以下の重要ルールを厳守してください：\n\n【絶対ルール】\n1. 必ず日本語版Wikipediaで記事を検索し、実際の記事内容のみを参照すること\n   - Wikipedia REST APIやOpenSearch APIを使用すること\n   - 記事が見つからない場合は、検索クエリのバリエーションを試すこと\n   - Wikipediaのリダイレクトを追跡すること\n   - 曖昧さ回避ページの場合は、最も適切な記事を選択すること\n2. Wikipedia記事に書かれていない情報は絶対に生成しないこと（ハルシネーション厳禁）\n3. 不確実な情報や推測は一切含めないこと\n4. 記事の冒頭部分から正確に要約を作成すること\n5. ハッシュタグは記事に明記されている関連項目のみから生成すること\n6. サブタイトル・エピソード情報がある場合は必ずすべて列挙すること\n\n【Wikipedia検索のベストプラクティス】\n- まず直接URLアクセスを試す: https://ja.wikipedia.org/wiki/[記事名]\n- 見つからない場合はOpenSearch APIで検索: https://ja.wikipedia.org/w/api.php?action=opensearch&search=[検索語]\n- リダイレクトは自動的に追跡される\n- 曖昧さ回避ページに遭遇した場合は、文脈に最も合う記事を選ぶ\n\n【ハッシュタグ正規化の必須ルール】\n- 作品名から「アニメ」「ゲーム」「漫画」などのメディアタイプを除去（正式名称の一部を除く）\n- カッコ書きの補足情報を除去（例：「（GB）」「（テレビアニメ）」）\n- 空白を含む場合は#{タグ名}形式、含まない場合は#タグ名形式を使用\n\n記事を見つけるために十分な努力をした後、それでも見つからない場合のみ「Wikipedia記事が見つかりませんでした」と回答してください。'
+            content: 'あなたはWikipedia記事を要約し、関連タグを抽出する専門アシスタントです。以下の重要ルールを厳守してください：\n\n【絶対ルール】\n1. 提供されたWikipedia記事の内容のみを参照すること\n2. 記事に書かれていない情報は絶対に生成しないこと（ハルシネーション厳禁）\n3. 不確実な情報や推測は一切含めないこと\n4. サブタイトル・エピソード情報は記事に明記されているもののみ列挙すること\n5. 記事に情報がない場合は、そのセクションを省略すること\n\n【ハッシュタグ正規化の必須ルール】\n- 作品名から「アニメ」「ゲーム」「漫画」などのメディアタイプを除去（正式名称の一部を除く）\n- カッコ書きの補足情報を除去（例：「（GB）」「（テレビアニメ）」）\n- 空白を含む場合は#{タグ名}形式、含まない場合は#タグ名形式を使用\n\n提供された記事の内容のみに基づいて正確に要約してください。'
           },
           {
             role: 'user',
@@ -172,12 +338,80 @@ export class AiService {
   }
 
   /**
-   * 指示プロンプトを構築（Wikipedia内容は含めない）
+   * 実際のWikipedia内容を含む指示プロンプトを構築
    * 
-   * 【重要】連載・シリーズ作品のサブタイトル情報の抽出は重要要素です。
-   * AIに対して、シーズン、期、章、巻、エピソード、各話タイトルなどの
-   * サブタイトル情報を省略せず、すべて列挙するよう明示的に指示しています。
-   * 特に各話・エピソードのタイトルは重要な情報として扱います。
+   * @param requestedTagName リクエストされたタグ名
+   * @param article Wikipedia記事情報
+   * @returns プロンプト文字列
+   */
+  private buildInstructionPromptWithContent(requestedTagName: string, article: WikipediaArticle): string {
+    const prompt = `# タスク
+以下のWikipedia記事「${article.title}」（リクエストされたタグ名: ${requestedTagName}）の内容を要約し、関連タグを抽出してMarkdown形式で出力してください。
+
+## Wikipedia記事の内容
+${article.extract}
+
+## 出力形式
+
+### 1. 冒頭の要約（必須）
+- Wikipedia記事の冒頭部分を1〜2行で簡潔に要約
+- 記事に書かれていない情報は絶対に含めないこと
+
+### 2. 関連タグ（必須）
+\`**関連タグ**: \` で始まり、その後にハッシュタグを空白区切りで3〜10個列挙
+
+**ハッシュタグ正規化ルール（厳守）：**
+1. 記事の内容から関連する概念・作品・人物などを抽出
+2. **メディアタイプを除去**: 「アニメ」「ゲーム」「漫画」「映画」などのプレフィックスを削除
+   - 例: 「アニメ SSSS.DYNAZENON」→「SSSS.DYNAZENON」
+3. **カッコ書きを除去**: 「（）」で囲まれた補足情報を削除
+   - 例: 「SSSS.DYNAZENON（アニメ）」→「SSSS.DYNAZENON」
+4. **形式**: 空白なし=#タグ名、空白あり=#{タグ名}
+
+### 3. サブセクション（該当する場合のみ）
+記事に以下の情報がある場合のみ列挙：
+- シーズン・期
+- 章・巻
+- エピソード・各話タイトル
+- 関連作品シリーズ
+
+**重要**: 記事に明記されていない情報は絶対に含めないこと。
+推測や創作で補完しないこと。
+
+### 4. 出典（必須）
+\`出典: [Wikipedia](${article.url})\`
+
+## 重要な注意事項
+❌ 記事に書かれていない情報を生成しない
+❌ 推測や創作で情報を補完しない
+❌ サブタイトルやエピソードを創作しない
+✅ 記事の内容のみを参照
+✅ 不確実な情報は含めない
+✅ ハッシュタグ正規化ルールを厳守
+
+## 出力例
+【記事が存在する場合】
+円谷プロダクションの特撮テレビドラマ『電光超人グリッドマン』を原作とする、TRIGGERによるテレビアニメ作品。
+
+**関連タグ**: #TRIGGER #円谷プロダクション #電光超人グリッドマン
+
+出典: [Wikipedia](https://ja.wikipedia.org/wiki/SSSS.GRIDMAN)
+`;
+
+    console.log('[AiService] buildInstructionPromptWithContent called:', {
+      requestedTagName: requestedTagName,
+      articleTitle: article.title,
+      extractLength: article.extract.length,
+      promptLength: prompt.length
+    });
+
+    return prompt;
+  }
+
+  /**
+   * 指示プロンプトを構築（Wikipedia内容は含めない）
+   * @deprecated この方式はAIにWeb検索能力があることを前提としており、ハルシネーションを引き起こす
+   * 代わりにbuildInstructionPromptWithContentを使用すること
    */
   private buildInstructionPrompt(requestedTagName: string): string {
     const prompt = `# タスク

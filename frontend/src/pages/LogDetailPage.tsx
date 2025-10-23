@@ -340,7 +340,7 @@ export function LogDetailPage() {
           </Card>
 
           {/* 広告 */}
-          {log && log.is_public && (log as any).advertisements && (
+          {log && log.is_public && (log as any).advertisements && (log as any).advertisements.length > 0 && (
             <Advertisement 
               advertisements={(log as any).advertisements}
               creditText={(log as any).advertisement_credit}

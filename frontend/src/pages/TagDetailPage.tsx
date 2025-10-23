@@ -463,7 +463,7 @@ export function TagDetailPage() {
       </Card>
 
       {/* 広告 */}
-      {tag && (tag as any).advertisements && (
+      {tag && (tag as any).advertisements && (tag as any).advertisements.length > 0 && (
         <Advertisement 
           advertisements={(tag as any).advertisements}
           creditText={(tag as any).advertisement_credit}

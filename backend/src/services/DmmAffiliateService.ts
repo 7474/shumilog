@@ -74,8 +74,8 @@ export class DmmAffiliateService {
       return [];
     }
 
-    // キーワードを結合して検索クエリを作成
-    const keyword = keywords.join(' ');
+    // キーワードを結合して検索クエリを作成（OR条件: | 区切り）
+    const keyword = keywords.join('|');
     // TODO R18判定ならFANZAにする
     const site = 'DMM.com';
 

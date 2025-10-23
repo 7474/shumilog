@@ -75,6 +75,11 @@ describe('DmmAffiliateService', () => {
 
       const result = await service.searchAdvertisements(['anime', 'game'], 5);
 
+      // キーワードがOR条件（|区切り）で渡されることを確認
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const fetchCall = (global.fetch as any).mock.calls[0][0];
+      expect(fetchCall).toContain('keyword=anime%7Cgame'); // %7C is URL-encoded |
+
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         productId: 'product_123',

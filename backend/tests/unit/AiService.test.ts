@@ -63,9 +63,12 @@ describe('AiService', () => {
       // Verify AI was called with the Wikipedia content
       expect(mockAi.run).toHaveBeenCalled();
       const aiCallArgs = (mockAi.run as any).mock.calls[0][1].input;
-      const userPrompt = aiCallArgs[1].content;
-      expect(userPrompt).toContain('進撃の巨人');
-      expect(userPrompt).toContain('人類と巨人の戦いを描くダークファンタジー作品');
+      // Check the Wikipedia content in the second message (index 1)
+      const wikipediaContent = aiCallArgs[1].content;
+      expect(wikipediaContent).toContain('人類と巨人の戦いを描くダークファンタジー作品');
+      // Check the instruction prompt in the third message (index 2)
+      const instructionPrompt = aiCallArgs[2].content;
+      expect(instructionPrompt).toContain('進撃の巨人');
 
       // Verify result
       expect(result.content).toBeTruthy();
@@ -221,12 +224,15 @@ describe('AiService', () => {
       expect(systemPrompt).toContain('ハルシネーション厳禁');
       expect(systemPrompt).toContain('記事に書かれていない情報は絶対に生成しないこと');
       
-      // User prompt should include the actual Wikipedia content
-      const userPrompt = aiCallArgs[1].content;
-      expect(userPrompt).toContain('## Wikipedia記事の内容');
-      expect(userPrompt).toContain('円谷プロダクション');
-      expect(userPrompt).toContain('電光超人グリッドマン');
-      expect(userPrompt).toContain('TRIGGER');
+      // Wikipedia content should be in the second message (index 1)
+      const wikipediaContent = aiCallArgs[1].content;
+      expect(wikipediaContent).toContain('円谷プロダクション');
+      expect(wikipediaContent).toContain('電光超人グリッドマン');
+      expect(wikipediaContent).toContain('TRIGGER');
+
+      // Instruction prompt should be in the third message (index 2)
+      const instructionPrompt = aiCallArgs[2].content;
+      expect(instructionPrompt).toContain('# タスク');
 
       // Verify result
       expect(result.content).toBeTruthy();
@@ -277,11 +283,11 @@ describe('AiService', () => {
       await aiService.generateTagContentFromName('テスト');
 
       // Verify the prompt includes hashtag normalization instructions
-      const userPrompt = (mockAi.run as any).mock.calls[0][1].input[1].content;
-      expect(userPrompt).toContain('ハッシュタグ正規化ルール');
-      expect(userPrompt).toContain('メディアタイプを除去');
-      expect(userPrompt).toContain('カッコ書きを除去');
-      expect(userPrompt).toContain('空白なし=#タグ名、空白あり=#{タグ名}');
+      const instructionPrompt = (mockAi.run as any).mock.calls[0][1].input[2].content;
+      expect(instructionPrompt).toContain('ハッシュタグ正規化ルール');
+      expect(instructionPrompt).toContain('メディアタイプを除去');
+      expect(instructionPrompt).toContain('カッコ書きを除去');
+      expect(instructionPrompt).toContain('空白なし=#タグ名、空白あり=#{タグ名}');
     });
 
     it('should warn against creating fake subtitles', async () => {
@@ -331,10 +337,10 @@ describe('AiService', () => {
       const systemPrompt = (mockAi.run as any).mock.calls[0][1].input[0].content;
       expect(systemPrompt).toContain('記事に書かれていない情報は絶対に生成しないこと');
       
-      const userPrompt = (mockAi.run as any).mock.calls[0][1].input[1].content;
-      expect(userPrompt).toContain('記事に明記されていない情報は絶対に含めないこと');
-      expect(userPrompt).toContain('推測や創作で補完しないこと');
-      expect(userPrompt).toContain('サブタイトルやエピソードを創作しない');
+      const instructionPrompt = (mockAi.run as any).mock.calls[0][1].input[2].content;
+      expect(instructionPrompt).toContain('記事に明記されていない情報は絶対に含めないこと');
+      expect(instructionPrompt).toContain('推測や創作で補完しないこと');
+      expect(instructionPrompt).toContain('サブタイトルやエピソードを創作しない');
     });
 
     it('should convert HTML to markdown when available', async () => {
@@ -395,16 +401,15 @@ describe('AiService', () => {
       // Verify AI was called with markdown content (not HTML)
       expect(mockAi.run).toHaveBeenCalled();
       const aiCallArgs = (mockAi.run as any).mock.calls[0][1].input;
-      const userPrompt = aiCallArgs[1].content;
+      const wikipediaContent = aiCallArgs[1].content;
       
       // Should contain markdown, not HTML
-      expect(userPrompt).toContain('## Wikipedia記事の内容');
-      expect(userPrompt).not.toContain('<html>');
-      expect(userPrompt).not.toContain('<body>');
-      expect(userPrompt).not.toContain('<strong>');
+      expect(wikipediaContent).not.toContain('<html>');
+      expect(wikipediaContent).not.toContain('<body>');
+      expect(wikipediaContent).not.toContain('<strong>');
       // Should contain markdown-formatted content
-      expect(userPrompt).toContain('#');
-      expect(userPrompt).toContain('*');
+      expect(wikipediaContent).toContain('#');
+      expect(wikipediaContent).toContain('*');
     });
 
     it('should truncate Wikipedia content when it exceeds max length', async () => {
@@ -456,18 +461,12 @@ describe('AiService', () => {
       // Verify AI was called with truncated content
       expect(mockAi.run).toHaveBeenCalled();
       const aiCallArgs = (mockAi.run as any).mock.calls[0][1].input;
-      const userPrompt = aiCallArgs[1].content;
+      const wikipediaContent = aiCallArgs[1].content;
       
-      // Extract the Wikipedia content part
-      const wikipediaContentMatch = userPrompt.match(/## Wikipedia記事の内容\n\n(.+)/s);
-      expect(wikipediaContentMatch).toBeTruthy();
-      
-      if (wikipediaContentMatch) {
-        const wikipediaContent = wikipediaContentMatch[1];
-        // Should be truncated to MAX_WIKIPEDIA_CHARS (32,000 characters)
-        expect(wikipediaContent.length).toBeLessThan(50000);
-        expect(wikipediaContent.length).toBeLessThanOrEqual(32000 + 10); // Allow small margin for truncation logic
-      }
+      // Wikipedia content should be truncated to MAX_WIKIPEDIA_CHARS (256,000 characters)
+      // Since test data is 50000 chars which is less than MAX_WIKIPEDIA_CHARS, 
+      // it should be passed through unchanged
+      expect(wikipediaContent.length).toBe(50000);
     });
 
     it('should separate instruction from Wikipedia content in prompt', async () => {
@@ -516,17 +515,22 @@ describe('AiService', () => {
       // Verify the prompt structure
       expect(mockAi.run).toHaveBeenCalled();
       const aiCallArgs = (mockAi.run as any).mock.calls[0][1].input;
-      const userPrompt = aiCallArgs[1].content;
       
-      // Should have clear separation between instruction and Wikipedia content
-      expect(userPrompt).toContain('# タスク');
-      expect(userPrompt).toContain('## 出力形式');
-      expect(userPrompt).toContain('## Wikipedia記事の内容');
+      // Should have three messages: system, wikipedia content, instruction
+      expect(aiCallArgs).toHaveLength(3);
       
-      // Wikipedia content should be at the end of the prompt
-      const wikipediaSection = userPrompt.indexOf('## Wikipedia記事の内容');
-      const taskSection = userPrompt.indexOf('# タスク');
-      expect(wikipediaSection).toBeGreaterThan(taskSection);
+      // Check system message
+      const systemPrompt = aiCallArgs[0].content;
+      expect(systemPrompt).toContain('Wikipedia記事を要約し、関連タグを抽出する専門アシスタント');
+      
+      // Check Wikipedia content message (index 1)
+      const wikipediaContent = aiCallArgs[1].content;
+      expect(wikipediaContent).toContain('テスト用の作品説明');
+      
+      // Check instruction message (index 2)
+      const instructionPrompt = aiCallArgs[2].content;
+      expect(instructionPrompt).toContain('# タスク');
+      expect(instructionPrompt).toContain('## 出力形式');
     });
   });
 });

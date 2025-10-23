@@ -2,6 +2,11 @@
  * DMMアフィリエイトサービス
  * DMMアフィリエイトAPIを使用してコンテンツに関連する広告を取得
  * API仕様: https://affiliate.dmm.com/api/guide/
+ * 
+ * 検索戦略:
+ * 1. AND検索（スペース区切り）で複数キーワードにマッチする商品を優先検索
+ * 2. AND検索で十分な結果が得られない場合、OR検索（|区切り）で補完
+ * 3. sort=rank（人気順）を使用して、一般的なキーワードに引っ張られるのを防ぐ
  */
 
 export interface DmmAffiliateConfig {

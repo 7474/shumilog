@@ -36,6 +36,15 @@ interface ExtractedMetadata {
 const AI_MODEL = '@cf/openai/gpt-oss-120b';
 
 /**
+ * 最大トークン数の制限
+ * gpt-oss-120bの最大入力トークン数を考慮して設定
+ * 1トークン ≈ 4文字（日本語）として概算
+ */
+const MAX_INPUT_TOKENS = 8000; // 安全マージンを持たせて8000トークンに制限
+const CHARS_PER_TOKEN = 4; // 日本語の場合の概算値
+const MAX_WIKIPEDIA_CHARS = MAX_INPUT_TOKENS * CHARS_PER_TOKEN; // 約32,000文字
+
+/**
  * Wikipedia記事の検索結果
  */
 interface WikipediaArticle {
@@ -43,6 +52,7 @@ interface WikipediaArticle {
   extract: string;
   url: string;
   fullContent?: string;
+  htmlContent?: string;
 }
 
 export class AiService {
@@ -131,6 +141,37 @@ export class AiService {
   }
 
   /**
+   * テキストを切り詰めて最大文字数以内に収める
+   * 
+   * @param text 切り詰める対象のテキスト
+   * @param maxChars 最大文字数
+   * @returns 切り詰められたテキスト
+   */
+  private truncateText(text: string, maxChars: number): string {
+    if (text.length <= maxChars) {
+      return text;
+    }
+
+    console.log('[AiService] Truncating text from', text.length, 'to', maxChars, 'characters');
+    
+    // 文の途中で切れないように、最後の句点で切る
+    const truncated = text.substring(0, maxChars);
+    const lastPeriod = Math.max(
+      truncated.lastIndexOf('。'),
+      truncated.lastIndexOf('.\n'),
+      truncated.lastIndexOf('\n\n')
+    );
+    
+    if (lastPeriod > maxChars * 0.8) {
+      // 80%以上の位置に句点があれば、そこで切る
+      return truncated.substring(0, lastPeriod + 1);
+    }
+    
+    // 句点が見つからない場合は、単純に切り詰める
+    return truncated + '...';
+  }
+
+  /**
    * Wikipedia記事を検索（複数の戦略を試行）
    * 
    * @param tagName タグ名
@@ -210,11 +251,31 @@ export class AiService {
       return null;
     }
 
-    return {
+    const article: WikipediaArticle = {
       title: data.title || title,
       extract: data.extract,
       url: data.content_urls?.desktop?.page || `https://ja.wikipedia.org/wiki/${encodeURIComponent(title)}`
     };
+
+    // Fetch full HTML content for markdown conversion
+    try {
+      const htmlUrl = `https://ja.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(data.title || title)}`;
+      const htmlResponse = await fetch(htmlUrl, {
+        headers: {
+          'User-Agent': 'ShumilogApp/1.0 (https://github.com/7474/shumilog)',
+          'Accept': 'text/html'
+        }
+      });
+
+      if (htmlResponse.ok) {
+        article.htmlContent = await htmlResponse.text();
+      }
+    } catch (error) {
+      console.warn('[AiService] Failed to fetch HTML content:', error);
+      // Continue without HTML content
+    }
+
+    return article;
   }
 
   /**
@@ -295,11 +356,15 @@ export class AiService {
         };
       }
 
-      // Wikipedia記事が見つかった場合、AI指示プロンプトを構築
-      // 実際のWikipedia内容を含める
-      const instructionPrompt = this.buildInstructionPromptWithContent(tagName, article);
+      // Wikipedia記事の内容を準備（Markdown変換と切り詰め）
+      const wikipediaContent = this.prepareWikipediaContent(article);
+
+      // 指示プロンプトを構築（Wikipedia内容は含まない）
+      const instructionPrompt = this.buildInstructionPrompt(tagName, article.url);
 
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
+      console.log('[AiService] Wikipedia content length:', wikipediaContent.length);
+      
       const aiResponse = await this.ai.run(AI_MODEL, {
         input: [
           {
@@ -308,7 +373,7 @@ export class AiService {
           },
           {
             role: 'user',
-            content: instructionPrompt
+            content: `${instructionPrompt}\n\n## Wikipedia記事の内容\n\n${wikipediaContent}`
           }
         ],
       });
@@ -338,7 +403,101 @@ export class AiService {
   }
 
   /**
+   * Wikipedia記事の内容を取得・変換して返す
+   * HTMLがあればMarkdownに変換し、なければextractを使用
+   * 
+   * @param article Wikipedia記事情報
+   * @returns 処理されたWikipedia内容
+   */
+  private prepareWikipediaContent(article: WikipediaArticle): string {
+    let content: string;
+
+    if (article.htmlContent) {
+      // HTMLコンテンツをMarkdownに変換
+      content = this.convertHtmlToMarkdown(article.htmlContent);
+    } else {
+      // HTMLがない場合はextractを使用
+      content = article.extract;
+    }
+
+    // 最大文字数を超える場合は切り詰める
+    if (content.length > MAX_WIKIPEDIA_CHARS) {
+      content = this.truncateText(content, MAX_WIKIPEDIA_CHARS);
+    }
+
+    return content;
+  }
+
+  /**
+   * 指示プロンプトを構築（Wikipedia内容は含めない）
+   * 
+   * @param requestedTagName リクエストされたタグ名
+   * @param articleUrl Wikipedia記事のURL
+   * @returns プロンプト文字列
+   */
+  private buildInstructionPrompt(requestedTagName: string, articleUrl: string): string {
+    const prompt = `# タスク
+以下のWikipedia記事「${requestedTagName}」の内容を要約し、関連タグを抽出してMarkdown形式で出力してください。
+
+## 出力形式
+
+### 1. 冒頭の要約（必須）
+- Wikipedia記事の冒頭部分を1〜2行で簡潔に要約
+- 記事に書かれていない情報は絶対に含めないこと
+
+### 2. 関連タグ（必須）
+\`**関連タグ**: \` で始まり、その後にハッシュタグを空白区切りで3〜10個列挙
+
+**ハッシュタグ正規化ルール（厳守）：**
+1. 記事の内容から関連する概念・作品・人物などを抽出
+2. **メディアタイプを除去**: 「アニメ」「ゲーム」「漫画」「映画」などのプレフィックスを削除
+   - 例: 「アニメ SSSS.DYNAZENON」→「SSSS.DYNAZENON」
+3. **カッコ書きを除去**: 「（）」で囲まれた補足情報を削除
+   - 例: 「SSSS.DYNAZENON（アニメ）」→「SSSS.DYNAZENON」
+4. **形式**: 空白なし=#タグ名、空白あり=#{タグ名}
+
+### 3. サブセクション（該当する場合のみ）
+記事に以下の情報がある場合のみ列挙：
+- シーズン・期
+- 章・巻
+- エピソード・各話タイトル
+- 関連作品シリーズ
+
+**重要**: 記事に明記されていない情報は絶対に含めないこと。
+推測や創作で補完しないこと。
+
+### 4. 出典（必須）
+\`出典: [Wikipedia](${articleUrl})\`
+
+## 重要な注意事項
+❌ 記事に書かれていない情報を生成しない
+❌ 推測や創作で情報を補完しない
+❌ サブタイトルやエピソードを創作しない
+✅ 記事の内容のみを参照
+✅ 不確実な情報は含めない
+✅ ハッシュタグ正規化ルールを厳守
+
+## 出力例
+【記事が存在する場合】
+円谷プロダクションの特撮テレビドラマ『電光超人グリッドマン』を原作とする、TRIGGERによるテレビアニメ作品。
+
+**関連タグ**: #TRIGGER #円谷プロダクション #電光超人グリッドマン
+
+出典: [Wikipedia](https://ja.wikipedia.org/wiki/SSSS.GRIDMAN)
+`;
+
+    console.log('[AiService] buildInstructionPrompt called:', {
+      requestedTagName: requestedTagName,
+      articleUrl: articleUrl,
+      promptLength: prompt.length
+    });
+
+    return prompt;
+  }
+
+  /**
    * 実際のWikipedia内容を含む指示プロンプトを構築
+   * @deprecated この方式は廃止予定。代わりにbuildInstructionPromptとprepareWikipediaContentを使用
    * 
    * @param requestedTagName リクエストされたタグ名
    * @param article Wikipedia記事情報
@@ -409,11 +568,11 @@ ${article.extract}
   }
 
   /**
-   * 指示プロンプトを構築（Wikipedia内容は含めない）
+   * 指示プロンプトを構築（Wikipedia内容は含めない、AI自身が検索することを前提とした旧方式）
    * @deprecated この方式はAIにWeb検索能力があることを前提としており、ハルシネーションを引き起こす
-   * 代わりにbuildInstructionPromptWithContentを使用すること
+   * 代わりにbuildInstructionPrompt(requestedTagName, articleUrl)とprepareWikipediaContentを使用すること
    */
-  private buildInstructionPrompt(requestedTagName: string): string {
+  private buildInstructionPromptDeprecated(requestedTagName: string): string {
     const prompt = `# タスク
 日本語版Wikipediaで「${requestedTagName}」を検索し、記事内容から正確な情報を抽出してMarkdown形式で出力してください。
 

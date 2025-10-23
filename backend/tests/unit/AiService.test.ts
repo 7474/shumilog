@@ -26,6 +26,12 @@ describe('AiService', () => {
         })
       });
 
+      // Mock HTML fetch (will fail but that's ok - it will use extract)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404
+      });
+
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
           output: [
@@ -94,6 +100,12 @@ describe('AiService', () => {
         })
       });
 
+      // Mock HTML fetch (will fail but that's ok - it will use extract)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404
+      });
+
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
           output: [
@@ -116,8 +128,8 @@ describe('AiService', () => {
       const aiService = new AiService(mockAi);
       const result = await aiService.generateTagContentFromName('きみの色');
 
-      // Verify multiple fetch attempts
-      expect(mockFetch).toHaveBeenCalledTimes(3);
+      // Verify multiple fetch attempts (now includes HTML fetch attempt)
+      expect(mockFetch).toHaveBeenCalledTimes(4);
       
       // Verify OpenSearch was called
       expect(mockFetch).toHaveBeenCalledWith(
@@ -169,6 +181,12 @@ describe('AiService', () => {
             }
           }
         })
+      });
+
+      // Mock HTML fetch (will fail but that's ok - it will use extract)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404
       });
 
       const mockAi: AiBinding = {
@@ -230,6 +248,12 @@ describe('AiService', () => {
         })
       });
 
+      // Mock HTML fetch (will fail but that's ok - it will use extract)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404
+      });
+
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
           output: [
@@ -275,6 +299,12 @@ describe('AiService', () => {
         })
       });
 
+      // Mock HTML fetch (will fail but that's ok - it will use extract)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404
+      });
+
       const mockAi: AiBinding = {
         run: vi.fn().mockResolvedValue({
           output: [
@@ -305,6 +335,198 @@ describe('AiService', () => {
       expect(userPrompt).toContain('記事に明記されていない情報は絶対に含めないこと');
       expect(userPrompt).toContain('推測や創作で補完しないこと');
       expect(userPrompt).toContain('サブタイトルやエピソードを創作しない');
+    });
+
+    it('should convert HTML to markdown when available', async () => {
+      // Mock Wikipedia REST API response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          title: 'テスト作品',
+          extract: 'テスト用の作品説明。',
+          content_urls: {
+            desktop: {
+              page: 'https://ja.wikipedia.org/wiki/Test'
+            }
+          }
+        })
+      });
+
+      // Mock HTML fetch with actual HTML content
+      const mockHtmlContent = `
+        <html>
+          <body>
+            <h1>テスト作品</h1>
+            <p>これは<strong>テスト用</strong>の作品説明です。</p>
+            <ul>
+              <li>特徴1</li>
+              <li>特徴2</li>
+            </ul>
+          </body>
+        </html>
+      `;
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: async () => mockHtmlContent
+      });
+
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `テスト用の作品説明。
+
+**関連タグ**: #テストタグ
+
+出典: [Wikipedia](https://ja.wikipedia.org/wiki/Test)`
+                }
+              ]
+            }
+          ]
+        })
+      };
+
+      const aiService = new AiService(mockAi);
+      await aiService.generateTagContentFromName('テスト');
+
+      // Verify AI was called with markdown content (not HTML)
+      expect(mockAi.run).toHaveBeenCalled();
+      const aiCallArgs = (mockAi.run as any).mock.calls[0][1].input;
+      const userPrompt = aiCallArgs[1].content;
+      
+      // Should contain markdown, not HTML
+      expect(userPrompt).toContain('## Wikipedia記事の内容');
+      expect(userPrompt).not.toContain('<html>');
+      expect(userPrompt).not.toContain('<body>');
+      expect(userPrompt).not.toContain('<strong>');
+      // Should contain markdown-formatted content
+      expect(userPrompt).toContain('#');
+      expect(userPrompt).toContain('*');
+    });
+
+    it('should truncate Wikipedia content when it exceeds max length', async () => {
+      // Create a very long extract (more than MAX_WIKIPEDIA_CHARS)
+      const longExtract = 'あ'.repeat(50000); // 50,000 characters
+
+      // Mock Wikipedia REST API response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          title: 'テスト作品',
+          extract: longExtract,
+          content_urls: {
+            desktop: {
+              page: 'https://ja.wikipedia.org/wiki/Test'
+            }
+          }
+        })
+      });
+
+      // Mock HTML fetch (will fail but that's ok - it will use extract)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404
+      });
+
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `テスト用の作品説明。
+
+**関連タグ**: #テストタグ
+
+出典: [Wikipedia](https://ja.wikipedia.org/wiki/Test)`
+                }
+              ]
+            }
+          ]
+        })
+      };
+
+      const aiService = new AiService(mockAi);
+      await aiService.generateTagContentFromName('テスト');
+
+      // Verify AI was called with truncated content
+      expect(mockAi.run).toHaveBeenCalled();
+      const aiCallArgs = (mockAi.run as any).mock.calls[0][1].input;
+      const userPrompt = aiCallArgs[1].content;
+      
+      // Extract the Wikipedia content part
+      const wikipediaContentMatch = userPrompt.match(/## Wikipedia記事の内容\n\n(.+)/s);
+      expect(wikipediaContentMatch).toBeTruthy();
+      
+      if (wikipediaContentMatch) {
+        const wikipediaContent = wikipediaContentMatch[1];
+        // Should be truncated to MAX_WIKIPEDIA_CHARS (32,000 characters)
+        expect(wikipediaContent.length).toBeLessThan(50000);
+        expect(wikipediaContent.length).toBeLessThanOrEqual(32000 + 10); // Allow small margin for truncation logic
+      }
+    });
+
+    it('should separate instruction from Wikipedia content in prompt', async () => {
+      // Mock Wikipedia REST API response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          title: 'テスト作品',
+          extract: 'テスト用の作品説明。',
+          content_urls: {
+            desktop: {
+              page: 'https://ja.wikipedia.org/wiki/Test'
+            }
+          }
+        })
+      });
+
+      // Mock HTML fetch (will fail but that's ok - it will use extract)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404
+      });
+
+      const mockAi: AiBinding = {
+        run: vi.fn().mockResolvedValue({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  text: `テスト用の作品説明。
+
+**関連タグ**: #テストタグ
+
+出典: [Wikipedia](https://ja.wikipedia.org/wiki/Test)`
+                }
+              ]
+            }
+          ]
+        })
+      };
+
+      const aiService = new AiService(mockAi);
+      await aiService.generateTagContentFromName('テスト');
+
+      // Verify the prompt structure
+      expect(mockAi.run).toHaveBeenCalled();
+      const aiCallArgs = (mockAi.run as any).mock.calls[0][1].input;
+      const userPrompt = aiCallArgs[1].content;
+      
+      // Should have clear separation between instruction and Wikipedia content
+      expect(userPrompt).toContain('# タスク');
+      expect(userPrompt).toContain('## 出力形式');
+      expect(userPrompt).toContain('## Wikipedia記事の内容');
+      
+      // Wikipedia content should be at the end of the prompt
+      const wikipediaSection = userPrompt.indexOf('## Wikipedia記事の内容');
+      const taskSection = userPrompt.indexOf('# タスク');
+      expect(wikipediaSection).toBeGreaterThan(taskSection);
     });
   });
 });

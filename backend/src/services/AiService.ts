@@ -39,10 +39,12 @@ const AI_MODEL = '@cf/openai/gpt-oss-120b';
  * 最大トークン数の制限
  * gpt-oss-120bの最大入力トークン数を考慮して設定
  * 1トークン ≈ 4文字（日本語）として概算
+ * https://developers.cloudflare.com/workers-ai/models/gpt-oss-120b/
+ * > Context Window: 128,000 tokens
  */
-const MAX_INPUT_TOKENS = 8000; // 安全マージンを持たせて8000トークンに制限
+const MAX_INPUT_TOKENS = 64000;
 const CHARS_PER_TOKEN = 4; // 日本語の場合の概算値
-const MAX_WIKIPEDIA_CHARS = MAX_INPUT_TOKENS * CHARS_PER_TOKEN; // 約32,000文字
+const MAX_WIKIPEDIA_CHARS = MAX_INPUT_TOKENS * CHARS_PER_TOKEN;
 
 /**
  * Wikipedia記事の検索結果
@@ -363,19 +365,39 @@ export class AiService {
       const instructionPrompt = this.buildInstructionPrompt(tagName, article.url);
 
       console.log(`[AiService] Sending request to AI model: ${AI_MODEL}`);
-      console.log('[AiService] Wikipedia content length:', wikipediaContent.length);
-      
-      const aiResponse = await this.ai.run(AI_MODEL, {
-        input: [
+      const input = [
           {
             role: 'system',
-            content: 'あなたはWikipedia記事を要約し、関連タグを抽出する専門アシスタントです。以下の重要ルールを厳守してください：\n\n【絶対ルール】\n1. 提供されたWikipedia記事の内容のみを参照すること\n2. 記事に書かれていない情報は絶対に生成しないこと（ハルシネーション厳禁）\n3. 不確実な情報や推測は一切含めないこと\n4. サブタイトル・エピソード情報は記事に明記されているもののみ列挙すること\n5. 記事に情報がない場合は、そのセクションを省略すること\n\n【ハッシュタグ正規化の必須ルール】\n- 作品名から「アニメ」「ゲーム」「漫画」などのメディアタイプを除去（正式名称の一部を除く）\n- カッコ書きの補足情報を除去（例：「（GB）」「（テレビアニメ）」）\n- 空白を含む場合は#{タグ名}形式、含まない場合は#タグ名形式を使用\n\n提供された記事の内容のみに基づいて正確に要約してください。'
+            content: 
+`あなたはWikipedia記事を要約し、関連タグを抽出する専門アシスタントです。以下の重要ルールを厳守してください：
+
+【絶対ルール】
+1. 提供されたWikipedia記事の内容のみを参照すること
+2. 記事に書かれていない情報は絶対に生成しないこと（ハルシネーション厳禁）
+3. 不確実な情報や推測は一切含めないこと
+4. サブタイトル・エピソード情報は記事に明記されているもののみ列挙すること
+5. 記事に情報がない場合は、そのセクションを省略すること
+
+【ハッシュタグ正規化の必須ルール】
+- 作品名から「アニメ」「ゲーム」「漫画」などのメディアタイプを除去（正式名称の一部を除く）
+- カッコ書きの補足情報を除去（例：「（GB）」「（テレビアニメ）」）
+- 空白を含む場合は#{タグ名}形式、含まない場合は#タグ名形式を使用
+
+提供された記事の内容のみに基づいて正確に要約してください。`,
           },
           {
             role: 'user',
-            content: `${instructionPrompt}\n\n## Wikipedia記事の内容\n\n${wikipediaContent}`
-          }
-        ],
+            content: wikipediaContent,
+          },
+          {
+            role: 'user',
+            content: instructionPrompt,
+          },
+        ];
+      console.log('[AiService] AI input:', input);
+      
+      const aiResponse = await this.ai.run(AI_MODEL, {
+        input: input,
       });
 
       console.log('[AiService] AI response received:', {
@@ -437,27 +459,22 @@ export class AiService {
    */
   private buildInstructionPrompt(requestedTagName: string, articleUrl: string): string {
     const prompt = `# タスク
-以下のWikipedia記事「${requestedTagName}」の内容を要約し、関連タグを抽出してMarkdown形式で出力してください。
+先のメッセージのWikipedia記事「${requestedTagName}」の内容を要約し、関連タグを抽出してMarkdown形式で出力してください。
 
 ## 出力形式
 
 ### 1. 冒頭の要約（必須）
 - Wikipedia記事の冒頭部分を1〜2行で簡潔に要約
 - 記事に書かれていない情報は絶対に含めないこと
+- 見出しは不要、要約のみを含めること
 
 ### 2. 関連タグ（必須）
+記事の内容から関連する概念・作品・人物などを抽出。
 \`**関連タグ**: \` で始まり、その後にハッシュタグを空白区切りで3〜10個列挙
 
-**ハッシュタグ正規化ルール（厳守）：**
-1. 記事の内容から関連する概念・作品・人物などを抽出
-2. **メディアタイプを除去**: 「アニメ」「ゲーム」「漫画」「映画」などのプレフィックスを削除
-   - 例: 「アニメ SSSS.DYNAZENON」→「SSSS.DYNAZENON」
-3. **カッコ書きを除去**: 「（）」で囲まれた補足情報を削除
-   - 例: 「SSSS.DYNAZENON（アニメ）」→「SSSS.DYNAZENON」
-4. **形式**: 空白なし=#タグ名、空白あり=#{タグ名}
 
 ### 3. サブセクション（該当する場合のみ）
-記事に以下の情報がある場合のみ列挙：
+記事に以下の情報がある場合のみハッシュタグとして列挙：
 - シーズン・期
 - 章・巻
 - エピソード・各話タイトル
@@ -477,13 +494,35 @@ export class AiService {
 ✅ 不確実な情報は含めない
 ✅ ハッシュタグ正規化ルールを厳守
 
+**ハッシュタグ正規化ルール（厳守）：**
+1. **メディアタイプを除去**: 「アニメ」「ゲーム」「漫画」「映画」などのプレフィックスを削除
+   - 例: 「アニメ SSSS.DYNAZENON」→「SSSS.DYNAZENON」
+2. **カッコ書きを除去**: 「（）」で囲まれた補足情報を削除
+   - 例: 「SSSS.DYNAZENON（アニメ）」→「SSSS.DYNAZENON」
+3. **形式**: 空白なし=#タグ名、空白あり=#{タグ名}
+
 ## 出力例
-【記事が存在する場合】
+\`\`\`
 円谷プロダクションの特撮テレビドラマ『電光超人グリッドマン』を原作とする、TRIGGERによるテレビアニメ作品。
 
 **関連タグ**: #TRIGGER #円谷プロダクション #電光超人グリッドマン
 
+## 各話リスト
+- #覚・醒
+- #修・復
+- #敗・北
+- #疑・心
+- #挑・発
+- #接・触
+- #策・略
+- #対・立
+- #夢・想
+- #崩・壊
+- #決・戦
+- #覚醒
+
 出典: [Wikipedia](https://ja.wikipedia.org/wiki/SSSS.GRIDMAN)
+\`\`\`
 `;
 
     console.log('[AiService] buildInstructionPrompt called:', {

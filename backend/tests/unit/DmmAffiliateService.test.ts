@@ -316,4 +316,268 @@ describe('DmmAffiliateService', () => {
       expect(creditText).toContain('href');
     });
   });
+
+  describe('cache functionality', () => {
+    it('should use cache when available and return cached response', async () => {
+      const mockResponse = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 1,
+          first_position: 1,
+          items: [
+            {
+              service_name: 'FANZA',
+              floor_name: 'Digital',
+              category_name: 'Anime',
+              content_id: 'content_cached',
+              product_id: 'product_cached',
+              title: 'Cached Product',
+              URL: 'https://dmm.com/product/cached',
+              affiliateURL: 'https://affiliate.dmm.com/product/cached',
+              imageURL: {
+                list: 'https://dmm.com/image/cached_list.jpg',
+                small: 'https://dmm.com/image/cached_small.jpg',
+                large: 'https://dmm.com/image/cached_large.jpg'
+              }
+            }
+          ]
+        }
+      };
+
+      // Create a proper Response mock that can be cloned and read multiple times
+      const mockResponseBody = JSON.stringify(mockResponse);
+      
+      // Return a new Response object each time to avoid body exhaustion
+      const mockCacheMatch = vi.fn().mockImplementation(() => 
+        Promise.resolve(new Response(mockResponseBody, {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }))
+      );
+      const mockCachePut = vi.fn();
+
+      global.caches = {
+        default: {
+          match: mockCacheMatch,
+          put: mockCachePut
+        }
+      } as any;
+
+      // Mock fetch (should not be called if cache hits)
+      global.fetch = vi.fn();
+
+      const service = new DmmAffiliateService({
+        apiId: 'test-api-id',
+        affiliateId: 'test-affiliate-id'
+      });
+
+      const result = await service.searchAdvertisements(['cached', 'anime'], 5);
+
+      // Should use cache (called twice for AND and OR search strategies)
+      expect(mockCacheMatch.mock.calls.length).toBeGreaterThan(0);
+      // Should not call fetch
+      expect(global.fetch).not.toHaveBeenCalled();
+      // Should not put to cache (already cached)
+      expect(mockCachePut).not.toHaveBeenCalled();
+      
+      // Should return cached result
+      expect(result).toHaveLength(1);
+      expect(result[0].productId).toBe('product_cached');
+      expect(result[0].title).toBe('Cached Product');
+    });
+
+    it('should fetch and cache response when cache misses', async () => {
+      const mockResponse = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 1,
+          first_position: 1,
+          items: [
+            {
+              service_name: 'FANZA',
+              floor_name: 'Digital',
+              category_name: 'Anime',
+              content_id: 'content_fresh',
+              product_id: 'product_fresh',
+              title: 'Fresh Product',
+              URL: 'https://dmm.com/product/fresh',
+              affiliateURL: 'https://affiliate.dmm.com/product/fresh',
+              imageURL: {
+                list: 'https://dmm.com/image/fresh_list.jpg',
+                small: 'https://dmm.com/image/fresh_small.jpg',
+                large: 'https://dmm.com/image/fresh_large.jpg'
+              }
+            }
+          ]
+        }
+      };
+
+      // Mock cache API - cache miss
+      const mockCacheMatch = vi.fn().mockResolvedValue(undefined);
+      const mockCachePut = vi.fn().mockResolvedValue(undefined);
+
+      global.caches = {
+        default: {
+          match: mockCacheMatch,
+          put: mockCachePut
+        }
+      } as any;
+
+      // Mock fetch
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        clone: () => ({
+          body: null,
+          clone: () => ({ body: null })
+        }),
+        json: async () => mockResponse
+      } as Response);
+
+      const service = new DmmAffiliateService({
+        apiId: 'test-api-id',
+        affiliateId: 'test-affiliate-id'
+      });
+
+      const result = await service.searchAdvertisements(['fresh', 'anime'], 5);
+
+      // Should check cache first
+      expect(mockCacheMatch).toHaveBeenCalled();
+      // Should call fetch on cache miss
+      expect(global.fetch).toHaveBeenCalled();
+      // Should cache the response
+      expect(mockCachePut).toHaveBeenCalled();
+      
+      // Check that cached response has Cache-Control header
+      const cachedRequest = mockCachePut.mock.calls[0][0];
+      const cachedResponse = mockCachePut.mock.calls[0][1];
+      expect(cachedRequest).toBeInstanceOf(Request);
+      expect(cachedResponse.headers.get('Cache-Control')).toBe('max-age=86400');
+      
+      // Should return fetched result
+      expect(result).toHaveLength(1);
+      expect(result[0].productId).toBe('product_fresh');
+      expect(result[0].title).toBe('Fresh Product');
+    });
+
+    it('should work without cache API (e.g., in test environments)', async () => {
+      const mockResponse = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 1,
+          first_position: 1,
+          items: [
+            {
+              service_name: 'FANZA',
+              floor_name: 'Digital',
+              category_name: 'Anime',
+              content_id: 'content_nocache',
+              product_id: 'product_nocache',
+              title: 'No Cache Product',
+              URL: 'https://dmm.com/product/nocache',
+              affiliateURL: 'https://affiliate.dmm.com/product/nocache',
+              imageURL: {
+                list: 'https://dmm.com/image/nocache_list.jpg',
+                small: 'https://dmm.com/image/nocache_small.jpg',
+                large: 'https://dmm.com/image/nocache_large.jpg'
+              }
+            }
+          ]
+        }
+      };
+
+      // Simulate cache API not available
+      global.caches = undefined as any;
+
+      // Mock fetch
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse
+      } as Response);
+
+      const service = new DmmAffiliateService({
+        apiId: 'test-api-id',
+        affiliateId: 'test-affiliate-id'
+      });
+
+      const result = await service.searchAdvertisements(['nocache'], 5);
+
+      // Should call fetch directly without cache
+      expect(global.fetch).toHaveBeenCalled();
+      
+      // Should return result
+      expect(result).toHaveLength(1);
+      expect(result[0].productId).toBe('product_nocache');
+      expect(result[0].title).toBe('No Cache Product');
+    });
+
+    it('should continue to return response even if caching fails', async () => {
+      const mockResponse = {
+        result: {
+          status: 200,
+          result_count: 1,
+          total_count: 1,
+          first_position: 1,
+          items: [
+            {
+              service_name: 'FANZA',
+              floor_name: 'Digital',
+              category_name: 'Anime',
+              content_id: 'content_cachefail',
+              product_id: 'product_cachefail',
+              title: 'Cache Fail Product',
+              URL: 'https://dmm.com/product/cachefail',
+              affiliateURL: 'https://affiliate.dmm.com/product/cachefail',
+              imageURL: {
+                list: 'https://dmm.com/image/cachefail_list.jpg',
+                small: 'https://dmm.com/image/cachefail_small.jpg',
+                large: 'https://dmm.com/image/cachefail_large.jpg'
+              }
+            }
+          ]
+        }
+      };
+
+      // Mock cache API - put fails
+      const mockCacheMatch = vi.fn().mockResolvedValue(undefined);
+      const mockCachePut = vi.fn().mockRejectedValue(new Error('Cache storage full'));
+
+      global.caches = {
+        default: {
+          match: mockCacheMatch,
+          put: mockCachePut
+        }
+      } as any;
+
+      // Mock fetch
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        clone: () => ({
+          body: null,
+          clone: () => ({ body: null })
+        }),
+        json: async () => mockResponse
+      } as Response);
+
+      const service = new DmmAffiliateService({
+        apiId: 'test-api-id',
+        affiliateId: 'test-affiliate-id'
+      });
+
+      const result = await service.searchAdvertisements(['cachefail'], 5);
+
+      // Should attempt to cache
+      expect(mockCachePut).toHaveBeenCalled();
+      
+      // Should still return result even if caching fails
+      expect(result).toHaveLength(1);
+      expect(result[0].productId).toBe('product_cachefail');
+      expect(result[0].title).toBe('Cache Fail Product');
+    });
+  });
 });

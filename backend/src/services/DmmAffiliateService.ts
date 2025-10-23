@@ -124,6 +124,7 @@ export class DmmAffiliateService {
 
   /**
    * 指定されたキーワードでDMM APIを検索
+   * Cloudflare Workers Cache APIを使用してレスポンスをキャッシュする
    * @param keyword 検索キーワード
    * @param site サイト名
    * @param limit 取得件数
@@ -145,8 +146,47 @@ export class DmmAffiliateService {
       output: 'json'
     });
 
+    const apiUrl = `${this.apiEndpoint}?${params.toString()}`;
+
     try {
-      const response = await fetch(`${this.apiEndpoint}?${params.toString()}`);
+      // Cache APIが利用可能かチェック（テスト環境では利用できない場合がある）
+      const cache = typeof caches !== 'undefined' ? caches.default : null;
+      let response: Response | undefined;
+
+      // キャッシュから取得を試みる
+      if (cache) {
+        const cacheKey = new Request(apiUrl);
+        response = await cache.match(cacheKey);
+        
+        if (response) {
+          console.log('[DmmAffiliateService] Cache hit for:', keyword);
+        }
+      }
+
+      // キャッシュミスまたはCache API利用不可の場合は実際にAPIを呼び出す
+      if (!response) {
+        console.log('[DmmAffiliateService] Cache miss, fetching from API:', keyword);
+        response = await fetch(apiUrl);
+
+        // レスポンスをキャッシュに保存（24時間）
+        if (cache && response.ok) {
+          // レスポンスをクローンしてCache-Controlヘッダーを追加
+          const responseToCache = new Response(response.clone().body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers)
+          });
+          // 24時間キャッシュ
+          responseToCache.headers.set('Cache-Control', 'max-age=86400');
+          
+          try {
+            await cache.put(new Request(apiUrl), responseToCache);
+          } catch (cacheError) {
+            // キャッシュ保存に失敗してもAPIレスポンスは返す
+            console.warn('[DmmAffiliateService] Failed to cache response:', cacheError);
+          }
+        }
+      }
 
       if (!response.ok) {
         console.error('[DmmAffiliateService] API request failed:', response.status);

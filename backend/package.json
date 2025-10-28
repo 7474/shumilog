@@ -22,7 +22,7 @@
     "@mixmark-io/domino": "^2.2.0",
     "@types/turndown": "^5.0.5",
     "drizzle-orm": "^0.44.6",
-    "hono": "^4.10.1",
+    "hono": "^4.10.3",
     "turndown": "^7.2.2",
     "uuid": "^13.0.0"
   },

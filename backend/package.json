@@ -39,7 +39,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.4.0",
     "jest-openapi": "^0.14.2",
-    "miniflare": "^4.20251008.0",
+    "miniflare": "^4.20251105.0",
     "openapi-backend": "^5.15.0",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",

@@ -136,7 +136,7 @@ export const cacheControl = () => {
     c.header('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=60');
     
     // CORS以外のリクエスト条件では応答内容は変化しない
-    c.header('Vary', 'Origin');
+    // 注: CORSミドルウェアが既にVaryヘッダーを設定しているため、ここでは設定しない
   };
 };
 

@@ -99,7 +99,8 @@ export const cacheApi = () => {
  * - Cache-Control: max-age=300（ブラウザキャッシュ：5分間）
  * - s-maxage=300（CDN等の共有キャッシュ：5分間）
  * - stale-while-revalidate=60（再検証中に古いコンテンツを提供可能）
- * - Vary: Origin（CORS以外の条件では同じ応答）
+ * 
+ * 注: Vary: Origin ヘッダーはCORSミドルウェアにより自動的に設定されます
  */
 export const cacheControl = () => {
   return async (c: Context, next: Next) => {

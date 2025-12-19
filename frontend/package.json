@@ -56,7 +56,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^16.5.0",
     "hono": "^4.10.8",
-    "jsdom": "^27.2.0",
+    "jsdom": "^27.3.0",
     "openapi-typescript": "^7.10.1",
     "prettier": "^3.7.4",
     "tailwindcss": "^4.1.17",

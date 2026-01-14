@@ -1,5 +1,7 @@
 node_modules/
 .wrangler/
+.terraform/
+infrastructure/terraform/.env
 
 # ESLint cache
 .eslintcache
